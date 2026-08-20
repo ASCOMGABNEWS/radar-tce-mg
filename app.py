@@ -5,65 +5,10 @@ import re
 from collections import Counter
 
 
-st.markdown("""
-<style>
-.news-card {
-    background: rgba(255,255,255,0.045);
-    border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 16px;
-    padding: 18px 20px;
-    margin: 12px 0;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-}
-
-.news-card:hover {
-    border-color: rgba(255,255,255,0.16);
-}
-
-.news-card-title {
-    font-size: 17px;
-    font-weight: 700;
-    line-height: 1.4;
-    margin-bottom: 8px;
-}
-
-.news-card-meta {
-    font-size: 12px;
-    color: #8f9aa7;
-    margin-bottom: 10px;
-}
-
-.news-card-summary {
-    font-size: 13px;
-    line-height: 1.55;
-    color: #b8c1cb;
-    margin-top: 10px;
-}
-
-.news-card-link {
-    display: inline-block;
-    margin-top: 12px;
-    padding: 6px 10px;
-    border-radius: 8px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.08);
-    color: inherit !important;
-    text-decoration: none !important;
-    font-size: 12px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
 # ============================================================
 # CONFIGURAÇÃO
 # ============================================================
 
-st.set_page_config(
-    page_title="Radar TCE-MG",
-    page_icon="🏛️",
-    layout="wide"
-)
 
 
 # ============================================================
@@ -1341,10 +1286,8 @@ if busca:
 # ============================================================
 
 st.subheader(
-
     f"📰 {len(filtradas)} notícias encontradas"
 )
-
 
 if not filtradas:
 
@@ -1353,125 +1296,98 @@ if not filtradas:
         "com os filtros selecionados."
     )
 
-
 else:
 
     for noticia in filtradas:
 
         data_formatada = ""
 
-
         if noticia["data"]:
 
-            data_formatada = (
-
-                noticia["data"]
-                .strftime(
-                    "%d/%m/%Y %H:%M"
-                )
-
+            data_formatada = noticia["data"].strftime(
+                "%d/%m/%Y %H:%M"
             )
 
+        titulo = noticia["titulo"]
+        resumo = noticia["resumo"]
 
-        # ----------------------------------------------------
-        # TÍTULO — SOMENTE A BOLINHA
-        # ----------------------------------------------------
+        if len(resumo) > 500:
+            resumo = resumo[:500] + "..."
+
+        # Favicon do domínio da notícia.
+        # Se não houver domínio, o card continua funcionando sem imagem.
+        dominio = ""
+
+        try:
+            from urllib.parse import urlparse
+            dominio = urlparse(noticia["link"]).netloc.replace("www.", "")
+        except Exception:
+            dominio = ""
+
+        if dominio:
+            favicon = (
+                "https://www.google.com/s2/favicons"
+                f"?domain={dominio}&sz=64"
+            )
+            imagem_fonte = (
+                f'<img src="{favicon}" '
+                f'alt="" '
+                f'onerror="this.style.display=\'none\'">'
+            )
+        else:
+            imagem_fonte = "📰"
+
+        pessoas_html = ""
+
+        for pessoa in noticia["pessoas"]:
+
+            pessoas_html += (
+                f'<span class="news-tag">👤 {pessoa}</span>'
+            )
+
+        temas_html = ""
+
+        for tema in noticia["temas"]:
+
+            temas_html += (
+                f'<span class="news-tag">{tema}</span>'
+            )
+
+        card = f"""
+        <div class="news-card">
+
+            <div class="news-title">
+                {noticia["bolinha"]} {titulo}
+            </div>
+
+            <div class="news-source">
+                {imagem_fonte}
+                <span>{noticia["veiculo"]}</span>
+                <span class="news-date">• {data_formatada}</span>
+            </div>
+
+            <div>
+                {pessoas_html}
+                {temas_html}
+            </div>
+
+            <div class="news-summary">
+                {resumo}
+            </div>
+
+            <a
+                class="news-link"
+                href="{noticia["link"]}"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                Ler matéria ↗
+            </a>
+
+        </div>
+        """
 
         st.markdown(
-
-            f"### "
-            f"{noticia['bolinha']} "
-            f"**{noticia['titulo']}**"
+            card,
+            unsafe_allow_html=True
         )
-
-
-        # ----------------------------------------------------
-        # INFORMAÇÕES
-        # ----------------------------------------------------
-
-        st.caption(
-
-            f"🗞️ {noticia['veiculo']}  •  "
-            f"📅 {data_formatada}"
-        )
-
-
-        # ----------------------------------------------------
-        # PESSOAS
-        # ----------------------------------------------------
-
-        if noticia["pessoas"]:
-
-            st.markdown(
-
-                " ".join(
-
-                    [
-                        f"`👤 {p}`"
-                        for p
-                        in noticia["pessoas"]
-                    ]
-
-                )
-
-            )
-
-
-        # ----------------------------------------------------
-        # TEMAS
-        # ----------------------------------------------------
-
-        if noticia["temas"]:
-
-            st.markdown(
-
-                " ".join(
-
-                    [
-                        f"`{tema}`"
-                        for tema
-                        in noticia["temas"]
-                    ]
-
-                )
-
-            )
-
-
-        # ----------------------------------------------------
-        # RESUMO
-        # ----------------------------------------------------
-
-        if noticia["resumo"]:
-
-            resumo = noticia[
-                "resumo"
-            ]
-
-
-            if len(resumo) > 500:
-
-                resumo = (
-                    resumo[:500]
-                    + "..."
-                )
-
-
-            st.write(
-                resumo
-            )
-
-
-        # ----------------------------------------------------
-        # LINK
-        # ----------------------------------------------------
-
-        st.link_button(
-
-            "Ler matéria ↗",
-
-            noticia["link"]
-        )
-
-
-        st.divider()
