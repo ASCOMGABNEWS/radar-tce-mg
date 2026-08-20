@@ -1202,6 +1202,14 @@ st.markdown("""
     .news-card { grid-template-columns:1fr; }
     .news-time { display:none; }
 }
+
+/* Títulos dos painéis ficam fixos; somente o conteúdo interno pode rolar. */
+.dashboard-panel-title {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1351,12 +1359,14 @@ col1, col2, col3 = st.columns(
 def box_title(text):
     st.markdown(
         f"""
-        <div style="
+        <div class="dashboard-panel-title" style="
             background:rgba(100,116,139,.07);
             border:1px solid rgba(100,116,139,.10);
             border-radius:9px;
             padding:8px 12px;
             margin:-4px -4px 12px -4px;
+            position:relative;
+            z-index:5;
             font-size:17px;
             font-weight:750;
             color:#27324a;
