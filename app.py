@@ -1519,21 +1519,6 @@ status_area.markdown(
 
 noticias = buscar_noticias()
 
-if noticias:
-    teste_ia = analisar_relevancia_ia(
-        noticias[0].get("titulo", ""),
-        noticias[0].get("resumo", ""),
-        noticias[0].get("veiculo", ""),
-        noticias[0].get("abrangencia", ""),
-        noticias[0].get("instituicoes", "")
-    )
-
-    st.info(
-        f"🤖 IA: {teste_ia['nota']}/100 — "
-        f"{teste_ia['nivel']}"
-    )
-    st.caption(teste_ia["motivo"])
-
 status_area.empty()
 
 st.markdown("### 📡 Monitoramento em tempo real")
