@@ -15,8 +15,10 @@ from reportlab.lib.units import cm
 
 
 def esc_html(value):
+    if value is None:
+        return ""
     return html.escape(
-        str(value or ""),
+        str(value),
         quote=True
     )
 
@@ -1860,7 +1862,11 @@ st.download_button(
 # ============================================================
 
 st.subheader(
-    f"📰 {len(filtradas)} notícias encontradas"
+    "📰 Notícias monitoradas"
+)
+
+st.caption(
+    f"{len(filtradas)} notícias encontradas no período selecionado."
 )
 
 if not filtradas:
@@ -1947,7 +1953,7 @@ else:
         </div>
         """
 
-        st.html(html)
+        st.markdown(news_card_html, unsafe_allow_html=True)
 
 # ============================================================
 # RODAPÉ
