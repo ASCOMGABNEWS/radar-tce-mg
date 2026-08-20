@@ -30,6 +30,10 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
 from reportlab.lib.units import cm
 
+if "OPENAI_API_KEY" in st.secrets:
+    st.success("🤖 IA conectada com sucesso!")
+else:
+    st.warning("🤖 Chave da IA não encontrada.")
 
 
 def esc_html(value):
