@@ -3,6 +3,7 @@ import feedparser
 from datetime import datetime, timedelta
 import re
 from collections import Counter
+from urllib.parse import urlparse
 
 
 # ============================================================
@@ -12,8 +13,440 @@ from collections import Counter
 st.set_page_config(
     page_title="Radar TCE-MG",
     page_icon="🏛️",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
+
+
+# ============================================================
+# CSS — IDENTIDADE VISUAL
+# ============================================================
+
+st.markdown("""
+<style>
+
+    /* --------------------------------------------------------
+       FUNDO
+    -------------------------------------------------------- */
+
+    .stApp {
+        background:
+            radial-gradient(
+                circle at 15% 10%,
+                rgba(90, 110, 140, 0.12),
+                transparent 30%
+            ),
+            radial-gradient(
+                circle at 85% 20%,
+                rgba(80, 100, 120, 0.10),
+                transparent 28%
+            ),
+            #0f141b;
+    }
+
+
+    /* --------------------------------------------------------
+       CONTAINER
+    -------------------------------------------------------- */
+
+    .block-container {
+        max-width: 1450px;
+        padding-top: 2rem;
+        padding-bottom: 4rem;
+    }
+
+
+    /* --------------------------------------------------------
+       TÍTULOS
+    -------------------------------------------------------- */
+
+    h1 {
+        font-size: 2.4rem !important;
+        font-weight: 750 !important;
+        letter-spacing: -0.04em;
+    }
+
+    h2 {
+        font-size: 1.35rem !important;
+        font-weight: 700 !important;
+        margin-top: 1.5rem !important;
+    }
+
+    h3 {
+        font-size: 1.05rem !important;
+        font-weight: 650 !important;
+    }
+
+
+    /* --------------------------------------------------------
+       HEADER
+    -------------------------------------------------------- */
+
+    .radar-header {
+        padding: 24px 28px;
+        border-radius: 22px;
+        margin-bottom: 20px;
+
+        background:
+            linear-gradient(
+                135deg,
+                rgba(255,255,255,0.085),
+                rgba(255,255,255,0.035)
+            );
+
+        border: 1px solid rgba(255,255,255,0.09);
+
+        box-shadow:
+            0 15px 40px rgba(0,0,0,0.18);
+
+        backdrop-filter: blur(18px);
+    }
+
+
+    .radar-title {
+        font-size: 30px;
+        font-weight: 800;
+        letter-spacing: -1px;
+        margin-bottom: 3px;
+    }
+
+
+    .radar-subtitle {
+        color: rgba(255,255,255,0.58);
+        font-size: 14px;
+    }
+
+
+    .status-online {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+
+        margin-top: 13px;
+        padding: 6px 11px;
+
+        border-radius: 999px;
+
+        background: rgba(80, 190, 120, 0.10);
+        border: 1px solid rgba(80, 190, 120, 0.20);
+
+        color: rgba(180,255,205,0.9);
+        font-size: 12px;
+    }
+
+
+    /* --------------------------------------------------------
+       PAINÉIS SUPERIORES
+    -------------------------------------------------------- */
+
+    .dashboard-card {
+        padding: 20px 22px;
+        min-height: 145px;
+
+        border-radius: 18px;
+
+        background:
+            linear-gradient(
+                135deg,
+                rgba(255,255,255,0.075),
+                rgba(255,255,255,0.025)
+            );
+
+        border: 1px solid rgba(255,255,255,0.08);
+
+        box-shadow:
+            0 10px 30px rgba(0,0,0,0.12);
+
+        backdrop-filter: blur(15px);
+    }
+
+
+    .dashboard-title {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 13px;
+    }
+
+
+    .dashboard-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        padding: 7px 0;
+
+        border-bottom:
+            1px solid rgba(255,255,255,0.045);
+
+        font-size: 13px;
+    }
+
+
+    .dashboard-row:last-child {
+        border-bottom: none;
+    }
+
+
+    .dashboard-number {
+        font-weight: 750;
+        font-size: 15px;
+    }
+
+
+    /* --------------------------------------------------------
+       MÉTRICAS
+    -------------------------------------------------------- */
+
+    div[data-testid="stMetric"] {
+        background:
+            rgba(255,255,255,0.045);
+
+        border:
+            1px solid rgba(255,255,255,0.07);
+
+        padding:
+            12px 15px;
+
+        border-radius:
+            15px;
+    }
+
+
+    div[data-testid="stMetricLabel"] {
+        font-size: 11px;
+    }
+
+
+    /* --------------------------------------------------------
+       FILTROS
+    -------------------------------------------------------- */
+
+    div[data-baseweb="select"] > div {
+        background:
+            rgba(255,255,255,0.045);
+
+        border-color:
+            rgba(255,255,255,0.10);
+
+        border-radius:
+            11px;
+    }
+
+
+    div[data-testid="stTextInput"] input {
+        background:
+            rgba(255,255,255,0.045);
+
+        border-color:
+            rgba(255,255,255,0.10);
+
+        border-radius:
+            11px;
+    }
+
+
+    /* --------------------------------------------------------
+       CARDS DE NOTÍCIA
+    -------------------------------------------------------- */
+
+    .news-card {
+        padding: 20px 22px;
+        margin: 13px 0;
+
+        border-radius: 18px;
+
+        background:
+            linear-gradient(
+                135deg,
+                rgba(255,255,255,0.065),
+                rgba(255,255,255,0.025)
+            );
+
+        border:
+            1px solid rgba(255,255,255,0.075);
+
+        box-shadow:
+            0 8px 25px rgba(0,0,0,0.12);
+
+        backdrop-filter:
+            blur(14px);
+
+        transition:
+            transform 0.15s ease,
+            border-color 0.15s ease;
+    }
+
+
+    .news-card:hover {
+        transform:
+            translateY(-2px);
+
+        border-color:
+            rgba(255,255,255,0.16);
+    }
+
+
+    .news-title {
+        font-size: 17px;
+        line-height: 1.38;
+
+        font-weight: 700;
+
+        letter-spacing:
+            -0.015em;
+
+        margin-bottom: 8px;
+    }
+
+
+    .news-meta {
+        color:
+            rgba(255,255,255,0.48);
+
+        font-size: 12px;
+
+        margin-bottom: 12px;
+    }
+
+
+    .news-summary {
+        color:
+            rgba(255,255,255,0.72);
+
+        font-size: 13px;
+
+        line-height: 1.55;
+
+        margin-top: 12px;
+    }
+
+
+    /* --------------------------------------------------------
+       TAGS
+    -------------------------------------------------------- */
+
+    .tag {
+        display: inline-block;
+
+        padding:
+            4px 8px;
+
+        margin:
+            3px 4px 3px 0;
+
+        border-radius:
+            999px;
+
+        background:
+            rgba(255,255,255,0.055);
+
+        border:
+            1px solid rgba(255,255,255,0.075);
+
+        color:
+            rgba(255,255,255,0.75);
+
+        font-size:
+            11px;
+    }
+
+
+    /* --------------------------------------------------------
+       FONTE
+    -------------------------------------------------------- */
+
+    .source-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+
+        padding:
+            4px 9px;
+
+        border-radius:
+            8px;
+
+        background:
+            rgba(255,255,255,0.055);
+
+        color:
+            rgba(255,255,255,0.72);
+
+        font-size:
+            11px;
+
+        border:
+            1px solid rgba(255,255,255,0.065);
+    }
+
+
+    /* --------------------------------------------------------
+       BOTÃO
+    -------------------------------------------------------- */
+
+    .read-button {
+        display: inline-block;
+
+        margin-top: 13px;
+
+        padding:
+            7px 12px;
+
+        border-radius:
+            9px;
+
+        background:
+            rgba(255,255,255,0.06);
+
+        border:
+            1px solid rgba(255,255,255,0.09);
+
+        color:
+            rgba(255,255,255,0.85);
+
+        text-decoration:
+            none;
+
+        font-size:
+            12px;
+    }
+
+
+    /* --------------------------------------------------------
+       SEPARADORES
+    -------------------------------------------------------- */
+
+    hr {
+        border-color:
+            rgba(255,255,255,0.06);
+    }
+
+
+    /* --------------------------------------------------------
+       BOTÕES STREAMLIT
+    -------------------------------------------------------- */
+
+    .stButton > button {
+        border-radius: 10px;
+        border:
+            1px solid rgba(255,255,255,0.10);
+
+        background:
+            rgba(255,255,255,0.055);
+
+        color:
+            rgba(255,255,255,0.88);
+    }
+
+
+    .stButton > button:hover {
+        border-color:
+            rgba(255,255,255,0.22);
+    }
+
+
+</style>
+""", unsafe_allow_html=True)
 
 
 # ============================================================
@@ -155,7 +588,7 @@ FONTES = {
 
 
 # ============================================================
-# PESSOAS MONITORADAS
+# PESSOAS
 # ============================================================
 
 PESSOAS = {
@@ -219,7 +652,7 @@ PESSOAS = {
 
 
 # ============================================================
-# RELAÇÃO ENTRE BUSCA ESPECÍFICA E PESSOA
+# MAPA DE BUSCAS DE PESSOAS
 # ============================================================
 
 MAPA_FONTE_PESSOA = {
@@ -257,7 +690,7 @@ MAPA_FONTE_PESSOA = {
 
 
 # ============================================================
-# TEMAS ESTRATÉGICOS
+# TEMAS
 # ============================================================
 
 TEMAS = {
@@ -358,7 +791,7 @@ TEMAS = {
 
 
 # ============================================================
-# FUNÇÕES DE TEXTO
+# FUNÇÕES
 # ============================================================
 
 def limpar_texto(texto):
@@ -417,9 +850,23 @@ def extrair_veiculo(item):
     return "Fonte não identificada"
 
 
-# ============================================================
-# IDENTIFICA TEMAS
-# ============================================================
+def obter_dominio(url):
+
+    try:
+
+        dominio = urlparse(url).netloc.lower()
+
+        dominio = dominio.replace(
+            "www.",
+            ""
+        )
+
+        return dominio
+
+    except Exception:
+
+        return ""
+
 
 def identificar_temas(
     titulo,
@@ -446,10 +893,6 @@ def identificar_temas(
 
     return encontrados
 
-
-# ============================================================
-# IDENTIFICA PESSOAS
-# ============================================================
 
 def identificar_pessoas(
     titulo,
@@ -483,10 +926,6 @@ def identificar_pessoas(
 
     return encontrados
 
-
-# ============================================================
-# SCORE
-# ============================================================
 
 def calcular_relevancia(
     titulo,
@@ -564,29 +1003,22 @@ def calcular_relevancia(
     )
 
 
-# ============================================================
-# CLASSIFICAÇÃO
-# ============================================================
-
 def classificar(score):
 
     if score >= 85:
-
         return "🔴"
 
     if score >= 65:
-
         return "🟠"
 
     if score >= 45:
-
         return "🟡"
 
     return "⚪"
 
 
 # ============================================================
-# COLETA DAS NOTÍCIAS
+# COLETA
 # ============================================================
 
 @st.cache_data(ttl=300)
@@ -675,10 +1107,7 @@ def buscar_noticias():
             )
 
 
-            # ------------------------------------------------
-            # CORREÇÃO DAS PESSOAS
-            # ------------------------------------------------
-
+            # Busca específica por pessoa
             if nome in MAPA_FONTE_PESSOA:
 
                 pessoa_fonte = (
@@ -723,6 +1152,11 @@ def buscar_noticias():
                         item
                     ),
 
+                "dominio":
+                    obter_dominio(
+                        link
+                    ),
+
                 "data":
                     data,
 
@@ -741,10 +1175,6 @@ def buscar_noticias():
                     pessoas,
             })
 
-
-    # --------------------------------------------------------
-    # ORDENAÇÃO
-    # --------------------------------------------------------
 
     noticias.sort(
 
@@ -768,14 +1198,23 @@ def buscar_noticias():
 # CABEÇALHO
 # ============================================================
 
-st.title(
-    "🏛️ Radar TCE-MG"
-)
+st.markdown("""
+<div class="radar-header">
 
-st.caption(
-    "Monitoramento inteligente de notícias "
-    "relacionadas ao Tribunal de Contas de Minas Gerais"
-)
+    <div class="radar-title">
+        🏛️ Radar TCE-MG
+    </div>
+
+    <div class="radar-subtitle">
+        Monitoramento de imprensa e assuntos estratégicos
+    </div>
+
+    <div class="status-online">
+        ● Monitoramento ativo
+    </div>
+
+</div>
+""", unsafe_allow_html=True)
 
 
 col1, col2 = st.columns(
@@ -786,7 +1225,7 @@ col1, col2 = st.columns(
 with col1:
 
     if st.button(
-        "🔄 Atualizar agora"
+        "🔄 Atualizar"
     ):
 
         st.cache_data.clear()
@@ -797,12 +1236,8 @@ with col1:
 with col2:
 
     st.caption(
-        "Monitoramento em tempo quase real • "
-        "atualização automática a cada 5 minutos"
+        "Atualização automática a cada 5 minutos"
     )
-
-
-st.divider()
 
 
 # ============================================================
@@ -876,7 +1311,7 @@ noticias_periodo = [
 
 
 # ============================================================
-# RADAR DE ATENÇÃO
+# CONTADORES
 # ============================================================
 
 criticas = [
@@ -894,53 +1329,6 @@ altas = [
     if 65 <= n["score"] < 85
 ]
 
-
-st.subheader(
-    "🚨 Radar de atenção"
-)
-
-
-col1, col2 = st.columns(
-    2
-)
-
-
-with col1:
-
-    st.metric(
-        "🔴 Críticas",
-        len(criticas)
-    )
-
-
-with col2:
-
-    st.metric(
-        "🟠 Alta relevância",
-        len(altas)
-    )
-
-
-if criticas:
-
-    st.markdown(
-        "#### 🔴 Atenção imediata"
-    )
-
-
-    for noticia in criticas[:5]:
-
-        st.markdown(
-            f"**{noticia['titulo']}**"
-        )
-
-
-st.divider()
-
-
-# ============================================================
-# CONTADORES
-# ============================================================
 
 contador_temas = Counter()
 
@@ -964,81 +1352,129 @@ for noticia in noticias_periodo:
 
 
 # ============================================================
-# ASSUNTOS + PESSOAS
+# PAINÉIS
 # ============================================================
 
-col1, col2 = st.columns(
-    2
+col1, col2, col3 = st.columns(
+    3
 )
 
 
-# ============================================================
-# ASSUNTOS QUENTES
-# ============================================================
+# ------------------------------------------------------------
+# RADAR DE ATENÇÃO
+# ------------------------------------------------------------
 
 with col1:
 
-    st.subheader(
-        "🔥 Assuntos quentes"
+    st.markdown(
+        '<div class="dashboard-card">'
+        '<div class="dashboard-title">'
+        '🚨 Radar de atenção'
+        '</div>'
+        f'<div class="dashboard-row">'
+        '<span>🔴 Críticas</span>'
+        f'<span class="dashboard-number">{len(criticas)}</span>'
+        '</div>'
+        f'<div class="dashboard-row">'
+        '<span>🟠 Alta relevância</span>'
+        f'<span class="dashboard-number">{len(altas)}</span>'
+        '</div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+
+# ------------------------------------------------------------
+# ASSUNTOS
+# ------------------------------------------------------------
+
+with col2:
+
+    html = (
+        '<div class="dashboard-card">'
+        '<div class="dashboard-title">'
+        '🔥 Assuntos quentes'
+        '</div>'
     )
 
 
     if contador_temas:
 
-        temas_quentes = (
-            contador_temas
-            .most_common(8)
-        )
+        for tema, quantidade in contador_temas.most_common(5):
 
-
-        for tema, quantidade in temas_quentes:
-
-            st.markdown(
-                f"**{tema}** — "
-                f"{quantidade} notícia(s)"
+            html += (
+                '<div class="dashboard-row">'
+                f'<span>{tema}</span>'
+                f'<span class="dashboard-number">'
+                f'{quantidade}'
+                '</span>'
+                '</div>'
             )
 
     else:
 
-        st.info(
-            "Nenhum tema identificado."
+        html += (
+            '<div class="dashboard-row">'
+            '<span>Nenhum tema identificado</span>'
+            '</div>'
         )
 
 
-# ============================================================
-# PESSOAS MAIS CITADAS
-# ============================================================
+    html += '</div>'
 
-with col2:
 
-    st.subheader(
-        "👥 Pessoas mais citadas"
+    st.markdown(
+        html,
+        unsafe_allow_html=True
+    )
+
+
+# ------------------------------------------------------------
+# PESSOAS
+# ------------------------------------------------------------
+
+with col3:
+
+    html = (
+        '<div class="dashboard-card">'
+        '<div class="dashboard-title">'
+        '👥 Pessoas mais citadas'
+        '</div>'
     )
 
 
     if contador_pessoas:
 
-        pessoas_quentes = (
-            contador_pessoas
-            .most_common(8)
-        )
+        for pessoa, quantidade in contador_pessoas.most_common(5):
 
-
-        for pessoa, quantidade in pessoas_quentes:
-
-            st.markdown(
-                f"**{pessoa}** — "
-                f"{quantidade} notícia(s)"
+            html += (
+                '<div class="dashboard-row">'
+                f'<span>{pessoa}</span>'
+                f'<span class="dashboard-number">'
+                f'{quantidade}'
+                '</span>'
+                '</div>'
             )
 
     else:
 
-        st.info(
-            "Nenhuma pessoa monitorada citada."
+        html += (
+            '<div class="dashboard-row">'
+            '<span>Nenhuma pessoa identificada</span>'
+            '</div>'
         )
 
 
-st.divider()
+    html += '</div>'
+
+
+    st.markdown(
+        html,
+        unsafe_allow_html=True
+    )
+
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 
 # ============================================================
@@ -1083,7 +1519,6 @@ col1, col2, col3, col4, col5 = st.columns(
 
 
 with col1:
-
     st.metric(
         "📰 Notícias",
         len(noticias_periodo)
@@ -1091,7 +1526,6 @@ with col1:
 
 
 with col2:
-
     st.metric(
         "🔴 Críticas",
         criticas_total
@@ -1099,7 +1533,6 @@ with col2:
 
 
 with col3:
-
     st.metric(
         "🟠 Altas",
         altas_total
@@ -1107,7 +1540,6 @@ with col3:
 
 
 with col4:
-
     st.metric(
         "🟡 Médias",
         medias_total
@@ -1115,7 +1547,6 @@ with col4:
 
 
 with col5:
-
     st.metric(
         "⚪ Menções",
         mencoes_total
@@ -1225,7 +1656,7 @@ with col2:
 
 
 # ============================================================
-# APLICA FILTROS
+# FILTROS
 # ============================================================
 
 filtradas = noticias_periodo
@@ -1268,9 +1699,6 @@ if filtro_fonte != "Todas":
 
 
 if filtro_relevancia != "Todas":
-
-    # O bolinha guarda somente o emoji,
-    # então fazemos a conversão aqui.
 
     mapa_relevancia = {
 
@@ -1317,7 +1745,7 @@ if busca:
 
 st.subheader(
 
-    f"📰 {len(filtradas)} notícias encontradas"
+    f"📰 {len(filtradas)} notícias"
 )
 
 
@@ -1348,26 +1776,51 @@ else:
             )
 
 
+        dominio = noticia[
+            "dominio"
+        ]
+
+
         # ----------------------------------------------------
-        # TÍTULO — SOMENTE A BOLINHA
+        # CARD
         # ----------------------------------------------------
 
         st.markdown(
-
-            f"### "
-            f"{noticia['bolinha']} "
-            f"**{noticia['titulo']}**"
+            '<div class="news-card">',
+            unsafe_allow_html=True
         )
 
 
         # ----------------------------------------------------
-        # INFORMAÇÕES
+        # TÍTULO
         # ----------------------------------------------------
 
-        st.caption(
+        st.markdown(
 
-            f"🗞️ {noticia['veiculo']}  •  "
-            f"📅 {data_formatada}"
+            f'<div class="news-title">'
+            f'{noticia["bolinha"]} '
+            f'{noticia["titulo"]}'
+            f'</div>',
+
+            unsafe_allow_html=True
+        )
+
+
+        # ----------------------------------------------------
+        # FONTE
+        # ----------------------------------------------------
+
+        st.markdown(
+
+            f'<span class="source-badge">'
+            f'📰 {noticia["veiculo"]}'
+            f'</span>'
+            f'&nbsp;&nbsp;'
+            f'<span class="news-meta">'
+            f'{data_formatada}'
+            f'</span>',
+
+            unsafe_allow_html=True
         )
 
 
@@ -1377,18 +1830,20 @@ else:
 
         if noticia["pessoas"]:
 
-            st.markdown(
+            tags_pessoas = ""
 
-                " ".join(
+            for pessoa in noticia["pessoas"]:
 
-                    [
-                        f"`👤 {p}`"
-                        for p
-                        in noticia["pessoas"]
-                    ]
-
+                tags_pessoas += (
+                    f'<span class="tag">'
+                    f'👤 {pessoa}'
+                    f'</span>'
                 )
 
+
+            st.markdown(
+                tags_pessoas,
+                unsafe_allow_html=True
             )
 
 
@@ -1398,18 +1853,20 @@ else:
 
         if noticia["temas"]:
 
-            st.markdown(
+            tags_temas = ""
 
-                " ".join(
+            for tema in noticia["temas"]:
 
-                    [
-                        f"`{tema}`"
-                        for tema
-                        in noticia["temas"]
-                    ]
-
+                tags_temas += (
+                    f'<span class="tag">'
+                    f'{tema}'
+                    f'</span>'
                 )
 
+
+            st.markdown(
+                tags_temas,
+                unsafe_allow_html=True
             )
 
 
@@ -1432,8 +1889,13 @@ else:
                 )
 
 
-            st.write(
-                resumo
+            st.markdown(
+
+                f'<div class="news-summary">'
+                f'{resumo}'
+                f'</div>',
+
+                unsafe_allow_html=True
             )
 
 
@@ -1441,12 +1903,19 @@ else:
         # LINK
         # ----------------------------------------------------
 
-        st.link_button(
+        st.markdown(
 
-            "Ler matéria ↗",
+            f'<a class="read-button" '
+            f'href="{noticia["link"]}" '
+            f'target="_blank">'
+            f'Ler matéria ↗'
+            f'</a>',
 
-            noticia["link"]
+            unsafe_allow_html=True
         )
 
 
-        st.divider()
+        st.markdown(
+            '</div>',
+            unsafe_allow_html=True
+        )
