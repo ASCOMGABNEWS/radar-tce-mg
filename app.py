@@ -37,38 +37,6 @@ else:
     client = None
     st.warning("🤖 Chave da IA não encontrada.")
 
-def testar_ia():
-    resposta = client.responses.create(
-        model="gpt-5.4-mini",
-        input="""
-Você é responsável por analisar notícias para o Gabinete
-do Conselheiro Agostinho Patrus, do TCE-MG.
-
-Analise esta notícia:
-
-Título:
-Reforma tributária: Atricon fecha acordo com o IDP para fortalecer fiscalização
-
-Resumo:
-A Associação dos Membros dos Tribunais de Contas do Brasil (Atricon)
-fechou acordo de cooperação com o Instituto Brasileiro de Ensino,
-Desenvolvimento e Pesquisa (IDP) para fortalecer a fiscalização
-relacionada à reforma tributária.
-
-Diga:
-1. Nota de relevância de 0 a 100.
-2. Classificação: Crítica, Alta, Média ou Menção.
-3. Explique brevemente por que essa notícia é relevante ou não.
-"""
-    )
-
-    return resposta.output_text
-
-
-if client:
-    st.write("🤖 Teste da IA:")
-    st.write(testar_ia())
-
 
 def esc_html(value):
     if value is None:
