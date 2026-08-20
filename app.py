@@ -1642,6 +1642,14 @@ st.markdown("""
     color:#667085;
 }
 
+.news-count-caption {
+    color:#98a2b3;
+    font-size:14px;
+    font-weight:800;
+    margin-top:2px;
+    margin-bottom:12px;
+}
+
 
 @media (max-width: 800px) {
     .news-card { grid-template-columns:1fr; }
@@ -2048,7 +2056,7 @@ if materias_relevantes_7d:
                 font-weight:750;
                 color:#27324a;
             ">
-                ⭐ Matéria mais importante dos últimos 7 dias
+                ⭐ Matéria mais importante dos últimos 7 dias em Minas Gerais
             </div>
             """,
             unsafe_allow_html=True
@@ -2531,7 +2539,7 @@ qtd_altas_filtradas = sum(
 
 with col_titulo:
     st.markdown(
-        f"### 📰 **Notícias monitoradas ({qtd_criticas_filtradas} críticas, {qtd_altas_filtradas} altas)**"
+        "### 📰 **Notícias monitoradas**"
     )
 
 with col_total:
@@ -2570,8 +2578,9 @@ with col_nacional:
                 st.session_state["abrangencia_botao"] = "Nacional"
             st.rerun()
 
-st.caption(
-    f"{len(filtradas)} notícias encontradas no período selecionado."
+st.markdown(
+    f'<div class="news-count-caption">{len(filtradas)} notícias encontradas ({qtd_criticas_filtradas} críticas, {qtd_altas_filtradas} altas)</div>',
+    unsafe_allow_html=True
 )
 
 if not filtradas:
