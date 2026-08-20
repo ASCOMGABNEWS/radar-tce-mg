@@ -365,12 +365,25 @@ TEMAS = {
         "educacional"
     ],
 
+    "📚 Obras literárias": [
+        "obra literária",
+        "obras literárias",
+        "livro",
+        "livros",
+        "literatura",
+        "romance",
+        "poesia",
+        "poeta",
+    ],
+
     "🏗️ Obras públicas": [
         "obra pública",
         "obras públicas",
-        "obras",
+        "licitação de obras",
+        "contrato de obras",
         "infraestrutura",
-        "construção"
+        "construção civil",
+        "empreendimento público",
     ],
 
     "🏢 Instituições": [
@@ -1289,7 +1302,8 @@ periodo = st.radio(
         "Últimos 7 dias",
     ],
     horizontal=True,
-    label_visibility="collapsed"
+    label_visibility="collapsed",
+    key="periodo"
 )
 
 
@@ -1410,6 +1424,8 @@ with col1:
                     key="ver_criticas"
                 ):
                     st.session_state["filtro_relevancia"] = "🔴 Crítica"
+                    st.session_state["periodo"] = "Últimos 7 dias"
+                    st.session_state["scroll_to_news"] = True
                     st.rerun()
 
         with r2:
@@ -1437,6 +1453,8 @@ with col1:
                     key="ver_altas"
                 ):
                     st.session_state["filtro_relevancia"] = "🟠 Alta"
+                    st.session_state["periodo"] = "Últimos 7 dias"
+                    st.session_state["scroll_to_news"] = True
                     st.rerun()
 
 
@@ -1448,7 +1466,7 @@ with col2:
 
         temas_quentes = contador_temas.most_common(20)
 
-        with st.container(height=245):
+        with st.container(height=245, border=False):
 
             if temas_quentes:
 
@@ -1465,6 +1483,8 @@ with col2:
                             key=f"tema_quente_{i}_{tema}"
                         ):
                             st.session_state["filtro_tema"] = tema
+                            st.session_state["periodo"] = "Últimos 7 dias"
+                            st.session_state["scroll_to_news"] = True
                             st.rerun()
 
                     with c2:
@@ -1485,7 +1505,7 @@ with col3:
 
         pessoas_quentes = contador_pessoas.most_common(20)
 
-        with st.container(height=245):
+        with st.container(height=245, border=False):
 
             if pessoas_quentes:
 
@@ -1502,6 +1522,8 @@ with col3:
                             key=f"pessoa_quente_{i}_{pessoa}"
                         ):
                             st.session_state["filtro_pessoa"] = pessoa
+                            st.session_state["periodo"] = "Últimos 7 dias"
+                            st.session_state["scroll_to_news"] = True
                             st.rerun()
 
                     with c2:
@@ -1984,6 +2006,27 @@ st.download_button(
 # ============================================================
 # RESULTADOS
 # ============================================================
+
+st.markdown(
+    '<div id="noticias-monitoradas"></div>',
+    unsafe_allow_html=True
+)
+
+if st.session_state.pop("scroll_to_news", False):
+    import streamlit.components.v1 as components
+    components.html(
+        """
+        <script>
+        const target = window.parent.document.getElementById("noticias-monitoradas");
+        if (target) {
+            setTimeout(() => {
+                target.scrollIntoView({behavior: "smooth", block: "start"});
+            }, 150);
+        }
+        </script>
+        """,
+        height=1,
+    )
 
 st.subheader("📰 Notícias monitoradas")
 
