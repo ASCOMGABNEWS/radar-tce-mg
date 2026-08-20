@@ -943,7 +943,9 @@ st.markdown("""
     border-radius:14px;
     padding:16px 18px;
     box-shadow:0 2px 10px rgba(16,24,40,.035);
-    min-height:0;
+    height:230px;
+    box-sizing:border-box;
+    overflow:hidden;
 }
 
 .section-title {
@@ -983,7 +985,7 @@ st.markdown("""
     padding:8px 0;
 }
 
-.compact-row {
+.secondary-card .compact-row {
     display:flex;
     align-items:center;
     justify-content:space-between;
@@ -1095,18 +1097,19 @@ st.markdown("""
 
 .news-card {
     display:grid;
-    grid-template-columns:105px 1fr 82px;
+    grid-template-columns:1fr 82px;
     gap:18px;
     align-items:start;
     background:rgba(255,255,255,.82);
     border:1px solid #e4e8ef;
     border-radius:14px;
-    padding:15px 17px;
-    margin:8px 0;
+    padding:13px 16px;
+    margin:9px 0;
     box-shadow:0 2px 8px rgba(16,24,40,.025);
 }
 
 .news-source {
+    display:none;
     text-align:center;
     border-right:1px solid #edf0f4;
     padding-right:14px;
@@ -1193,7 +1196,7 @@ st.markdown("""
 }
 
 @media (max-width: 800px) {
-    .news-card { grid-template-columns:75px 1fr; }
+    .news-card { grid-template-columns:1fr; }
     .news-time { display:none; }
 }
 </style>
@@ -1355,7 +1358,7 @@ mencoes = [
 # RADAR / ASSUNTOS / PESSOAS
 # ------------------------------------------------------------
 
-col1, col2, col3 = st.columns([1.05, 1.25, 1.25], gap="small")
+col1, col2, col3 = st.columns([1.05, 1.25, 1.25], gap="medium")
 
 
 with col1:
@@ -1454,56 +1457,6 @@ with col3:
 
     render_top_card(
         "👥 Pessoas mais citadas",
-        linhas
-    )
-
-
-# ------------------------------------------------------------
-# VEÍCULOS / INSTITUIÇÕES — PAINÉIS SECUNDÁRIOS
-# ------------------------------------------------------------
-
-col4, col5 = st.columns(2, gap="small")
-
-with col4:
-
-    linhas = ""
-
-    for veiculo, quantidade in contador_veiculos.most_common(5):
-
-        linhas += f"""
-        <div class="compact-row">
-            <span>📰 {esc_html(veiculo)}</span>
-            <strong>{quantidade}</strong>
-        </div>
-        """
-
-    if not linhas:
-        linhas = '<div class="empty-note">Nenhum veículo identificado.</div>'
-
-    render_top_card(
-        "🗞️ Veículos que mais repercutiram",
-        linhas
-    )
-
-
-with col5:
-
-    linhas = ""
-
-    for instituicao, quantidade in contador_instituicoes.most_common(5):
-
-        linhas += f"""
-        <div class="compact-row">
-            <span>🏛️ {esc_html(instituicao)}</span>
-            <strong>{quantidade}</strong>
-        </div>
-        """
-
-    if not linhas:
-        linhas = '<div class="empty-note">Nenhuma instituição identificada.</div>'
-
-    render_top_card(
-        "🏛️ Instituições mais citadas",
         linhas
     )
 
@@ -1885,19 +1838,6 @@ if not filtradas:
 
 else:
 
-    def favicon_url(noticia):
-
-        try:
-            from urllib.parse import urlparse
-            dominio = urlparse(noticia["link"]).netloc
-            dominio = dominio.replace("www.", "")
-            return (
-                "https://www.google.com/s2/favicons"
-                f"?domain={dominio}&sz=128"
-            )
-        except Exception:
-            return ""
-
     for noticia in filtradas:
 
         data_formatada = ""
@@ -1906,8 +1846,6 @@ else:
             data_formatada = noticia["data"].strftime(
                 "%d/%m/%Y %H:%M"
             )
-
-        logo = favicon_url(noticia)
 
         pessoas_html = "".join(
             [
@@ -1943,16 +1881,11 @@ else:
         html = f"""
         <div class="news-card">
 
-            <div class="news-source">
-                <img class="news-logo"
-                     src="{link if False else logo}"
-                     onerror="this.onerror=null;this.src='https://www.google.com/s2/favicons?domain=news.google.com&sz=128';">
-                <div class="news-source-name">
-                    {veiculo_html}
-                </div>
-            </div>
-
             <div class="news-content">
+
+                <div class="news-meta">
+                    📰 {veiculo_html}
+                </div>
 
                 <div class="news-title">
                     <span class="severity-dot">{noticia["bolinha"]}</span>
