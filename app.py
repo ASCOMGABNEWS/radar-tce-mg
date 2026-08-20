@@ -834,7 +834,115 @@ def classificar_abrangencia(veiculo, titulo="", resumo=""):
 # ============================================================
 # COLETA
 # ============================================================
+@st.cache_data(ttl=3600, show_spinner=False)
+def analisar_relevancia_ia(titulo, resumo, veiculo, abrangencia, instituicoes):
+    try:
+        if not client:
+            return {
+                "nota": 0,
+                "nivel": "Menção",
+                "motivo": "IA não configurada."
+            }
 
+        resposta = client.responses.create(
+            model="gpt-5.4-mini",
+            input=f"""
+Você é o analista de inteligência institucional do Radar TCE-MG.
+
+O Radar monitora notícias para o Gabinete do Conselheiro
+Agostinho Patrus, do Tribunal de Contas do Estado de Minas Gerais.
+
+Analise a relevância institucional da notícia abaixo.
+
+TÍTULO:
+{titulo}
+
+RESUMO:
+{resumo}
+
+VEÍCULO:
+{veiculo}
+
+ABRANGÊNCIA:
+{abrangencia}
+
+INSTITUIÇÕES IDENTIFICADAS:
+{instituicoes}
+
+Dê mais importância para:
+- TCE-MG;
+- Conselheiros do TCE-MG;
+- Agostinho Patrus;
+- Atricon;
+- IRB;
+- outros Tribunais de Contas;
+- presidentes e conselheiros de outros Tribunais de Contas;
+- controle externo;
+- fiscalização;
+- contas públicas;
+- administração pública;
+- reforma tributária;
+- concessões;
+- assuntos institucionais relevantes.
+
+Uma notícia sobre outro Tribunal de Contas também pode ser relevante,
+mesmo que não mencione o TCE-MG.
+
+Classifique:
+
+CRÍTICA: 90 a 100
+ALTA: 75 a 89
+MÉDIA: 50 a 74
+MENÇÃO: 0 a 49
+
+Responda EXATAMENTE neste formato:
+
+NOTA: número de 0 a 100
+NÍVEL: Crítica, Alta, Média ou Menção
+MOTIVO: explicação curta em até 2 frases
+"""
+        )
+
+        texto = resposta.output_text.strip()
+
+        nota = 0
+        nivel = "Menção"
+        motivo = texto
+
+        for linha in texto.splitlines():
+            linha_limpa = linha.strip()
+
+            if linha_limpa.upper().startswith("NOTA:"):
+                try:
+                    nota = int(
+                        ''.join(
+                            c for c in linha_limpa.split(":", 1)[1]
+                            if c.isdigit()
+                        )
+                    )
+                    nota = max(0, min(100, nota))
+                except Exception:
+                    nota = 0
+
+            elif linha_limpa.upper().startswith("NÍVEL:"):
+                nivel = linha_limpa.split(":", 1)[1].strip()
+
+            elif linha_limpa.upper().startswith("MOTIVO:"):
+                motivo = linha_limpa.split(":", 1)[1].strip()
+
+        return {
+            "nota": nota,
+            "nivel": nivel,
+            "motivo": motivo
+        }
+
+    except Exception as e:
+        return {
+            "nota": 0,
+            "nivel": "Menção",
+            "motivo": "Não foi possível realizar a análise da IA."
+        }
+        
 @st.cache_data(ttl=300, show_spinner=False)
 def buscar_noticias():
 
