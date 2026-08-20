@@ -1411,6 +1411,56 @@ status_area.markdown(
 
 noticias = buscar_noticias()
 
+# TESTE IA - analisar apenas a primeira notícia
+if client and noticias:
+    noticia_teste = noticias[0]
+
+    resposta_ia = client.responses.create(
+        model="gpt-5.4-mini",
+        input=f"""
+Você é o analista de relevância do Radar TCE-MG.
+
+A notícia abaixo foi encontrada pelo monitoramento.
+
+Título: {noticia_teste.get("titulo", "")}
+
+Resumo: {noticia_teste.get("resumo", "")}
+
+Veículo: {noticia_teste.get("veiculo", "")}
+
+Abrangência: {noticia_teste.get("abrangencia", "")}
+
+Instituições identificadas:
+{noticia_teste.get("instituicoes", "")}
+
+Avalie a relevância desta notícia para o Gabinete do Conselheiro
+Agostinho Patrus, do Tribunal de Contas de Minas Gerais.
+
+Considere especialmente:
+- TCE-MG;
+- Conselheiros do TCE-MG;
+- Atricon;
+- IRB;
+- outros Tribunais de Contas;
+- controle externo;
+- fiscalização;
+- administração pública;
+- contas públicas;
+- reforma tributária;
+- concessões;
+- assuntos institucionais relevantes.
+
+Responda exatamente neste formato:
+
+NOTA: [0 a 100]
+NÍVEL: [Crítica, Alta, Média ou Menção]
+MOTIVO: [explicação curta]
+"""
+    )
+
+    st.info("🤖 Teste da IA em uma notícia real")
+    st.write(resposta_ia.output_text)
+
 status_area.empty()
 
 
