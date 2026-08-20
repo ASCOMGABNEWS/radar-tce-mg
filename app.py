@@ -3,6 +3,227 @@ import feedparser
 from datetime import datetime, timedelta
 import re
 from collections import Counter
+from io import BytesIO
+from html import escape
+
+import pandas as pd
+from docx import Document
+from docx.shared import Pt
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.units import cm
+
+
+
+# ============================================================
+# EXPORTAÇÃO DO CLIPPING
+# ============================================================
+
+def gerar_excel(noticias):
+    linhas = []
+
+    for n in noticias:
+        linhas.append({
+            "Data": n["data"].strftime("%d/%m/%Y %H:%M") if n["data"] else "",
+            "Veículo": n["veiculo"],
+            "Título": n["titulo"],
+            "Relevância": n["bolinha"],
+            "Pessoas": ", ".join(n["pessoas"]),
+            "Temas": ", ".join(n["temas"]),
+            "Link": n["link"],
+        })
+
+    df = pd.DataFrame(linhas)
+    output = BytesIO()
+
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Clipping")
+
+    output.seek(0)
+    return output
+
+
+def gerar_word(noticias):
+    doc = Document()
+
+    titulo = doc.add_heading(
+        f"CLIPPING TCE-MG — {datetime.now().strftime('%d/%m/%Y')}",
+        0
+    )
+    doc.add_paragraph(
+        f"{len(noticias)} notícia(s) selecionada(s)"
+    )
+
+    doc.add_heading("Destaques", level=1)
+
+    for n in noticias:
+        p = doc.add_paragraph()
+
+        run = p.add_run(
+            f"{n['bolinha']} {n['titulo']}"
+        )
+        run.bold = True
+        run.font.size = Pt(12)
+
+        doc.add_paragraph(
+            f"{n['veiculo']} • "
+            f"{n['data'].strftime('%d/%m/%Y %H:%M') if n['data'] else ''}"
+        )
+
+        if n["pessoas"]:
+            doc.add_paragraph(
+                "Pessoas: " + ", ".join(n["pessoas"])
+            )
+
+        if n["temas"]:
+            doc.add_paragraph(
+                "Temas: " + ", ".join(n["temas"])
+            )
+
+        if n["resumo"]:
+            doc.add_paragraph(n["resumo"])
+
+        doc.add_paragraph(
+            "Link: " + n["link"]
+        )
+
+    output = BytesIO()
+    doc.save(output)
+    output.seek(0)
+    return output
+
+
+def gerar_pdf(noticias):
+    output = BytesIO()
+
+    doc = SimpleDocTemplate(
+        output,
+        pagesize=A4,
+        rightMargin=1.7 * cm,
+        leftMargin=1.7 * cm,
+        topMargin=1.5 * cm,
+        bottomMargin=1.5 * cm,
+    )
+
+    styles = getSampleStyleSheet()
+
+    titulo_style = ParagraphStyle(
+        "TituloClipping",
+        parent=styles["Title"],
+        alignment=TA_CENTER,
+        fontSize=18,
+        leading=22,
+        spaceAfter=10,
+    )
+
+    noticia_style = ParagraphStyle(
+        "Noticia",
+        parent=styles["BodyText"],
+        fontSize=10,
+        leading=14,
+        spaceAfter=5,
+    )
+
+    meta_style = ParagraphStyle(
+        "Meta",
+        parent=styles["BodyText"],
+        fontSize=8,
+        leading=11,
+        spaceAfter=7,
+    )
+
+    story = []
+
+    story.append(
+        Paragraph(
+            f"CLIPPING TCE-MG — {datetime.now().strftime('%d/%m/%Y')}",
+            titulo_style
+        )
+    )
+
+    story.append(
+        Paragraph(
+            f"{len(noticias)} notícia(s) selecionada(s)",
+            meta_style
+        )
+    )
+
+    for n in noticias:
+
+        data = (
+            n["data"].strftime("%d/%m/%Y %H:%M")
+            if n["data"] else ""
+        )
+
+        titulo = escape(
+            f"{n['bolinha']} {n['titulo']}"
+        )
+
+        story.append(
+            Paragraph(
+                f"<b>{titulo}</b>",
+                noticia_style
+            )
+        )
+
+        story.append(
+            Paragraph(
+                escape(
+                    f"{n['veiculo']} • {data}"
+                ),
+                meta_style
+            )
+        )
+
+        if n["pessoas"]:
+            story.append(
+                Paragraph(
+                    escape(
+                        "Pessoas: "
+                        + ", ".join(n["pessoas"])
+                    ),
+                    meta_style
+                )
+            )
+
+        if n["temas"]:
+            story.append(
+                Paragraph(
+                    escape(
+                        "Temas: "
+                        + ", ".join(n["temas"])
+                    ),
+                    meta_style
+                )
+            )
+
+        if n["resumo"]:
+            resumo = n["resumo"]
+            if len(resumo) > 700:
+                resumo = resumo[:700] + "..."
+
+            story.append(
+                Paragraph(
+                    escape(resumo),
+                    noticia_style
+                )
+            )
+
+        story.append(
+            Paragraph(
+                escape(n["link"]),
+                meta_style
+            )
+        )
+
+        story.append(Spacer(1, 0.22 * cm))
+
+    doc.build(story)
+
+    output.seek(0)
+    return output
 
 
 # ============================================================
@@ -1285,6 +1506,52 @@ if busca:
 
     ]
 
+
+
+# ============================================================
+# DOWNLOAD DO CLIPPING
+# ============================================================
+
+st.subheader("📥 Baixar clipping")
+
+st.caption(
+    f"O arquivo será gerado com as {len(filtradas)} notícia(s) "
+    "que estão aparecendo abaixo, respeitando todos os filtros."
+)
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    excel = gerar_excel(filtradas)
+    st.download_button(
+        "📊 Excel",
+        data=excel,
+        file_name=f"clipping_tce_mg_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True,
+    )
+
+with col2:
+    word = gerar_word(filtradas)
+    st.download_button(
+        "📝 Word",
+        data=word,
+        file_name=f"clipping_tce_mg_{datetime.now().strftime('%Y%m%d_%H%M')}.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        use_container_width=True,
+    )
+
+with col3:
+    pdf = gerar_pdf(filtradas)
+    st.download_button(
+        "📄 PDF",
+        data=pdf,
+        file_name=f"clipping_tce_mg_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+    )
+
+st.divider()
 
 # ============================================================
 # RESULTADOS
