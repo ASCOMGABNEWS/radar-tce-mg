@@ -120,6 +120,9 @@ FONTES = {
     "O Globo - Tribunais de Contas":
         'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
+    "STF - Tribunais de Contas":
+        'https://news.google.com/rss/search?q=(%22STF%22+OR+%22Supremo+Tribunal+Federal%22)+(%22Tribunal+de+Contas%22+OR+%22TCE%22+OR+%22TCU%22+OR+%22controle+externo%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
     "Correio Braziliense":
         'https://news.google.com/rss/search?q=site%3Acorreiobraziliense.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
@@ -181,6 +184,15 @@ FONTES = {
 
     "Tribunal de Contas":
         'https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "TCU":
+        'https://news.google.com/rss/search?q=(%22TCU%22+OR+%22Tribunal+de+Contas+da+Uni%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Presidentes e Conselheiros de TCs":
+        'https://news.google.com/rss/search?q=(%22presidente+do+TCE%22+OR+%22presidente+do+Tribunal+de+Contas%22+OR+%22conselheiro+do+TCE%22+OR+%22conselheira+do+TCE%22+OR+%22ministro+do+TCU%22+OR+%22ministra+do+TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Fatos graves em Tribunais de Contas":
+        'https://news.google.com/rss/search?q=(%22afastado%22+OR+%22afastamento%22+OR+%22pris%C3%A3o%22+OR+%22preso%22+OR+%22den%C3%BAncia%22+OR+%22denunciado%22+OR+%22investiga%C3%A7%C3%A3o%22+OR+%22investigado%22+OR+%22opera%C3%A7%C3%A3o%22+OR+%22busca+e+apreens%C3%A3o%22)+(TCE+OR+TCU+OR+%22Tribunal+de+Contas%22+OR+%22conselheiro%22+OR+%22presidente+do+TCE%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "Presidentes de Tribunais de Contas":
         'https://news.google.com/rss/search?q=%22presidente%20do%20Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
@@ -697,79 +709,107 @@ def calcular_relevancia(
 
     score = 15
 
-
+    # Relevância institucional básica.
     if "tce-mg" in texto:
-
         score += 35
-
     elif "tce mg" in texto:
-
         score += 30
-
     elif "tribunal de contas" in texto:
-
         score += 25
 
     if "tcu" in texto or "tribunal de contas da união" in texto:
         score += 10
 
-    if any(t in texto for t in [
+    if "atricon" in texto or "instituto rui barbosa" in texto or " irb" in texto:
+        score += 8
+
+    # Autoridades de Tribunais de Contas.
+    termos_autoridade = [
         "presidente do tce",
-        "conselheiro do tce",
         "presidente do tribunal de contas",
+        "conselheiro do tce",
+        "conselheira do tce",
         "conselheiro do tribunal de contas",
-        "afastado do tce",
-        "afastamento do tce"
-    ]):
-        score += 10
+        "conselheira do tribunal de contas",
+        "ministro do tcu",
+        "ministra do tcu",
+        "presidente do tcu",
+    ]
 
+    autoridade_tc = any(t in texto for t in termos_autoridade)
 
-    score += (
-        len(pessoas) * 12
-    )
+    if autoridade_tc:
+        score += 15
 
+    # STF só ganha peso quando há relação com o universo do Radar.
+    contexto_controle = any(t in texto for t in [
+        "tce",
+        "tcu",
+        "tribunal de contas",
+        "atricon",
+        "irb",
+        "controle externo",
+        "fiscalização de contas",
+    ])
 
-    score += (
-        len(temas) * 5
-    )
+    if ("stf" in texto or "supremo tribunal federal" in texto) and contexto_controle:
+        score += 15
 
+    score += len(pessoas) * 12
+    score += len(temas) * 5
 
+    # Fatos graves: não podem ficar escondidos como notícia média
+    # quando envolvem autoridades/órgãos do controle externo.
+    termos_graves = [
+        "afastado", "afastada", "afastamento",
+        "preso", "presa", "prisão",
+        "denúncia", "denunciado", "denunciada",
+        "investigação", "investigado", "investigada",
+        "operação", "busca e apreensão",
+        "cassado", "cassada", "cassação",
+        "corrupção", "fraude", "improbidade", "crime",
+    ]
+
+    gravidade = any(t in texto for t in termos_graves)
+    contexto_institucional = any(t in texto for t in [
+        "tce", "tcu", "tribunal de contas",
+        "conselheiro", "conselheira",
+        "presidente do tce", "presidente do tribunal de contas",
+        "ministro do tcu", "ministra do tcu",
+        "atricon", "irb",
+    ])
+
+    if gravidade and contexto_institucional:
+        # Piso de ALTA para fato grave envolvendo controle externo.
+        score = max(score, 75)
+
+        # Casos de maior gravidade: prisão, operação, busca e apreensão
+        # ou corrupção/crime envolvendo autoridade/TC.
+        gravidade_maxima = any(t in texto for t in [
+            "prisão", "preso", "presa",
+            "operação", "busca e apreensão",
+            "corrupção", "crime",
+        ])
+
+        if gravidade_maxima and (autoridade_tc or "tcu" in texto or "tce" in texto):
+            score = max(score, 85)
+
+    # Ações institucionais relevantes.
     termos_acao = [
-
-        "determina",
-        "decide",
-        "suspende",
-        "condena",
-        "multa",
-        "auditoria",
-        "fiscalização",
-        "julgamento",
-        "acórdão",
-        "denúncia",
-        "irregularidade",
-        "recomenda",
-        "processo",
-        "ressarcimento",
+        "determina", "decide", "suspende", "condena", "multa",
+        "auditoria", "fiscalização", "julgamento", "acórdão",
+        "irregularidade", "recomenda", "processo", "ressarcimento",
         "contas",
     ]
 
-
     for termo in termos_acao:
-
         if termo in texto:
-
             score += 5
 
-
     if "r$" in texto:
-
         score += 5
 
-
-    return min(
-        score,
-        100
-    )
+    return min(score, 100)
 
 
 def classificar(score):
@@ -801,6 +841,7 @@ FONTES_NACIONAIS = {
     "G1",
     "G1 - Tribunais de Contas",
     "O Globo - Tribunais de Contas",
+    "STF - Tribunais de Contas",
     "Poder360",
     "JOTA",
     "Migalhas",
