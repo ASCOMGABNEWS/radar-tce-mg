@@ -1,3 +1,17 @@
+from zoneinfo import ZoneInfo
+
+FUSO_BRASIL = ZoneInfo("America/Sao_Paulo")
+
+def formatar_horario_noticia(data):
+    """Feedparser normaliza published_parsed para UTC; exibe em Brasília."""
+    if not data:
+        return ""
+    try:
+        # O campo obtido de published_parsed é naive, mas representa UTC.
+        data_utc = data.replace(tzinfo=ZoneInfo("UTC"))
+        return data_utc.astimezone(FUSO_BRASIL).strftime("%d/%m/%Y %H:%M")
+    except Exception:
+        return ""
 import streamlit as st
 import feedparser
 from datetime import datetime, timedelta
@@ -1974,10 +1988,9 @@ def gerar_pdf_clipping(noticias_clipping):
 
     for noticia in noticias_clipping:
 
-        data = ""
-
-        if noticia["data"]:
-            data = noticia["data"].strftime("%d/%m/%Y %H:%M")
+        data = formatar_horario_noticia(
+            noticia.get("data")
+        )
 
         pessoas = ", ".join(noticia["pessoas"])
         temas = ", ".join(noticia["temas"])
@@ -2110,12 +2123,9 @@ else:
 
     for i, noticia in enumerate(filtradas):
 
-        data_formatada = ""
-
-        if noticia.get("data"):
-            data_formatada = noticia["data"].strftime(
-                "%d/%m/%Y %H:%M"
-            )
+        data_formatada = formatar_horario_noticia(
+            noticia.get("data")
+        )
 
         with st.container(border=True):
 
