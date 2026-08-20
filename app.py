@@ -1,6 +1,7 @@
 import streamlit as st
 import feedparser
 from datetime import datetime, timedelta
+import re
 
 st.set_page_config(
     page_title="Radar TCE-MG",
@@ -19,23 +20,38 @@ FONTES = {
 
 
 # --------------------------------
-# SCORE DE RELEVÂNCIA
+# LIMPA O TEXTO
 # --------------------------------
 
-def calcular_relevancia(titulo, monitoramento):
+def limpar_texto(texto):
 
-    texto = titulo.lower()
+    if not texto:
+        return ""
 
-    score = 20
+    texto = re.sub(r"<[^>]+>", " ", texto)
+    texto = re.sub(r"\s+", " ", texto)
 
-    # Menções diretas ao Tribunal
+    return texto.strip()
+
+
+# --------------------------------
+# SCORE
+# --------------------------------
+
+def calcular_relevancia(titulo, resumo, monitoramento):
+
+    texto = f"{titulo} {resumo}".lower()
+
+    score = 15
+
+    # Menção direta ao TCE
     if "tce-mg" in texto:
         score += 40
 
-    if "tce mg" in texto:
+    elif "tce mg" in texto:
         score += 35
 
-    if "tribunal de contas" in texto:
+    elif "tribunal de contas" in texto:
         score += 30
 
     # Conselheiros
@@ -46,29 +62,35 @@ def calcular_relevancia(titulo, monitoramento):
     ]
 
     for nome in nomes:
+
         if nome in texto:
             score += 25
 
-    # Termos de fiscalização
-    termos_importantes = [
-        "decisão",
-        "julgamento",
+    # Atuação do Tribunal
+    termos_acao = [
+        "determina",
+        "decide",
+        "suspende",
+        "condena",
+        "multa",
         "auditoria",
         "fiscalização",
-        "determina",
-        "recomenda",
-        "irregularidade",
-        "contas",
-        "denúncia",
+        "julgamento",
         "acórdão",
-        "condena"
+        "denúncia",
+        "irregularidade",
+        "recomenda",
+        "processo",
+        "ressarcimento",
+        "contas",
     ]
 
-    for termo in termos_importantes:
+    for termo in termos_acao:
+
         if termo in texto:
             score += 8
 
-    # Temas muito comuns no universo do Tribunal
+    # Temas relevantes
     temas = [
         "licitação",
         "contrato",
@@ -76,17 +98,22 @@ def calcular_relevancia(titulo, monitoramento):
         "saúde",
         "educação",
         "transporte",
-        "obra pública",
+        "obra",
         "servidor",
-        "dinheiro público"
+        "dinheiro público",
+        "recursos públicos",
     ]
 
     for tema in temas:
+
         if tema in texto:
             score += 4
 
-    # Pequeno bônus se a própria busca foi feita
-    # especificamente pelo nome de alguém
+    # Valores financeiros
+    if "r$" in texto:
+        score += 5
+
+    # Busca específica por conselheiro
     if monitoramento in [
         "Durval Ângelo",
         "Agostinho Patrus",
@@ -99,11 +126,11 @@ def calcular_relevancia(titulo, monitoramento):
 
 def classificar(score):
 
-    if score >= 80:
-        return "🔴 Alta"
+    if score >= 75:
+        return "🔴 Crítica"
 
-    if score >= 50:
-        return "🟠 Média"
+    if score >= 45:
+        return "🟠 Relevante"
 
     return "⚪ Menção"
 
@@ -115,8 +142,13 @@ def classificar(score):
 def obter_data(item):
 
     try:
+
         if hasattr(item, "published_parsed") and item.published_parsed:
-            return datetime(*item.published_parsed[:6])
+
+            return datetime(
+                *item.published_parsed[:6]
+            )
+
     except Exception:
         pass
 
@@ -132,8 +164,11 @@ def extrair_veiculo(item):
     titulo = item.get("title", "")
 
     if " - " in titulo:
-        partes = titulo.rsplit(" - ", 1)
-        return partes[-1].strip()
+
+        return titulo.rsplit(
+            " - ",
+            1
+        )[-1].strip()
 
     return "Fonte não identificada"
 
@@ -156,7 +191,10 @@ def buscar_noticias():
 
         for item in feed.entries:
 
-            link = item.get("link", "")
+            link = item.get(
+                "link",
+                ""
+            )
 
             if not link or link in links:
                 continue
@@ -173,19 +211,40 @@ def buscar_noticias():
                 "Sem título"
             )
 
+            resumo = limpar_texto(
+                item.get(
+                    "summary",
+                    ""
+                )
+            )
+
             score = calcular_relevancia(
                 titulo,
+                resumo,
                 nome
             )
 
             noticias.append({
+
                 "titulo": titulo,
+
+                "resumo": resumo,
+
                 "link": link,
+
                 "monitoramento": nome,
-                "veiculo": extrair_veiculo(item),
+
+                "veiculo": extrair_veiculo(
+                    item
+                ),
+
                 "data": data,
+
                 "score": score,
-                "classificacao": classificar(score)
+
+                "classificacao": classificar(
+                    score
+                )
             })
 
     noticias.sort(
@@ -206,30 +265,30 @@ def buscar_noticias():
 st.title("🏛️ Radar TCE-MG")
 
 st.caption(
-    "Monitoramento inteligente de notícias relacionadas "
-    "ao Tribunal de Contas de Minas Gerais"
+    "Monitoramento inteligente de notícias "
+    "relacionadas ao Tribunal de Contas de Minas Gerais"
 )
 
-col_botao, col_info = st.columns([1, 5])
+col1, col2 = st.columns([1, 5])
 
-with col_botao:
+with col1:
 
     if st.button("🔄 Atualizar agora"):
 
         st.cache_data.clear()
         st.rerun()
 
-with col_info:
+with col2:
 
     st.caption(
-        "Coleta: últimos 7 dias • atualização aproximada: 5 minutos"
+        "Últimos 7 dias • atualização aproximada a cada 5 minutos"
     )
 
 st.divider()
 
 
 # --------------------------------
-# COLETA
+# NOTÍCIAS
 # --------------------------------
 
 noticias = buscar_noticias()
@@ -239,35 +298,47 @@ noticias = buscar_noticias()
 # MÉTRICAS
 # --------------------------------
 
-alta = len([
+criticas = len([
     n for n in noticias
-    if n["score"] >= 80
+    if n["score"] >= 75
 ])
 
-media = len([
+relevantes = len([
     n for n in noticias
-    if 50 <= n["score"] < 80
+    if 45 <= n["score"] < 75
 ])
 
-mencao = len([
+mencoes = len([
     n for n in noticias
-    if n["score"] < 50
+    if n["score"] < 45
 ])
 
 
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    st.metric("📰 Notícias", len(noticias))
+    st.metric(
+        "📰 Notícias",
+        len(noticias)
+    )
 
 with col2:
-    st.metric("🔴 Alta", alta)
+    st.metric(
+        "🔴 Críticas",
+        criticas
+    )
 
 with col3:
-    st.metric("🟠 Média", media)
+    st.metric(
+        "🟠 Relevantes",
+        relevantes
+    )
 
 with col4:
-    st.metric("⚪ Menção", mencao)
+    st.metric(
+        "⚪ Menções",
+        mencoes
+    )
 
 
 st.divider()
@@ -294,8 +365,8 @@ with col2:
         "Relevância",
         [
             "Todas",
-            "🔴 Alta",
-            "🟠 Média",
+            "🔴 Crítica",
+            "🟠 Relevante",
             "⚪ Menção"
         ]
     )
@@ -309,7 +380,7 @@ with col3:
 
 
 # --------------------------------
-# APLICA FILTROS
+# FILTRAGEM
 # --------------------------------
 
 filtradas = noticias
@@ -334,7 +405,9 @@ if busca:
 
     filtradas = [
         n for n in filtradas
-        if termo in n["titulo"].lower()
+        if termo in (
+            n["titulo"] + " " + n["resumo"]
+        ).lower()
     ]
 
 
@@ -347,48 +420,43 @@ st.subheader(
 )
 
 
-if not filtradas:
+for noticia in filtradas:
 
-    st.info(
-        "Nenhuma notícia encontrada."
+    data_formatada = ""
+
+    if noticia["data"]:
+
+        data_formatada = noticia["data"].strftime(
+            "%d/%m/%Y %H:%M"
+        )
+
+    st.markdown(
+        f"### {noticia['classificacao']} "
+        f"**{noticia['score']}/100**"
     )
 
-else:
+    st.markdown(
+        f"**{noticia['titulo']}**"
+    )
 
-    for noticia in filtradas:
+    st.caption(
+        f"🗞️ {noticia['veiculo']}  •  "
+        f"🔎 {noticia['monitoramento']}  •  "
+        f"📅 {data_formatada}"
+    )
 
-        data_formatada = ""
+    if noticia["resumo"]:
 
-        if noticia["data"]:
+        resumo = noticia["resumo"]
 
-            data_formatada = noticia["data"].strftime(
-                "%d/%m/%Y %H:%M"
-            )
+        if len(resumo) > 400:
+            resumo = resumo[:400] + "..."
 
-        st.markdown(
-            f"### {noticia['classificacao']} "
-            f"**{noticia['score']}/100**"
-        )
+        st.write(resumo)
 
-        st.markdown(
-            f"**{noticia['titulo']}**"
-        )
+    st.link_button(
+        "Ler matéria ↗",
+        noticia["link"]
+    )
 
-        col1, col2 = st.columns([5, 1])
-
-        with col1:
-
-            st.caption(
-                f"🗞️ {noticia['veiculo']}  •  "
-                f"🔎 {noticia['monitoramento']}  •  "
-                f"📅 {data_formatada}"
-            )
-
-        with col2:
-
-            st.link_button(
-                "Ler matéria ↗",
-                noticia["link"]
-            )
-
-        st.divider()
+    st.divider()
