@@ -5,6 +5,56 @@ import re
 from collections import Counter
 
 
+st.markdown("""
+<style>
+.news-card {
+    background: rgba(255,255,255,0.045);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin: 12px 0;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.news-card:hover {
+    border-color: rgba(255,255,255,0.16);
+}
+
+.news-card-title {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 8px;
+}
+
+.news-card-meta {
+    font-size: 12px;
+    color: #8f9aa7;
+    margin-bottom: 10px;
+}
+
+.news-card-summary {
+    font-size: 13px;
+    line-height: 1.55;
+    color: #b8c1cb;
+    margin-top: 10px;
+}
+
+.news-card-link {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: inherit !important;
+    text-decoration: none !important;
+    font-size: 12px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 # ============================================================
 # CONFIGURAÇÃO
 # ============================================================
