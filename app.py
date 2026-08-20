@@ -1530,6 +1530,67 @@ st.download_button(
 st.divider()
 
 
+
+# ============================================================
+# O QUE MERECE ATENÇÃO HOJE
+# ============================================================
+
+# As notícias mais relevantes do recorte atual.
+# Mantém a lista completa abaixo; este bloco é apenas um resumo rápido.
+atencao_hoje = [
+    n for n in filtradas
+    if n["score"] >= 65
+]
+
+if atencao_hoje:
+
+    st.subheader(
+        "🚨 O que merece atenção hoje"
+    )
+
+    st.caption(
+        "Seleção automática das matérias mais relevantes no recorte atual."
+    )
+
+    for noticia in atencao_hoje[:5]:
+
+        data_atencao = ""
+
+        if noticia["data"]:
+            data_atencao = noticia["data"].strftime(
+                "%d/%m %H:%M"
+            )
+
+        pessoas_atencao = ""
+
+        if noticia["pessoas"]:
+            pessoas_atencao = (
+                " • 👤 "
+                + ", ".join(noticia["pessoas"][:3])
+            )
+
+        temas_atencao = ""
+
+        if noticia["temas"]:
+            temas_atencao = (
+                " • 🏷️ "
+                + ", ".join(noticia["temas"][:3])
+            )
+
+        st.markdown(
+            f"{noticia['bolinha']} "
+            f"**{noticia['titulo']}**"
+        )
+
+        st.caption(
+            f"🗞️ {noticia['veiculo']} • "
+            f"📅 {data_atencao}"
+            f"{pessoas_atencao}"
+            f"{temas_atencao}"
+        )
+
+    st.divider()
+
 # ============================================================
 # RANKING DE VEÍCULOS
 # ============================================================
