@@ -1247,13 +1247,13 @@ st.markdown(
             <div>
                 <div class="radar-title">Radar TCE-MG</div>
                 <div class="radar-subtitle">
-                    Monitoramento inteligente de notícias<br>
+                    Monitoramento inteligente do Gab. Agostinho Patrus sobre notícias<br>
                     relacionadas ao Tribunal de Contas de Minas Gerais
                 </div>
             </div>
         </div>
         <div class="radar-update">
-            Última atualização: <strong>{agora.strftime('%d/%m/%Y %H:%M')}</strong><br>
+            Última atualização: <strong>{agora.strftime("%d/%m/%Y")}</strong><br>
             Atualização automática a cada 5 minutos
         </div>
     </div>
