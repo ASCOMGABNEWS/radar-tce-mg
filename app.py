@@ -728,8 +728,10 @@ def buscar_noticias():
 
     links = set()
 
+    # Os RSS retornam datas sem fuso. Mantemos o limite como datetime
+    # sem timezone para evitar comparação entre datetimes aware/naive.
     limite = (
-        agora_radar()
+        agora_radar().replace(tzinfo=None)
         - timedelta(days=7)
     )
 
