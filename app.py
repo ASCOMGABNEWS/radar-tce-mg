@@ -2,6 +2,7 @@ import streamlit as st
 import feedparser
 from datetime import datetime, timedelta
 import re
+import html
 from collections import Counter
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
@@ -11,6 +12,13 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
 from reportlab.lib.units import cm
 
+
+
+def esc_html(value):
+    return html.escape(
+        str(value or ""),
+        quote=True
+    )
 
 
 # ============================================================
@@ -852,36 +860,6 @@ def buscar_noticias():
 
 
 # ============================================================
-# VISUAL — PAINÉIS
-# ============================================================
-
-st.markdown("""
-<style>
-
-.insight-box {
-    background: rgba(255,255,255,0.035);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
-    padding: 16px 18px;
-    margin: 8px 0 14px 0;
-}
-
-.insight-title {
-    font-size: 15px;
-    font-weight: 700;
-    margin-bottom: 5px;
-}
-
-.insight-subtitle {
-    font-size: 12px;
-    opacity: .68;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-
-# ============================================================
 # INTERFACE
 # ============================================================
 
@@ -950,9 +928,9 @@ st.markdown("""
 
 .section-title {
     font-size:16px;
-    font-weight:750;
+    font-weight:700;
     color:#18233a;
-    margin-bottom:13px;
+    margin-bottom:10px;
 }
 
 .mini-grid {
@@ -1087,13 +1065,6 @@ st.markdown("""
     color:#344054;
 }
 
-.metric-strip {
-    background:rgba(255,255,255,.72);
-    border:1px solid #e4e8ef;
-    border-radius:14px;
-    padding:13px 4px;
-    margin:10px 0 14px 0;
-}
 
 .news-card {
     display:grid;
@@ -1187,13 +1158,6 @@ st.markdown("""
     color:#667085;
 }
 
-.period-box {
-    background:#fff;
-    border:1px solid #e4e8ef;
-    border-radius:12px;
-    padding:7px 12px 3px 12px;
-    margin:8px 0 12px 0;
-}
 
 @media (max-width: 800px) {
     .news-card { grid-template-columns:1fr; }
@@ -1231,7 +1195,21 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-if st.button("🔄 Atualizar agora"):
+col_atualizar, col_status = st.columns([1.1, 3.5])
+
+with col_atualizar:
+
+    atualizar_agora = st.button(
+        "🔄 Atualizar agora"
+    )
+
+with col_status:
+
+    status_area = st.empty()
+
+
+if atualizar_agora:
+
     st.cache_data.clear()
     st.rerun()
 
@@ -1240,7 +1218,11 @@ if st.button("🔄 Atualizar agora"):
 # COLETA
 # ============================================================
 
-noticias = buscar_noticias()
+with status_area:
+
+    with st.spinner("Atualizando notícias..."):
+
+        noticias = buscar_noticias()
 
 
 # ============================================================
@@ -1328,7 +1310,7 @@ mencoes = [
 
 col1, col2, col3 = st.columns(
     [1.05, 1.25, 1.25],
-    gap="small"
+    gap="medium"
 )
 
 # ------------------------------------------------------------
@@ -1339,7 +1321,7 @@ with col1:
 
     with st.container(border=True):
 
-        st.markdown("### 🚨 Radar de atenção")
+        st.markdown("**🚨 Radar de atenção**")
 
         r1, r2 = st.columns(2)
 
@@ -1377,7 +1359,7 @@ with col2:
 
     with st.container(border=True):
 
-        st.markdown("### 🔥 Assuntos quentes")
+        st.markdown("**🔥 Assuntos quentes**")
 
         temas_quentes = contador_temas.most_common(6)
 
@@ -1423,7 +1405,7 @@ with col3:
 
     with st.container(border=True):
 
-        st.markdown("### 👥 Pessoas mais citadas")
+        st.markdown("**👥 Pessoas mais citadas**")
 
         pessoas_quentes = (
             contador_pessoas
@@ -1481,8 +1463,6 @@ with m4:
     st.metric("🟡 Médias", len(medias))
 with m5:
     st.metric("⚪ Menções", len(mencoes))
-
-st.divider()
 
 
 # ============================================================
@@ -1822,7 +1802,6 @@ st.download_button(
     mime="application/pdf",
 )
 
-st.divider()
 
 # ============================================================
 # RESULTADOS
