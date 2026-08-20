@@ -2,10 +2,11 @@ import streamlit as st
 import feedparser
 from datetime import datetime, timedelta
 import re
+from collections import Counter
 
 
 # ============================================================
-# CONFIGURAÇÃO DA PÁGINA
+# CONFIGURAÇÃO
 # ============================================================
 
 st.set_page_config(
@@ -21,7 +22,6 @@ st.set_page_config(
 
 FONTES = {
 
-    # Busca geral
     "TCE-MG":
         'https://news.google.com/rss/search?q=%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
@@ -31,8 +31,6 @@ FONTES = {
     "Tribunal de Contas":
         'https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%22%20%22Minas%20Gerais%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
-
-    # Veículos
     "Estado de Minas":
         'https://news.google.com/rss/search?q=site%3Aem.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
@@ -48,8 +46,6 @@ FONTES = {
     "G1 Minas":
         'https://news.google.com/rss/search?q=site%3Ag1.globo.com%2Fmg+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
-
-    # Pessoas
     "Durval Ângelo":
         'https://news.google.com/rss/search?q=%22Durval%20Ângelo%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
@@ -65,11 +61,20 @@ FONTES = {
     "Ione Pinheiro":
         'https://news.google.com/rss/search?q=%22Ione%20Pinheiro%22%20TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
-    "Tadeu Martins Leite":
-        'https://news.google.com/rss/search?q=%22Tadeu%20Martins%20Leite%22%20TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+    "Tadeu Martins Leite / Tadeuzinho":
+        'https://news.google.com/rss/search?q=%22Tadeu%20Martins%20Leite%22%20OR%20%22Tadeuzinho%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
-    "Tadeuzinho":
-        'https://news.google.com/rss/search?q=%22Tadeuzinho%22%20TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+    "Licurgo Mourão":
+        'https://news.google.com/rss/search?q=%22Licurgo%20Mourão%22%20TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Hamilton Coelho":
+        'https://news.google.com/rss/search?q=%22Hamilton%20Coelho%22%20TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Adonias Fernandes":
+        'https://news.google.com/rss/search?q=%22Adonias%20Fernandes%22%20TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Telmo Passareli":
+        'https://news.google.com/rss/search?q=%22Telmo%20Passareli%22%20TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 }
 
 
@@ -79,30 +84,66 @@ FONTES = {
 
 PESSOAS = {
 
-    "Conselheiros": [
-        "Durval Ângelo",
-        "Agostinho Patrus",
-        "Gilberto Diniz",
-        "Alencar da Silveira",
-        "Ione Pinheiro",
-    ],
+    "Conselheiros": {
 
-    "Eleito / transição": [
-        "Tadeu Martins Leite",
-        "Tadeuzinho",
-    ],
+        "Durval Ângelo": [
+            "Durval Ângelo"
+        ],
 
-    "Conselheiros substitutos": [
-        "Licurgo Mourão",
-        "Hamilton Coelho",
-        "Adonias Fernandes",
-        "Victor Meyer",
-    ],
+        "Agostinho Patrus": [
+            "Agostinho Patrus"
+        ],
+
+        "Gilberto Diniz": [
+            "Gilberto Diniz"
+        ],
+
+        "Alencar da Silveira": [
+            "Alencar da Silveira",
+            "Alencar Silveira"
+        ],
+
+        "Ione Pinheiro": [
+            "Ione Pinheiro"
+        ],
+    },
+
+    "Eleito / transição": {
+
+        "Tadeu Martins Leite (Tadeuzinho)": [
+            "Tadeu Martins Leite",
+            "Tadeuzinho",
+            "Tadeu Leite"
+        ],
+    },
+
+    "Conselheiros substitutos": {
+
+        "Licurgo Joseph Mourão de Oliveira": [
+            "Licurgo Joseph Mourão",
+            "Licurgo Mourão"
+        ],
+
+        "Hamilton Antônio Coelho": [
+            "Hamilton Antônio Coelho",
+            "Hamilton Coelho"
+        ],
+
+        "Adonias Fernandes Monteiro": [
+            "Adonias Fernandes Monteiro",
+            "Adonias Fernandes"
+        ],
+
+        "Telmo de Moura Passareli": [
+            "Telmo de Moura Passareli",
+            "Telmo Passareli"
+        ],
+    }
 }
 
 
 # ============================================================
-# TEMAS ESTRATÉGICOS
+# TEMAS
 # ============================================================
 
 TEMAS = {
@@ -115,28 +156,28 @@ TEMAS = {
         "CFEM",
         "royalties",
         "barragem",
-        "barragens",
+        "barragens"
     ],
 
     "🚰 Copasa": [
         "Copasa",
         "saneamento",
         "água",
-        "abastecimento",
+        "abastecimento"
     ],
 
     "🏭 Estatais": [
         "Cemig",
         "Codemig",
         "empresa estatal",
-        "estatal",
+        "estatal"
     ],
 
     "🏛️ Privatização": [
         "privatização",
         "privatizar",
         "desestatização",
-        "venda da estatal",
+        "venda da estatal"
     ],
 
     "🚌 Transporte": [
@@ -147,7 +188,7 @@ TEMAS = {
         "rodovia",
         "pedágio",
         "concessão",
-        "mobilidade",
+        "mobilidade"
     ],
 
     "💰 Benefícios fiscais": [
@@ -157,7 +198,7 @@ TEMAS = {
         "incentivo fiscal",
         "renúncia fiscal",
         "ICMS",
-        "crédito presumido",
+        "crédito presumido"
     ],
 
     "⚖️ Controle": [
@@ -172,8 +213,7 @@ TEMAS = {
         "ressarcimento",
         "julgamento",
         "acórdão",
-        "determina",
-        "recomenda",
+        "determina"
     ],
 
     "🏥 Saúde": [
@@ -181,8 +221,7 @@ TEMAS = {
         "hospital",
         "hospitais",
         "SUS",
-        "medicamento",
-        "médico",
+        "medicamento"
     ],
 
     "🎓 Educação": [
@@ -191,7 +230,7 @@ TEMAS = {
         "escolas",
         "ensino",
         "universidade",
-        "educacional",
+        "educacional"
     ],
 
     "🏗️ Obras públicas": [
@@ -199,7 +238,7 @@ TEMAS = {
         "obras públicas",
         "obras",
         "infraestrutura",
-        "construção",
+        "construção"
     ],
 }
 
@@ -213,8 +252,17 @@ def limpar_texto(texto):
     if not texto:
         return ""
 
-    texto = re.sub(r"<[^>]+>", " ", texto)
-    texto = re.sub(r"\s+", " ", texto)
+    texto = re.sub(
+        r"<[^>]+>",
+        " ",
+        texto
+    )
+
+    texto = re.sub(
+        r"\s+",
+        " ",
+        texto
+    )
 
     return texto.strip()
 
@@ -255,63 +303,63 @@ def extrair_veiculo(item):
     return "Fonte não identificada"
 
 
-# ============================================================
-# IDENTIFICA TEMAS
-# ============================================================
-
-def identificar_temas(titulo, resumo):
+def identificar_temas(
+    titulo,
+    resumo
+):
 
     texto = (
         titulo + " " + resumo
     ).lower()
 
-    temas_encontrados = []
+    encontrados = []
 
     for tema, palavras in TEMAS.items():
-
-        encontrou = False
 
         for palavra in palavras:
 
             if palavra.lower() in texto:
 
-                encontrou = True
+                encontrados.append(
+                    tema
+                )
+
                 break
 
-        if encontrou:
-
-            temas_encontrados.append(
-                tema
-            )
-
-    return temas_encontrados
+    return encontrados
 
 
-# ============================================================
-# IDENTIFICA PESSOAS
-# ============================================================
-
-def identificar_pessoas(titulo, resumo):
+def identificar_pessoas(
+    titulo,
+    resumo
+):
 
     texto = (
         titulo + " " + resumo
     ).lower()
 
-    pessoas_encontradas = []
+    encontrados = []
 
-    for grupo, pessoas in PESSOAS.items():
+    for grupo in PESSOAS.values():
 
-        for pessoa in pessoas:
+        for pessoa, variacoes in grupo.items():
 
-            if pessoa.lower() in texto:
+            for variacao in variacoes:
 
-                if pessoa not in pessoas_encontradas:
+                if (
+                    variacao.lower()
+                    in texto
+                ):
 
-                    pessoas_encontradas.append(
-                        pessoa
-                    )
+                    if pessoa not in encontrados:
 
-    return pessoas_encontradas
+                        encontrados.append(
+                            pessoa
+                        )
+
+                    break
+
+    return encontrados
 
 
 # ============================================================
@@ -333,10 +381,6 @@ def calcular_relevancia(
     score = 15
 
 
-    # --------------------------------------------------------
-    # MENÇÃO DIRETA AO TRIBUNAL
-    # --------------------------------------------------------
-
     if "tce-mg" in texto:
 
         score += 35
@@ -350,23 +394,15 @@ def calcular_relevancia(
         score += 25
 
 
-    # --------------------------------------------------------
-    # PESSOAS
-    # --------------------------------------------------------
-
-    score += len(pessoas) * 12
+    score += (
+        len(pessoas) * 12
+    )
 
 
-    # --------------------------------------------------------
-    # TEMAS
-    # --------------------------------------------------------
+    score += (
+        len(temas) * 5
+    )
 
-    score += len(temas) * 5
-
-
-    # --------------------------------------------------------
-    # TERMOS DE ATUAÇÃO
-    # --------------------------------------------------------
 
     termos_acao = [
 
@@ -387,6 +423,7 @@ def calcular_relevancia(
         "contas",
     ]
 
+
     for termo in termos_acao:
 
         if termo in texto:
@@ -394,30 +431,26 @@ def calcular_relevancia(
             score += 5
 
 
-    # --------------------------------------------------------
-    # VALOR FINANCEIRO
-    # --------------------------------------------------------
-
     if "r$" in texto:
 
         score += 5
 
 
-    # --------------------------------------------------------
-    # BUSCA ESPECÍFICA
-    # --------------------------------------------------------
-
-    if monitoramento in [
-
-        "Durval Ângelo",
-        "Agostinho Patrus",
-        "Gilberto Diniz",
-        "Alencar da Silveira",
-        "Ione Pinheiro",
-        "Tadeu Martins Leite",
-        "Tadeuzinho",
-
-    ]:
+    if (
+        monitoramento
+        in [
+            "Durval Ângelo",
+            "Agostinho Patrus",
+            "Gilberto Diniz",
+            "Alencar da Silveira",
+            "Ione Pinheiro",
+            "Tadeu Martins Leite / Tadeuzinho",
+            "Licurgo Mourão",
+            "Hamilton Coelho",
+            "Adonias Fernandes",
+            "Telmo Passareli",
+        ]
+    ):
 
         score += 8
 
@@ -483,7 +516,6 @@ def buscar_noticias():
             )
 
 
-            # Remove duplicadas
             if (
                 not link
                 or link in links
@@ -497,7 +529,6 @@ def buscar_noticias():
             )
 
 
-            # Apenas últimos 7 dias
             if (
                 data
                 and data < limite
@@ -540,13 +571,9 @@ def buscar_noticias():
             score = calcular_relevancia(
 
                 titulo,
-
                 resumo,
-
                 nome,
-
                 temas,
-
                 pessoas
             )
 
@@ -589,9 +616,6 @@ def buscar_noticias():
             })
 
 
-    # Ordena primeiro por relevância
-    # e depois por data
-
     noticias.sort(
 
         key=lambda x: (
@@ -611,7 +635,7 @@ def buscar_noticias():
 
 
 # ============================================================
-# CABEÇALHO
+# INTERFACE
 # ============================================================
 
 st.title(
@@ -643,7 +667,8 @@ with col1:
 with col2:
 
     st.caption(
-        "Últimos 7 dias • atualização aproximada a cada 5 minutos"
+        "Monitoramento em tempo quase real • "
+        "últimos 7 dias"
     )
 
 
@@ -651,49 +676,240 @@ st.divider()
 
 
 # ============================================================
-# BUSCA
+# COLETA
 # ============================================================
 
 noticias = buscar_noticias()
 
 
 # ============================================================
+# PERÍODO
+# ============================================================
+
+st.subheader(
+    "🕐 Período"
+)
+
+
+periodo = st.radio(
+
+    "Mostrar notícias de:",
+
+    [
+        "Últimas 6 horas",
+        "Últimas 24 horas",
+        "Últimos 3 dias",
+        "Últimos 7 dias",
+    ],
+
+    horizontal=True,
+
+    label_visibility="collapsed"
+)
+
+
+agora = datetime.now()
+
+
+if periodo == "Últimas 6 horas":
+
+    limite_periodo = (
+        agora
+        - timedelta(hours=6)
+    )
+
+elif periodo == "Últimas 24 horas":
+
+    limite_periodo = (
+        agora
+        - timedelta(hours=24)
+    )
+
+elif periodo == "Últimos 3 dias":
+
+    limite_periodo = (
+        agora
+        - timedelta(days=3)
+    )
+
+else:
+
+    limite_periodo = (
+        agora
+        - timedelta(days=7)
+    )
+
+
+noticias_periodo = [
+
+    n for n in noticias
+
+    if (
+        n["data"]
+        and n["data"]
+        >= limite_periodo
+    )
+]
+
+
+# ============================================================
+# RADAR DE ATENÇÃO
+# ============================================================
+
+criticas = [
+
+    n for n in noticias_periodo
+
+    if n["score"] >= 85
+]
+
+
+altas = [
+
+    n for n in noticias_periodo
+
+    if 65 <= n["score"] < 85
+]
+
+
+st.subheader(
+    "🚨 Radar de atenção"
+)
+
+
+col1, col2 = st.columns(
+    2
+)
+
+
+with col1:
+
+    st.metric(
+        "🔴 Críticas",
+        len(criticas)
+    )
+
+
+with col2:
+
+    st.metric(
+        "🟠 Alta relevância",
+        len(altas)
+    )
+
+
+if criticas:
+
+    st.markdown(
+        "### 🔴 Atenção imediata"
+    )
+
+
+    for noticia in criticas[:5]:
+
+        st.markdown(
+
+            f"**{noticia['titulo']}**  "
+            f"— {noticia['score']}/100"
+        )
+
+
+st.divider()
+
+
+# ============================================================
+# ASSUNTOS QUENTES
+# ============================================================
+
+contador_temas = Counter()
+
+
+for noticia in noticias_periodo:
+
+    for tema in noticia["temas"]:
+
+        contador_temas[
+            tema
+        ] += 1
+
+
+st.subheader(
+    "🔥 Assuntos quentes"
+)
+
+
+if contador_temas:
+
+    temas_quentes = (
+        contador_temas
+        .most_common(8)
+    )
+
+
+    colunas = st.columns(
+        min(
+            len(temas_quentes),
+            4
+        )
+    )
+
+
+    for i, (tema, quantidade) in enumerate(
+        temas_quentes
+    ):
+
+        with colunas[
+            i % len(colunas)
+        ]:
+
+            st.metric(
+                tema,
+                quantidade
+            )
+
+else:
+
+    st.info(
+        "Nenhum tema identificado no período."
+    )
+
+
+st.divider()
+
+
+# ============================================================
 # MÉTRICAS
 # ============================================================
 
-criticas = len([
+criticas_total = len([
 
-    n for n in noticias
+    n for n in noticias_periodo
 
     if n["score"] >= 85
-
 ])
 
 
-altas = len([
+altas_total = len([
 
-    n for n in noticias
+    n for n in noticias_periodo
 
     if 65 <= n["score"] < 85
-
 ])
 
 
-medias = len([
+medias_total = len([
 
-    n for n in noticias
+    n for n in noticias_periodo
 
     if 45 <= n["score"] < 65
-
 ])
 
 
-mencoes = len([
+mencoes_total = len([
 
-    n for n in noticias
+    n for n in noticias_periodo
 
     if n["score"] < 45
-
 ])
 
 
@@ -706,7 +922,7 @@ with col1:
 
     st.metric(
         "📰 Notícias",
-        len(noticias)
+        len(noticias_periodo)
     )
 
 
@@ -714,7 +930,7 @@ with col2:
 
     st.metric(
         "🔴 Críticas",
-        criticas
+        criticas_total
     )
 
 
@@ -722,7 +938,7 @@ with col3:
 
     st.metric(
         "🟠 Altas",
-        altas
+        altas_total
     )
 
 
@@ -730,7 +946,7 @@ with col4:
 
     st.metric(
         "🟡 Médias",
-        medias
+        medias_total
     )
 
 
@@ -738,7 +954,7 @@ with col5:
 
     st.metric(
         "⚪ Menções",
-        mencoes
+        mencoes_total
     )
 
 
@@ -759,6 +975,16 @@ col1, col2, col3 = st.columns(
 )
 
 
+todas_pessoas = []
+
+
+for grupo in PESSOAS.values():
+
+    todas_pessoas.extend(
+        grupo.keys()
+    )
+
+
 with col1:
 
     filtro_pessoa = st.selectbox(
@@ -768,11 +994,7 @@ with col1:
         [
             "Todas"
         ]
-        + [
-            pessoa
-            for grupo in PESSOAS.values()
-            for pessoa in grupo
-        ]
+        + todas_pessoas
     )
 
 
@@ -834,7 +1056,7 @@ with col2:
         "🔍 Buscar palavra",
 
         placeholder=
-        "Ex.: Copasa, mineração, ônibus..."
+        "Ex.: Copasa, mineração, transporte..."
     )
 
 
@@ -842,7 +1064,7 @@ with col2:
 # APLICA FILTROS
 # ============================================================
 
-filtradas = noticias
+filtradas = noticias_periodo
 
 
 if filtro_pessoa != "Todas":
@@ -948,10 +1170,6 @@ else:
             )
 
 
-        # ----------------------------------------------------
-        # TÍTULO E SCORE
-        # ----------------------------------------------------
-
         st.markdown(
 
             f"### "
@@ -966,10 +1184,6 @@ else:
         )
 
 
-        # ----------------------------------------------------
-        # INFORMAÇÕES
-        # ----------------------------------------------------
-
         st.caption(
 
             f"🗞️ {noticia['veiculo']}  •  "
@@ -978,45 +1192,45 @@ else:
         )
 
 
-        # ----------------------------------------------------
-        # TAGS DE PESSOAS
-        # ----------------------------------------------------
-
         if noticia["pessoas"]:
 
             st.markdown(
+
                 " ".join(
+
                     [
                         f"`👤 {p}`"
-                        for p in noticia["pessoas"]
+                        for p
+                        in noticia["pessoas"]
                     ]
+
                 )
+
             )
 
-
-        # ----------------------------------------------------
-        # TAGS DE TEMAS
-        # ----------------------------------------------------
 
         if noticia["temas"]:
 
             st.markdown(
+
                 " ".join(
+
                     [
                         f"`{tema}`"
-                        for tema in noticia["temas"]
+                        for tema
+                        in noticia["temas"]
                     ]
+
                 )
+
             )
 
 
-        # ----------------------------------------------------
-        # RESUMO
-        # ----------------------------------------------------
-
         if noticia["resumo"]:
 
-            resumo = noticia["resumo"]
+            resumo = noticia[
+                "resumo"
+            ]
 
 
             if len(resumo) > 500:
@@ -1031,10 +1245,6 @@ else:
                 resumo
             )
 
-
-        # ----------------------------------------------------
-        # LINK
-        # ----------------------------------------------------
 
         st.link_button(
 
