@@ -791,7 +791,7 @@ with col1:
 with col2:
 
     st.caption(
-        "Monitoramento em tempo quase real • "
+        "Monitoramento em tempo real - Gabinete Agostinho Patrus• "
         "atualização automática a cada 5 minutos"
     )
 
