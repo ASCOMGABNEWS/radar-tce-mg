@@ -22,14 +22,9 @@ st.set_page_config(
 
 FONTES = {
 
-    "TCE-MG":
-        'https://news.google.com/rss/search?q=%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "TCE MG":
-        'https://news.google.com/rss/search?q=%22TCE%20MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Tribunal de Contas":
-        'https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%22%20%22Minas%20Gerais%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+    # ========================================================
+    # IMPRENSA MINEIRA
+    # ========================================================
 
     "Estado de Minas":
         'https://news.google.com/rss/search?q=site%3Aem.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
@@ -43,8 +38,89 @@ FONTES = {
     "Hoje em Dia":
         'https://news.google.com/rss/search?q=site%3Ahojeemdia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
+    "Tribuna de Minas":
+        'https://news.google.com/rss/search?q=site%3Atribunademinas.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Diário do Comércio":
+        'https://news.google.com/rss/search?q=site%3Adiariodocomercio.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "BHAZ":
+        'https://news.google.com/rss/search?q=site%3Abhaz.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Agência Minas":
+        'https://news.google.com/rss/search?q=site%3Aagenciaminas.mg.gov.br+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "O Fator":
+        'https://news.google.com/rss/search?q=site%3Aofator.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Edição do Brasil":
+        'https://news.google.com/rss/search?q=site%3Aedicaodobrasil.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Moon BH":
+        'https://news.google.com/rss/search?q=site%3Amoonbh.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+
+    # ========================================================
+    # IMPRENSA NACIONAL
+    # ========================================================
+
     "G1 Minas":
         'https://news.google.com/rss/search?q=site%3Ag1.globo.com%2Fmg+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Folha de S.Paulo":
+        'https://news.google.com/rss/search?q=site%3Afolha.uol.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "O Globo":
+        'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Correio Braziliense":
+        'https://news.google.com/rss/search?q=site%3Acorreiobraziliense.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Poder360":
+        'https://news.google.com/rss/search?q=site%3Apoder360.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "O Antagonista":
+        'https://news.google.com/rss/search?q=site%3Aoantagonista.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Brasil de Fato":
+        'https://news.google.com/rss/search?q=site%3Abrasildefato.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "revista piauí":
+        'https://news.google.com/rss/search?q=site%3Apiaui.folha.uol.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "JOTA":
+        'https://news.google.com/rss/search?q=site%3Ajota.info+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Migalhas":
+        'https://news.google.com/rss/search?q=site%3Amigalhas.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "O Bastidor":
+        'https://news.google.com/rss/search?q=site%3Aobastidor.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Intercept Brasil":
+        'https://news.google.com/rss/search?q=site%3Aintercept.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Bem Minas":
+        'https://news.google.com/rss/search?q=site%3Abemminas.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+
+    # ========================================================
+    # BUSCAS GERAIS
+    # ========================================================
+
+    "TCE-MG":
+        'https://news.google.com/rss/search?q=%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "TCE MG":
+        'https://news.google.com/rss/search?q=%22TCE%20MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Tribunal de Contas MG":
+        'https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%22+%22Minas%20Gerais%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+
+    # ========================================================
+    # PESSOAS
+    # ========================================================
 
     "Durval Ângelo":
         'https://news.google.com/rss/search?q=%22Durval%20Ângelo%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
@@ -53,33 +129,33 @@ FONTES = {
         'https://news.google.com/rss/search?q=%22Agostinho%20Patrus%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "Gilberto Diniz":
-        'https://news.google.com/rss/search?q=%22Gilberto%20Diniz%22%20TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'https://news.google.com/rss/search?q=%22Gilberto%20Diniz%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "Alencar da Silveira":
-        'https://news.google.com/rss/search?q=%22Alencar%20da%20Silveira%22%20TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'https://news.google.com/rss/search?q=%22Alencar%20da%20Silveira%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "Ione Pinheiro":
-        'https://news.google.com/rss/search?q=%22Ione%20Pinheiro%22%20TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'https://news.google.com/rss/search?q=%22Ione%20Pinheiro%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "Tadeu Martins Leite / Tadeuzinho":
-        'https://news.google.com/rss/search?q=%22Tadeu%20Martins%20Leite%22%20OR%20%22Tadeuzinho%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'https://news.google.com/rss/search?q=%22Tadeu%20Martins%20Leite%22+OR+%22Tadeuzinho%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "Licurgo Mourão":
-        'https://news.google.com/rss/search?q=%22Licurgo%20Mourão%22%20TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'https://news.google.com/rss/search?q=%22Licurgo%20Mourão%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "Hamilton Coelho":
-        'https://news.google.com/rss/search?q=%22Hamilton%20Coelho%22%20TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'https://news.google.com/rss/search?q=%22Hamilton%20Coelho%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "Adonias Fernandes":
-        'https://news.google.com/rss/search?q=%22Adonias%20Fernandes%22%20TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'https://news.google.com/rss/search?q=%22Adonias%20Fernandes%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "Telmo Passareli":
-        'https://news.google.com/rss/search?q=%22Telmo%20Passareli%22%20TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'https://news.google.com/rss/search?q=%22Telmo%20Passareli%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 }
 
 
 # ============================================================
-# PESSOAS
+# PESSOAS MONITORADAS
 # ============================================================
 
 PESSOAS = {
@@ -143,7 +219,7 @@ PESSOAS = {
 
 
 # ============================================================
-# TEMAS
+# TEMAS ESTRATÉGICOS
 # ============================================================
 
 TEMAS = {
@@ -436,25 +512,6 @@ def calcular_relevancia(
         score += 5
 
 
-    if (
-        monitoramento
-        in [
-            "Durval Ângelo",
-            "Agostinho Patrus",
-            "Gilberto Diniz",
-            "Alencar da Silveira",
-            "Ione Pinheiro",
-            "Tadeu Martins Leite / Tadeuzinho",
-            "Licurgo Mourão",
-            "Hamilton Coelho",
-            "Adonias Fernandes",
-            "Telmo Passareli",
-        ]
-    ):
-
-        score += 8
-
-
     return min(
         score,
         100
@@ -635,7 +692,7 @@ def buscar_noticias():
 
 
 # ============================================================
-# INTERFACE
+# CABEÇALHO
 # ============================================================
 
 st.title(
@@ -668,7 +725,7 @@ with col2:
 
     st.caption(
         "Monitoramento em tempo quase real • "
-        "últimos 7 dias"
+        "atualização automática a cada 5 minutos"
     )
 
 
@@ -686,14 +743,9 @@ noticias = buscar_noticias()
 # PERÍODO
 # ============================================================
 
-st.subheader(
-    "🕐 Período"
-)
-
-
 periodo = st.radio(
 
-    "Mostrar notícias de:",
+    "🕐 Período",
 
     [
         "Últimas 6 horas",
@@ -702,9 +754,7 @@ periodo = st.radio(
         "Últimos 7 dias",
     ],
 
-    horizontal=True,
-
-    label_visibility="collapsed"
+    horizontal=True
 )
 
 
@@ -801,7 +851,7 @@ with col2:
 if criticas:
 
     st.markdown(
-        "### 🔴 Atenção imediata"
+        "#### 🔴 Atenção imediata"
     )
 
 
@@ -809,8 +859,7 @@ if criticas:
 
         st.markdown(
 
-            f"**{noticia['titulo']}**  "
-            f"— {noticia['score']}/100"
+            f"**{noticia['titulo']}**"
         )
 
 
@@ -818,10 +867,12 @@ st.divider()
 
 
 # ============================================================
-# ASSUNTOS QUENTES
+# ASSUNTOS QUENTES + PESSOAS MAIS CITADAS
 # ============================================================
 
 contador_temas = Counter()
+
+contador_pessoas = Counter()
 
 
 for noticia in noticias_periodo:
@@ -833,45 +884,84 @@ for noticia in noticias_periodo:
         ] += 1
 
 
-st.subheader(
-    "🔥 Assuntos quentes"
+    for pessoa in noticia["pessoas"]:
+
+        contador_pessoas[
+            pessoa
+        ] += 1
+
+
+col1, col2 = st.columns(
+    2
 )
 
 
-if contador_temas:
+# ============================================================
+# ASSUNTOS QUENTES
+# ============================================================
 
-    temas_quentes = (
-        contador_temas
-        .most_common(8)
+with col1:
+
+    st.subheader(
+        "🔥 Assuntos quentes"
     )
 
 
-    colunas = st.columns(
-        min(
-            len(temas_quentes),
-            4
+    if contador_temas:
+
+        temas_quentes = (
+            contador_temas
+            .most_common(8)
         )
-    )
 
 
-    for i, (tema, quantidade) in enumerate(
-        temas_quentes
-    ):
+        for tema, quantidade in temas_quentes:
 
-        with colunas[
-            i % len(colunas)
-        ]:
-
-            st.metric(
-                tema,
-                quantidade
+            st.markdown(
+                f"**{tema}** — "
+                f"{quantidade} "
+                f"notícia(s)"
             )
 
-else:
+    else:
 
-    st.info(
-        "Nenhum tema identificado no período."
+        st.info(
+            "Nenhum tema identificado."
+        )
+
+
+# ============================================================
+# PESSOAS MAIS CITADAS
+# ============================================================
+
+with col2:
+
+    st.subheader(
+        "👥 Pessoas mais citadas"
     )
+
+
+    if contador_pessoas:
+
+        pessoas_quentes = (
+            contador_pessoas
+            .most_common(8)
+        )
+
+
+        for pessoa, quantidade in pessoas_quentes:
+
+            st.markdown(
+                f"**{pessoa}** — "
+                f"{quantidade} "
+                f"notícia(s)"
+            )
+
+    else:
+
+        st.info(
+            "Nenhuma pessoa monitorada citada."
+        )
 
 
 st.divider()
@@ -970,11 +1060,6 @@ st.subheader(
 )
 
 
-col1, col2, col3 = st.columns(
-    3
-)
-
-
 todas_pessoas = []
 
 
@@ -983,6 +1068,11 @@ for grupo in PESSOAS.values():
     todas_pessoas.extend(
         grupo.keys()
     )
+
+
+col1, col2, col3 = st.columns(
+    3
+)
 
 
 with col1:
@@ -1139,7 +1229,7 @@ if busca:
 
 st.subheader(
 
-    f"📰 {len(filtradas)} notícias"
+    f"📰 {len(filtradas)} notícias encontradas"
 )
 
 
@@ -1170,27 +1260,32 @@ else:
             )
 
 
+        # ----------------------------------------------------
+        # CLASSIFICAÇÃO
+        # ----------------------------------------------------
+
         st.markdown(
 
             f"### "
             f"{noticia['classificacao']} "
-            f"**{noticia['score']}/100**"
+            f" **{noticia['titulo']}**"
         )
 
 
-        st.markdown(
-
-            f"**{noticia['titulo']}**"
-        )
-
+        # ----------------------------------------------------
+        # INFORMAÇÕES
+        # ----------------------------------------------------
 
         st.caption(
 
             f"🗞️ {noticia['veiculo']}  •  "
-            f"🔎 {noticia['monitoramento']}  •  "
             f"📅 {data_formatada}"
         )
 
+
+        # ----------------------------------------------------
+        # PESSOAS
+        # ----------------------------------------------------
 
         if noticia["pessoas"]:
 
@@ -1209,6 +1304,10 @@ else:
             )
 
 
+        # ----------------------------------------------------
+        # TEMAS
+        # ----------------------------------------------------
+
         if noticia["temas"]:
 
             st.markdown(
@@ -1225,6 +1324,10 @@ else:
 
             )
 
+
+        # ----------------------------------------------------
+        # RESUMO
+        # ----------------------------------------------------
 
         if noticia["resumo"]:
 
@@ -1245,6 +1348,10 @@ else:
                 resumo
             )
 
+
+        # ----------------------------------------------------
+        # LINK
+        # ----------------------------------------------------
 
         st.link_button(
 
