@@ -959,7 +959,7 @@ st.markdown("""
     border-radius:14px;
     padding:16px 18px;
     box-shadow:0 2px 10px rgba(16,24,40,.035);
-    height:220px;
+    height:230px;
     box-sizing:border-box;
     overflow:hidden;
 }
@@ -1265,7 +1265,7 @@ noticias = buscar_noticias()
 status_area.empty()
 
 
-st.markdown("**📡 Monitoramento em tempo real**")
+st.markdown("### 📡 Monitoramento em tempo real")
 
 # ============================================================
 # PERÍODO
@@ -1326,6 +1326,7 @@ for noticia in noticias_periodo:
 
 
 
+
 # ============================================================
 # PAINEL SUPERIOR
 # ============================================================
@@ -1340,18 +1341,7 @@ altas = [
     if 65 <= n["score"] < 85
 ]
 
-medias = [
-    n for n in noticias_periodo
-    if 45 <= n["score"] < 65
-]
-
-mencoes = [
-    n for n in noticias_periodo
-    if n["score"] < 45
-]
-
-# Painéis com altura igual. O container de assuntos tem rolagem
-# quando houver muitos assuntos, sem aumentar a altura da linha.
+# As três caixas têm a mesma altura.
 col1, col2, col3 = st.columns(
     [1.05, 1.25, 1.25],
     gap="medium"
@@ -1363,21 +1353,33 @@ with col1:
 
         st.markdown("**🚨 Radar de atenção**")
 
-        r1, r2 = st.columns(2)
+        r1, r2 = st.columns(2, gap="small")
 
         with r1:
+
             st.markdown("🔴 **Críticas**")
+
             st.markdown(
-                f"### {len(criticas)}"
+                f"<div style='font-size:42px;font-weight:800;line-height:1;margin:8px 0 0 0'>{len(criticas)}</div>",
+                unsafe_allow_html=True
             )
-            st.caption("merecem atenção imediata")
+
+            st.caption(
+                "merecem atenção imediata"
+            )
 
         with r2:
+
             st.markdown("🟠 **Alta relevância**")
+
             st.markdown(
-                f"### {len(altas)}"
+                f"<div style='font-size:42px;font-weight:800;line-height:1;margin:8px 0 0 0'>{len(altas)}</div>",
+                unsafe_allow_html=True
             )
-            st.caption("potencialmente importantes")
+
+            st.caption(
+                "potencialmente importantes"
+            )
 
 
 with col2:
@@ -1388,36 +1390,35 @@ with col2:
 
         temas_quentes = contador_temas.most_common(20)
 
-        if temas_quentes:
+        # Rolagem interna para não aumentar a altura da caixa.
+        with st.container(height=245):
 
-            max_tema = max(
-                quantidade
-                for _, quantidade in temas_quentes
-            )
+            if temas_quentes:
 
-            for tema, quantidade in temas_quentes:
+                for tema, quantidade in temas_quentes:
 
-                c1, c2 = st.columns([5, 1])
-
-                with c1:
-                    st.markdown(
-                        f"**{tema}**"
+                    c1, c2 = st.columns(
+                        [6, 1],
+                        gap="small"
                     )
 
-                    st.progress(
-                        quantidade / max_tema,
-                        text=None
-                    )
+                    with c1:
 
-                with c2:
-                    st.markdown(
-                        f"**{quantidade}**"
-                    )
+                        st.markdown(
+                            f"**{tema}**"
+                        )
 
-        else:
-            st.caption(
-                "Nenhum assunto identificado."
-            )
+                    with c2:
+
+                        st.markdown(
+                            f"**{quantidade}**"
+                        )
+
+            else:
+
+                st.caption(
+                    "Nenhum assunto identificado."
+                )
 
 
 with col3:
@@ -1428,37 +1429,34 @@ with col3:
 
         pessoas_quentes = contador_pessoas.most_common(10)
 
-        if pessoas_quentes:
+        with st.container(height=245):
 
-            max_pessoa = max(
-                quantidade
-                for _, quantidade
-                in pessoas_quentes
-            )
+            if pessoas_quentes:
 
-            for pessoa, quantidade in pessoas_quentes:
+                for pessoa, quantidade in pessoas_quentes:
 
-                c1, c2 = st.columns([5, 1])
-
-                with c1:
-                    st.markdown(
-                        f"**{pessoa}**"
+                    c1, c2 = st.columns(
+                        [6, 1],
+                        gap="small"
                     )
 
-                    st.progress(
-                        quantidade / max_pessoa,
-                        text=None
-                    )
+                    with c1:
 
-                with c2:
-                    st.markdown(
-                        f"**{quantidade}**"
-                    )
+                        st.markdown(
+                            f"**{pessoa}**"
+                        )
 
-        else:
-            st.caption(
-                "Nenhuma pessoa identificada."
-            )
+                    with c2:
+
+                        st.markdown(
+                            f"**{quantidade}**"
+                        )
+
+            else:
+
+                st.caption(
+                    "Nenhuma pessoa identificada."
+                )
 
 
 # ============================================================
