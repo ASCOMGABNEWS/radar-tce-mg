@@ -1,4 +1,5 @@
 import streamlit as st
+from urllib.parse import quote
 import feedparser
 from datetime import datetime, timedelta
 import re
@@ -1374,7 +1375,7 @@ col1, col2, col3 = st.columns(
 def box_title(text):
     st.markdown(
         f"""
-        <div class="dashboard-panel-title" style="
+        <div style="
             background:rgba(100,116,139,.07);
             border:1px solid rgba(100,116,139,.10);
             border-radius:9px;
@@ -1388,6 +1389,15 @@ def box_title(text):
         </div>
         """,
         unsafe_allow_html=True
+    )
+
+
+def filtro_link(label, param, value):
+    """Link que aplica o filtro e leva a tela direto às notícias."""
+    return (
+        f'<a href="?{param}={quote(str(value))}#noticias-monitoradas" '
+        f'style="text-decoration:none;color:#27324a;font-weight:650;">'
+        f'{label}</a>'
     )
 
 
@@ -1419,14 +1429,14 @@ with col1:
             st.caption("merecem atenção imediata")
 
             if criticas:
-                if st.button(
-                    f"Ver {len(criticas)} matéria(s) →",
-                    key="ver_criticas"
-                ):
-                    st.session_state["filtro_relevancia"] = "🔴 Crítica"
-                    st.session_state["periodo"] = "Últimos 7 dias"
-                    st.session_state["scroll_to_news"] = True
-                    st.rerun()
+                st.markdown(
+                    filtro_link(
+                        f"Ver {len(criticas)} matéria(s) →",
+                        "filtro_relevancia",
+                        "🔴 Crítica"
+                    ),
+                    unsafe_allow_html=True
+                )
 
         with r2:
 
@@ -1448,14 +1458,14 @@ with col1:
             st.caption("potencialmente importantes")
 
             if altas:
-                if st.button(
-                    f"Ver {len(altas)} matéria(s) →",
-                    key="ver_altas"
-                ):
-                    st.session_state["filtro_relevancia"] = "🟠 Alta"
-                    st.session_state["periodo"] = "Últimos 7 dias"
-                    st.session_state["scroll_to_news"] = True
-                    st.rerun()
+                st.markdown(
+                    filtro_link(
+                        f"Ver {len(altas)} matéria(s) →",
+                        "filtro_relevancia",
+                        "🟠 Alta"
+                    ),
+                    unsafe_allow_html=True
+                )
 
 
 with col2:
@@ -1466,35 +1476,46 @@ with col2:
 
         temas_quentes = contador_temas.most_common(20)
 
-        with st.container(height=245, border=False):
+        if temas_quentes:
 
-            if temas_quentes:
+            temas_html = ""
 
-                for i, (tema, quantidade) in enumerate(temas_quentes):
+            for tema, quantidade in temas_quentes:
 
-                    c1, c2 = st.columns(
-                        [6, 1],
-                        gap="small"
-                    )
+                temas_html += f"""
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    gap:10px;
+                    padding:7px 3px;
+                    border-bottom:1px solid #eef1f5;
+                    font-size:14px;
+                ">
+                    <span>
+                        {filtro_link(tema, "filtro_tema", tema)}
+                    </span>
+                    <strong>{quantidade}</strong>
+                </div>
+                """
 
-                    with c1:
-                        if st.button(
-                            tema,
-                            key=f"tema_quente_{i}_{tema}"
-                        ):
-                            st.session_state["filtro_tema"] = tema
-                            st.session_state["periodo"] = "Últimos 7 dias"
-                            st.session_state["scroll_to_news"] = True
-                            st.rerun()
+            st.markdown(
+                f"""
+                <div style="
+                    height:232px;
+                    overflow-y:auto;
+                    overflow-x:hidden;
+                    padding-right:6px;
+                ">
+                    {temas_html}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
-                    with c2:
-                        st.markdown(f"**{quantidade}**")
+        else:
 
-            else:
-
-                st.caption(
-                    "Nenhum assunto identificado."
-                )
+            st.caption("Nenhum assunto identificado.")
 
 
 with col3:
@@ -1505,35 +1526,46 @@ with col3:
 
         pessoas_quentes = contador_pessoas.most_common(20)
 
-        with st.container(height=245, border=False):
+        if pessoas_quentes:
 
-            if pessoas_quentes:
+            pessoas_html = ""
 
-                for i, (pessoa, quantidade) in enumerate(pessoas_quentes):
+            for pessoa, quantidade in pessoas_quentes:
 
-                    c1, c2 = st.columns(
-                        [6, 1],
-                        gap="small"
-                    )
+                pessoas_html += f"""
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    gap:10px;
+                    padding:7px 3px;
+                    border-bottom:1px solid #eef1f5;
+                    font-size:14px;
+                ">
+                    <span>
+                        {filtro_link(pessoa, "filtro_pessoa", pessoa)}
+                    </span>
+                    <strong>{quantidade}</strong>
+                </div>
+                """
 
-                    with c1:
-                        if st.button(
-                            pessoa,
-                            key=f"pessoa_quente_{i}_{pessoa}"
-                        ):
-                            st.session_state["filtro_pessoa"] = pessoa
-                            st.session_state["periodo"] = "Últimos 7 dias"
-                            st.session_state["scroll_to_news"] = True
-                            st.rerun()
+            st.markdown(
+                f"""
+                <div style="
+                    height:232px;
+                    overflow-y:auto;
+                    overflow-x:hidden;
+                    padding-right:6px;
+                ">
+                    {pessoas_html}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
-                    with c2:
-                        st.markdown(f"**{quantidade}**")
+        else:
 
-            else:
-
-                st.caption(
-                    "Nenhuma pessoa identificada."
-                )
+            st.caption("Nenhuma pessoa identificada.")
 
 
 # ============================================================
@@ -1649,6 +1681,19 @@ if "filtro_tema" not in st.session_state:
 
 if "filtro_relevancia" not in st.session_state:
     st.session_state["filtro_relevancia"] = "Todas"
+
+# Atalhos vindos dos painéis superiores.
+# O fragmento #noticias-monitoradas faz o navegador descer automaticamente.
+qp = st.query_params
+
+if qp.get("filtro_pessoa"):
+    st.session_state["filtro_pessoa"] = qp.get("filtro_pessoa")
+
+if qp.get("filtro_tema"):
+    st.session_state["filtro_tema"] = qp.get("filtro_tema")
+
+if qp.get("filtro_relevancia"):
+    st.session_state["filtro_relevancia"] = qp.get("filtro_relevancia")
 
 # ============================================================
 # FILTROS
@@ -2011,22 +2056,6 @@ st.markdown(
     '<div id="noticias-monitoradas"></div>',
     unsafe_allow_html=True
 )
-
-if st.session_state.pop("scroll_to_news", False):
-    import streamlit.components.v1 as components
-    components.html(
-        """
-        <script>
-        const target = window.parent.document.getElementById("noticias-monitoradas");
-        if (target) {
-            setTimeout(() => {
-                target.scrollIntoView({behavior: "smooth", block: "start"});
-            }, 150);
-        }
-        </script>
-        """,
-        height=1,
-    )
 
 st.subheader("📰 Notícias monitoradas")
 
