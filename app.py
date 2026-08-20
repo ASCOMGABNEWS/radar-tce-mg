@@ -943,7 +943,7 @@ st.markdown("""
     border-radius:14px;
     padding:16px 18px;
     box-shadow:0 2px 10px rgba(16,24,40,.035);
-    min-height:210px;
+    min-height:0;
 }
 
 .section-title {
@@ -971,6 +971,35 @@ st.markdown("""
     font-size:12px;
     color:#344054;
     font-weight:650;
+}
+
+
+.red-number { color:#d92d20; }
+.orange-number { color:#e76f00; }
+
+.empty-note {
+    font-size:12px;
+    color:#98a2b3;
+    padding:8px 0;
+}
+
+.compact-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:7px 0;
+    border-bottom:1px solid #eef1f5;
+    font-size:12px;
+    color:#344054;
+}
+
+.compact-row:last-child {
+    border-bottom:none;
+}
+
+.compact-row strong {
+    color:#18233a;
 }
 
 .mini-number {
@@ -1096,6 +1125,16 @@ st.markdown("""
     font-size:10px;
     font-weight:700;
     color:#344054;
+}
+
+
+.news-content {
+    min-width:0;
+}
+
+.severity-dot {
+    display:inline-block;
+    margin-right:5px;
 }
 
 .news-title {
@@ -1269,101 +1308,204 @@ for noticia in noticias_periodo:
 # PAINEL SUPERIOR
 # ============================================================
 
-col1, col2, col3 = st.columns([1.05, 1.25, 1.25])
-
-with col1:
-
-    st.markdown(
-        '<div class="section-card">'
-        '<div class="section-title">🚨 Radar de atenção</div>',
-        unsafe_allow_html=True
+def esc_html(value):
+    return (
+        str(value)
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
     )
 
+
+def render_top_card(title, body_html):
     st.markdown(
         f"""
-        <div class="mini-grid">
-            <div class="mini-card">
-                <div class="mini-label">🔴 Críticas</div>
-                <div class="mini-number">{len(criticas)}</div>
-                <div class="mini-note">merecem atenção imediata</div>
-            </div>
-            <div class="mini-card">
-                <div class="mini-label">🟠 Alta relevância</div>
-                <div class="mini-number">{len(altas)}</div>
-                <div class="mini-note">potencialmente importantes</div>
-            </div>
+        <div class="section-card">
+            <div class="section-title">{title}</div>
+            {body_html}
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    st.markdown("</div>", unsafe_allow_html=True)
+
+criticas = [
+    n for n in noticias_periodo
+    if n["score"] >= 85
+]
+
+altas = [
+    n for n in noticias_periodo
+    if 65 <= n["score"] < 85
+]
+
+medias = [
+    n for n in noticias_periodo
+    if 45 <= n["score"] < 65
+]
+
+mencoes = [
+    n for n in noticias_periodo
+    if n["score"] < 45
+]
+
+
+# ------------------------------------------------------------
+# RADAR / ASSUNTOS / PESSOAS
+# ------------------------------------------------------------
+
+col1, col2, col3 = st.columns([1.05, 1.25, 1.25], gap="small")
+
+
+with col1:
+
+    radar_body = f"""
+    <div class="mini-grid">
+        <div class="mini-card">
+            <div class="mini-label">🔴 Críticas</div>
+            <div class="mini-number red-number">{len(criticas)}</div>
+            <div class="mini-note">merecem atenção imediata</div>
+        </div>
+        <div class="mini-card">
+            <div class="mini-label">🟠 Alta relevância</div>
+            <div class="mini-number orange-number">{len(altas)}</div>
+            <div class="mini-note">potencialmente importantes</div>
+        </div>
+    </div>
+    """
+
+    with col1:
+        render_top_card(
+            "🚨 Radar de atenção",
+            radar_body
+        )
 
 
 with col2:
 
-    st.markdown(
-        '<div class="section-card">'
-        '<div class="section-title">🔥 Assuntos quentes</div>',
-        unsafe_allow_html=True
+    temas_quentes = contador_temas.most_common(7)
+    max_tema = max(
+        [q for _, q in temas_quentes],
+        default=1
     )
 
-    temas_quentes = contador_temas.most_common(8)
-    max_tema = max([q for _, q in temas_quentes], default=1)
+    linhas = ""
 
     for tema, quantidade in temas_quentes:
 
-        pct = int((quantidade / max_tema) * 100)
-
-        st.markdown(
-            f"""
-            <div class="hot-row">
-                <div>
-                    <div class="hot-name">{tema}</div>
-                    <div class="hot-bar">
-                        <div class="hot-fill" style="width:{pct}%"></div>
-                    </div>
-                </div>
-                <div class="hot-count">{quantidade}</div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        pct = int(
+            (quantidade / max_tema) * 100
         )
 
-    st.markdown("</div>", unsafe_allow_html=True)
+        linhas += f"""
+        <div class="hot-row">
+            <div>
+                <div class="hot-name">{esc_html(tema)}</div>
+                <div class="hot-bar">
+                    <div class="hot-fill"
+                         style="width:{pct}%"></div>
+                </div>
+            </div>
+            <div class="hot-count">{quantidade}</div>
+        </div>
+        """
+
+    if not linhas:
+        linhas = '<div class="empty-note">Nenhum assunto identificado.</div>'
+
+    render_top_card(
+        "🔥 Assuntos quentes",
+        linhas
+    )
 
 
 with col3:
 
-    st.markdown(
-        '<div class="section-card">'
-        '<div class="section-title">👥 Pessoas mais citadas</div>',
-        unsafe_allow_html=True
+    pessoas_quentes = contador_pessoas.most_common(6)
+    max_pessoa = max(
+        [q for _, q in pessoas_quentes],
+        default=1
     )
 
-    pessoas_quentes = contador_pessoas.most_common(6)
-    max_pessoa = max([q for _, q in pessoas_quentes], default=1)
+    linhas = ""
 
     for pessoa, quantidade in pessoas_quentes:
 
-        pct = int((quantidade / max_pessoa) * 100)
-
-        st.markdown(
-            f"""
-            <div class="person-row">
-                <div>
-                    <div class="person-name">{pessoa}</div>
-                    <div class="person-bar">
-                        <div class="person-fill" style="width:{pct}%"></div>
-                    </div>
-                </div>
-                <div class="person-count">{quantidade}</div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        pct = int(
+            (quantidade / max_pessoa) * 100
         )
 
-    st.markdown("</div>", unsafe_allow_html=True)
+        linhas += f"""
+        <div class="person-row">
+            <div>
+                <div class="person-name">{esc_html(pessoa)}</div>
+                <div class="person-bar">
+                    <div class="person-fill"
+                         style="width:{pct}%"></div>
+                </div>
+            </div>
+            <div class="person-count">{quantidade}</div>
+        </div>
+        """
+
+    if not linhas:
+        linhas = '<div class="empty-note">Nenhuma pessoa identificada.</div>'
+
+    render_top_card(
+        "👥 Pessoas mais citadas",
+        linhas
+    )
+
+
+# ------------------------------------------------------------
+# VEÍCULOS / INSTITUIÇÕES — PAINÉIS SECUNDÁRIOS
+# ------------------------------------------------------------
+
+col4, col5 = st.columns(2, gap="small")
+
+with col4:
+
+    linhas = ""
+
+    for veiculo, quantidade in contador_veiculos.most_common(5):
+
+        linhas += f"""
+        <div class="compact-row">
+            <span>📰 {esc_html(veiculo)}</span>
+            <strong>{quantidade}</strong>
+        </div>
+        """
+
+    if not linhas:
+        linhas = '<div class="empty-note">Nenhum veículo identificado.</div>'
+
+    render_top_card(
+        "🗞️ Veículos que mais repercutiram",
+        linhas
+    )
+
+
+with col5:
+
+    linhas = ""
+
+    for instituicao, quantidade in contador_instituicoes.most_common(5):
+
+        linhas += f"""
+        <div class="compact-row">
+            <span>🏛️ {esc_html(instituicao)}</span>
+            <strong>{quantidade}</strong>
+        </div>
+        """
+
+    if not linhas:
+        linhas = '<div class="empty-note">Nenhuma instituição identificada.</div>'
+
+    render_top_card(
+        "🏛️ Instituições mais citadas",
+        linhas
+    )
 
 
 # ============================================================
@@ -1769,66 +1911,77 @@ else:
 
         pessoas_html = "".join(
             [
-                f'<span class="tag">👤 {p}</span>'
+                f'<span class="tag">👤 {esc_html(p)}</span>'
                 for p in noticia["pessoas"]
             ]
         )
 
         temas_html = "".join(
             [
-                f'<span class="tag">{tema}</span>'
+                f'<span class="tag">{esc_html(tema)}</span>'
                 for tema in noticia["temas"]
             ]
         )
 
-        resumo = noticia["resumo"] or ""
+        resumo = esc_html(
+            noticia["resumo"] or ""
+        )
 
         if len(resumo) > 420:
             resumo = resumo[:420] + "..."
 
-        st.markdown(
-            f"""
-            <div class="news-card">
+        titulo_html = esc_html(
+            noticia["titulo"]
+        )
 
-                <div class="news-source">
-                    <img class="news-logo"
-                         src="{logo}"
-                         onerror="this.style.display='none';">
-                    <div class="news-source-name">
-                        {noticia["veiculo"]}
-                    </div>
+        veiculo_html = esc_html(
+            noticia["veiculo"]
+        )
+
+        link = noticia["link"]
+
+        html = f"""
+        <div class="news-card">
+
+            <div class="news-source">
+                <img class="news-logo"
+                     src="{link if False else logo}"
+                     onerror="this.onerror=null;this.src='https://www.google.com/s2/favicons?domain=news.google.com&sz=128';">
+                <div class="news-source-name">
+                    {veiculo_html}
+                </div>
+            </div>
+
+            <div class="news-content">
+
+                <div class="news-title">
+                    <span class="severity-dot">{noticia["bolinha"]}</span>
+                    <a href="{link}"
+                       target="_blank"
+                       rel="noopener noreferrer">
+                       {titulo_html}
+                    </a>
                 </div>
 
-                <div>
-
-                    <div class="news-title">
-                        {noticia["bolinha"]}
-                        <a href="{noticia["link"]}"
-                           target="_blank"
-                           rel="noopener noreferrer">
-                           {noticia["titulo"]}
-                        </a>
-                    </div>
-
-                    <div class="news-meta">
-                        {pessoas_html}
-                        {temas_html}
-                    </div>
-
-                    <div class="news-summary">
-                        {resumo}
-                    </div>
-
+                <div class="news-meta">
+                    {pessoas_html}
+                    {temas_html}
                 </div>
 
-                <div class="news-time">
-                    {data_formatada}
+                <div class="news-summary">
+                    {resumo}
                 </div>
 
             </div>
-            """,
-            unsafe_allow_html=True
-        )
+
+            <div class="news-time">
+                {data_formatada}
+            </div>
+
+        </div>
+        """
+
+        st.html(html)
 
 # ============================================================
 # RODAPÉ
