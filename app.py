@@ -791,7 +791,7 @@ with col1:
 with col2:
 
     st.caption(
-        "Monitoramento em tempo real - Gabinete Agostinho Patrus • "
+        "Monitoramento em tempo quase real • "
         "atualização automática a cada 5 minutos"
     )
 
@@ -1528,6 +1528,48 @@ st.download_button(
 )
 
 st.divider()
+
+
+# ============================================================
+# RANKING DE VEÍCULOS
+# ============================================================
+
+contador_veiculos = Counter()
+
+for noticia in filtradas:
+
+    veiculo = noticia["veiculo"]
+
+    if veiculo and veiculo != "Fonte não identificada":
+
+        contador_veiculos[veiculo] += 1
+
+
+if contador_veiculos:
+
+    st.subheader(
+        "📰 Veículos que mais repercutiram"
+    )
+
+    ranking_veiculos = (
+        contador_veiculos
+        .most_common(8)
+    )
+
+    colunas = st.columns(4)
+
+    for i, (veiculo, quantidade) in enumerate(
+        ranking_veiculos
+    ):
+
+        with colunas[i % 4]:
+
+            st.metric(
+                veiculo,
+                quantidade
+            )
+
+    st.divider()
 
 # ============================================================
 # RESULTADOS
