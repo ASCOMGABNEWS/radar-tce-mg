@@ -1555,38 +1555,6 @@ with col3:
         )
 
 
-with col3:
-
-    with st.container(border=True, height=310):
-
-        box_title("👥 Pessoas mais citadas")
-
-        pessoas_quentes = contador_pessoas.most_common(10)
-
-        with st.container(height=245):
-
-            if pessoas_quentes:
-
-                for pessoa, quantidade in pessoas_quentes:
-
-                    c1, c2 = st.columns(
-                        [6, 1],
-                        gap="small"
-                    )
-
-                    with c1:
-                        st.markdown(f"**{pessoa}**")
-
-                    with c2:
-                        st.markdown(f"**{quantidade}**")
-
-            else:
-
-                st.caption(
-                    "Nenhuma pessoa identificada."
-                )
-
-
 # ============================================================
 # MÉTRICAS
 # ============================================================
