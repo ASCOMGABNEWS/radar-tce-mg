@@ -14,6 +14,7 @@ def formatar_horario_noticia(data):
     except Exception:
         return ""
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 import feedparser
 from datetime import datetime, timedelta
 from urllib.parse import quote
@@ -52,7 +53,7 @@ def esc_html(value):
 
 st.set_page_config(
     page_title="Radar TCE-MG",
-    page_icon="🏛️",
+    page_icon="radar.png",
     layout="wide"
 )
 
@@ -1384,9 +1385,11 @@ st.markdown("""
 }
 
 .radar-subtitle {
-    font-size:14px;
+    font-size:12px;
+    line-height:1.4;
     color:#667085;
     margin-top:3px;
+    max-width:850px;
 }
 
 .radar-update {
@@ -1668,8 +1671,23 @@ st.markdown("""
 
 
 # ============================================================
+# ATUALIZAÇÃO AUTOMÁTICA
+# ============================================================
+
+st_autorefresh(interval=5 * 60 * 1000, key="radar_auto_refresh")
+
+# ============================================================
 # CABEÇALHO
 # ============================================================
+
+import base64
+from pathlib import Path
+
+radar_icon_path = Path(__file__).with_name("radar.png")
+try:
+    radar_icon_b64 = base64.b64encode(radar_icon_path.read_bytes()).decode("utf-8")
+except Exception:
+    radar_icon_b64 = ""
 
 agora = datetime.now(FUSO_BRASIL)
 
@@ -1677,7 +1695,7 @@ st.markdown(
     f"""
     <div class="radar-header">
         <div class="radar-brand">
-            <div class="radar-icon">🏛️</div>
+            <div class="radar-icon"><img src="data:image/png;base64,{radar_icon_b64}" style="width:78px;height:78px;object-fit:contain;"></div>
             <div>
                 <div class="radar-title">Radar TCE-MG</div>
                 <div class="radar-subtitle">
@@ -1687,7 +1705,7 @@ st.markdown(
             </div>
         </div>
         <div class="radar-update">
-            Última atualização: <strong>{agora.strftime("%d/%m/%Y")}</strong><br>
+            Última atualização: <strong>{agora.strftime("%d/%m/%Y %H:%M")}</strong><br>
             Atualização automática a cada 5 minutos
         </div>
     </div>
@@ -2069,7 +2087,7 @@ if materias_relevantes_7d:
         )
 
         st.markdown(
-            f"{nivel}  •  📰 **{materia_destaque.get('veiculo', 'Fonte não identificada')}**"
+            f"{nivel}  •  📰 **{materia_destaque.get('veiculo', 'Fonte não identificada')}**  •  📅 {formatar_horario_noticia(materia_destaque.get('data'))}"
         )
 
         st.markdown(
