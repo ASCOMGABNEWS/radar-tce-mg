@@ -2009,9 +2009,14 @@ with col3:
 # do período selecionado no filtro principal.
 limite_destaque_7d = datetime.now(FUSO_BRASIL) - timedelta(days=7)
 
+# O destaque principal do Radar é exclusivo de Minas Gerais.
 noticias_7d = [
     n for n in noticias
-    if n.get("data") and n["data"] >= limite_destaque_7d
+    if (
+        n.get("data")
+        and n["data"] >= limite_destaque_7d
+        and n.get("abrangencia") == "Minas Gerais"
+    )
 ]
 
 materias_relevantes_7d = [
@@ -2516,8 +2521,18 @@ st.download_button(
 # ============================================================
 col_titulo, col_total, col_estadual, col_nacional = st.columns([3.4, 1.4, 1.4, 1.4], gap="medium")
 
+# Contagem dinâmica da lista atualmente filtrada.
+qtd_criticas_filtradas = sum(
+    1 for n in filtradas if n.get("score", 0) >= 85
+)
+qtd_altas_filtradas = sum(
+    1 for n in filtradas if 65 <= n.get("score", 0) < 85
+)
+
 with col_titulo:
-    st.subheader("📰 Notícias monitoradas")
+    st.markdown(
+        f"### 📰 **Notícias monitoradas ({qtd_criticas_filtradas} críticas, {qtd_altas_filtradas} altas)**"
+    )
 
 with col_total:
     with st.container(key="abrangencia-total"):
