@@ -32,10 +32,8 @@ from reportlab.lib.units import cm
 
 if "OPENAI_API_KEY" in st.secrets:
     client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-    st.success("🤖 IA conectada com sucesso!")
 else:
     client = None
-    st.warning("🤖 Chave da IA não encontrada.")
 
 
 def esc_html(value):
