@@ -105,14 +105,20 @@ FONTES = {
     # IMPRENSA NACIONAL
     # --------------------------------------------------------
 
-    "G1 Minas":
-        'https://news.google.com/rss/search?q=site%3Ag1.globo.com%2Fmg+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+    "G1":
+        'https://news.google.com/rss/search?q=site%3Ag1.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22Atricon%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "G1 - Tribunais de Contas":
+        'https://news.google.com/rss/search?q=site%3Ag1.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "Folha de S.Paulo":
         'https://news.google.com/rss/search?q=site%3Afolha.uol.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "O Globo":
-        'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22Atricon%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "O Globo - Tribunais de Contas":
+        'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "Correio Braziliense":
         'https://news.google.com/rss/search?q=site%3Acorreiobraziliense.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
@@ -178,6 +184,18 @@ FONTES = {
 
     "Presidentes de Tribunais de Contas":
         'https://news.google.com/rss/search?q=%22presidente%20do%20Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Conselheiros de Tribunais de Contas":
+        'https://news.google.com/rss/search?q=%22conselheiro%20do%20TCE%22+OR+%22conselheira%20do%20TCE%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Afastamentos em Tribunais de Contas":
+        'https://news.google.com/rss/search?q=%22afastado%22+(%22TCE%22+OR+%22Tribunal+de+Contas%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "TCE Maranhão":
+        'https://news.google.com/rss/search?q=(%22TCE-MA%22+OR+%22TCE+Maranh%C3%A3o%22+OR+%22Tribunal+de+Contas+do+Maranh%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Daniel Brandão":
+        'https://news.google.com/rss/search?q=%22Daniel+Brand%C3%A3o%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "Conselheiros de Tribunais de Contas":
         'https://news.google.com/rss/search?q=%22conselheiro%22+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
@@ -781,6 +799,8 @@ FONTES_NACIONAIS = {
     "UOL",
     "Globo",
     "G1",
+    "G1 - Tribunais de Contas",
+    "O Globo - Tribunais de Contas",
     "Poder360",
     "JOTA",
     "Migalhas",
