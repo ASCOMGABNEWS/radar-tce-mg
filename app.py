@@ -1350,67 +1350,49 @@ mencoes = [
     if n["score"] < 45
 ]
 
+# Painéis com altura igual. O container de assuntos tem rolagem
+# quando houver muitos assuntos, sem aumentar a altura da linha.
 col1, col2, col3 = st.columns(
     [1.05, 1.25, 1.25],
     gap="medium"
 )
 
-# ------------------------------------------------------------
-# RADAR DE ATENÇÃO
-# ------------------------------------------------------------
-
 with col1:
 
-    with st.container(border=True):
+    with st.container(border=True, height=310):
 
-        st.markdown('<span style="font-size:16px;font-weight:700;">🚨 Radar de atenção</span>', unsafe_allow_html=True)
+        st.markdown("**🚨 Radar de atenção**")
 
         r1, r2 = st.columns(2)
 
         with r1:
-
             st.markdown("🔴 **Críticas**")
-
             st.markdown(
-                f"<h2 style='margin:2px 0 0 0'>{len(criticas)}</h2>",
-                unsafe_allow_html=True
+                f"### {len(criticas)}"
             )
-
-            st.caption(
-                "merecem atenção imediata"
-            )
+            st.caption("merecem atenção imediata")
 
         with r2:
-
             st.markdown("🟠 **Alta relevância**")
-
             st.markdown(
-                f"<h2 style='margin:2px 0 0 0'>{len(altas)}</h2>",
-                unsafe_allow_html=True
+                f"### {len(altas)}"
             )
+            st.caption("potencialmente importantes")
 
-            st.caption(
-                "potencialmente importantes"
-            )
-
-# ------------------------------------------------------------
-# ASSUNTOS QUENTES
-# ------------------------------------------------------------
 
 with col2:
 
-    with st.container(border=True):
+    with st.container(border=True, height=310):
 
-        st.markdown('<span style="font-size:16px;font-weight:700;">🔥 Assuntos quentes</span>', unsafe_allow_html=True)
+        st.markdown("**🔥 Assuntos quentes**")
 
-        temas_quentes = contador_temas.most_common(6)
+        temas_quentes = contador_temas.most_common(20)
 
         if temas_quentes:
 
             max_tema = max(
                 quantidade
-                for _, quantidade
-                in temas_quentes
+                for _, quantidade in temas_quentes
             )
 
             for tema, quantidade in temas_quentes:
@@ -1418,41 +1400,33 @@ with col2:
                 c1, c2 = st.columns([5, 1])
 
                 with c1:
-
                     st.markdown(
                         f"**{tema}**"
                     )
 
                     st.progress(
-                        quantidade / max_tema
+                        quantidade / max_tema,
+                        text=None
                     )
 
                 with c2:
-
                     st.markdown(
                         f"**{quantidade}**"
                     )
 
         else:
-
             st.caption(
                 "Nenhum assunto identificado."
             )
 
-# ------------------------------------------------------------
-# PESSOAS MAIS CITADAS
-# ------------------------------------------------------------
 
 with col3:
 
-    with st.container(border=True):
+    with st.container(border=True, height=310):
 
-        st.markdown('<span style="font-size:16px;font-weight:700;">👥 Pessoas mais citadas</span>', unsafe_allow_html=True)
+        st.markdown("**👥 Pessoas mais citadas**")
 
-        pessoas_quentes = (
-            contador_pessoas
-            .most_common(6)
-        )
+        pessoas_quentes = contador_pessoas.most_common(10)
 
         if pessoas_quentes:
 
@@ -1467,23 +1441,21 @@ with col3:
                 c1, c2 = st.columns([5, 1])
 
                 with c1:
-
                     st.markdown(
                         f"**{pessoa}**"
                     )
 
                     st.progress(
-                        quantidade / max_pessoa
+                        quantidade / max_pessoa,
+                        text=None
                     )
 
                 with c2:
-
                     st.markdown(
                         f"**{quantidade}**"
                     )
 
         else:
-
             st.caption(
                 "Nenhuma pessoa identificada."
             )
@@ -1493,18 +1465,39 @@ with col3:
 # MÉTRICAS
 # ============================================================
 
-m1, m2, m3, m4, m5 = st.columns(5)
+with st.container(border=True):
 
-with m1:
-    st.metric("📰 Total de notícias", len(noticias_periodo))
-with m2:
-    st.metric("🔴 Críticas", len(criticas))
-with m3:
-    st.metric("🟠 Altas", len(altas))
-with m4:
-    st.metric("🟡 Médias", len(medias))
-with m5:
-    st.metric("⚪ Menções", len(mencoes))
+    m1, m2, m3, m4, m5 = st.columns(5)
+
+    with m1:
+        st.metric(
+            "📰 Total de notícias",
+            len(noticias_periodo)
+        )
+
+    with m2:
+        st.metric(
+            "🔴 Críticas",
+            len(criticas)
+        )
+
+    with m3:
+        st.metric(
+            "🟠 Altas",
+            len(altas)
+        )
+
+    with m4:
+        st.metric(
+            "🟡 Médias",
+            len(medias)
+        )
+
+    with m5:
+        st.metric(
+            "⚪ Menções",
+            len(mencoes)
+        )
 
 
 # ============================================================
