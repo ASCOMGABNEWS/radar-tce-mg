@@ -17,7 +17,7 @@ import feedparser
 from datetime import datetime, timedelta
 from urllib.parse import quote
 from urllib.request import Request, urlopen
-
+from openai import OpenAI
 
 import re
 import html
