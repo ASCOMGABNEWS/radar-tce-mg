@@ -160,11 +160,23 @@ FONTES = {
     "TCE-MG / Conselheiros e Tribunal de Contas":
         'https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%20de%20Minas%20Gerais%22+conselheiro&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
+    "Atricon":
+        'https://news.google.com/rss/search?q=%22Atricon%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "IRB / Instituto Rui Barbosa":
+        'https://news.google.com/rss/search?q=%22Instituto%20Rui%20Barbosa%22+OR+%22IRB%22+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
     "TCE-MG / Atricon":
         'https://news.google.com/rss/search?q=%22TCE-MG%22+Atricon&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "TCE-MG / IRB":
-        'https://news.google.com/rss/search?q=%22TCE-MG%22+IRB&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+        'https://news.google.com/rss/search?q=%22TCE-MG%22+%22Instituto%20Rui%20Barbosa%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Folha / Atricon":
+        'https://news.google.com/rss/search?q=site%3Afolha.uol.com.br+Atricon&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Folha / IRB":
+        'https://news.google.com/rss/search?q=site%3Afolha.uol.com.br+(%22Instituto%20Rui%20Barbosa%22+OR+IRB)+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
 
     # --------------------------------------------------------
