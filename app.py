@@ -362,6 +362,22 @@ TEMAS = {
         "infraestrutura",
         "construção"
     ],
+
+    "🏢 Instituições": [
+        "Governo de Minas",
+        "Governo de MG",
+        "Assembleia Legislativa",
+        "ALMG",
+        "TCU",
+        "STF",
+        "STJ",
+        "Ministério Público",
+        "MPMG",
+        "Prefeitura de Belo Horizonte",
+        "Cemig",
+        "Codemig",
+        "Vale"
+    ],
 }
 
 
@@ -448,6 +464,74 @@ def identificar_temas(
                     tema
                 )
 
+                break
+
+    return encontrados
+
+
+def identificar_instituicoes(
+    titulo,
+    resumo
+):
+
+    texto = (
+        titulo
+        + " "
+        + resumo
+    ).lower()
+
+    mapa = {
+        "Governo de Minas": [
+            "governo de minas",
+            "governo de mg"
+        ],
+        "ALMG": [
+            "assembleia legislativa",
+            "almg"
+        ],
+        "TCU": [
+            "tcu",
+            "tribunal de contas da união"
+        ],
+        "STF": [
+            "stf",
+            "supremo tribunal federal"
+        ],
+        "STJ": [
+            "stj",
+            "superior tribunal de justiça"
+        ],
+        "Ministério Público": [
+            "ministério público",
+            "mpmg"
+        ],
+        "Prefeitura de Belo Horizonte": [
+            "prefeitura de belo horizonte",
+            "prefeitura de bh"
+        ],
+        "Cemig": [
+            "cemig"
+        ],
+        "Copasa": [
+            "copasa"
+        ],
+        "Codemig": [
+            "codemig"
+        ],
+        "Vale": [
+            "vale"
+        ],
+    }
+
+    encontrados = []
+
+    for instituicao, variacoes in mapa.items():
+
+        for variacao in variacoes:
+
+            if variacao in texto:
+
+                encontrados.append(instituicao)
                 break
 
     return encontrados
@@ -566,6 +650,17 @@ def calcular_relevancia(
     )
 
 
+def extrair_valores(texto):
+
+    encontrados = re.findall(
+        r"R\$\s?\d+(?:[.,]\d+)*(?:\s?(?:mil|milhão|milhões|bilhão|bilhões))?",
+        texto,
+        flags=re.IGNORECASE
+    )
+
+    return encontrados
+
+
 def classificar(score):
 
     if score >= 85:
@@ -672,6 +767,15 @@ def buscar_noticias():
                 resumo
             )
 
+            instituicoes = identificar_instituicoes(
+                titulo,
+                resumo
+            )
+
+            valores = extrair_valores(
+                titulo + " " + resumo
+            )
+
 
             # ------------------------------------------------
             # CORREÇÃO DAS PESSOAS
@@ -737,6 +841,12 @@ def buscar_noticias():
 
                 "pessoas":
                     pessoas,
+
+                "instituicoes":
+                    instituicoes,
+
+                "valores":
+                    valores,
             })
 
 
@@ -791,7 +901,7 @@ with col1:
 with col2:
 
     st.caption(
-        "Monitoramento em tempo quase real • "
+        "Monitoramento em tempo real - Gabinete Agostinho Patrus • "
         "atualização automática a cada 5 minutos"
     )
 
@@ -1209,6 +1319,10 @@ with col2:
         "Ex.: Copasa, mineração, transporte..."
     )
 
+apenas_relevantes = st.checkbox(
+    "🎯 Apenas relevantes (🔴 + 🟠)"
+)
+
 
 # ============================================================
 # APLICA FILTROS
@@ -1273,6 +1387,14 @@ if filtro_relevancia != "Todas":
             filtro_relevancia
         ]
 
+    ]
+
+
+if apenas_relevantes:
+
+    filtradas = [
+        n for n in filtradas
+        if n["score"] >= 65
     ]
 
 
@@ -1531,6 +1653,141 @@ st.divider()
 
 
 
+
+# ============================================================
+# ASSUNTOS EM ALTA
+# ============================================================
+
+duracao_periodo = agora - limite_periodo
+limite_anterior = limite_periodo - duracao_periodo
+
+noticias_anteriores = [
+    n for n in noticias
+    if (
+        n["data"]
+        and limite_anterior <= n["data"] < limite_periodo
+    )
+]
+
+contador_temas_anterior = Counter()
+
+for noticia in noticias_anteriores:
+    for tema in noticia["temas"]:
+        contador_temas_anterior[tema] += 1
+
+contador_temas_atual = Counter()
+
+for noticia in filtradas:
+    for tema in noticia["temas"]:
+        contador_temas_atual[tema] += 1
+
+if contador_temas_atual:
+
+    st.subheader(
+        "📈 Assuntos em alta"
+    )
+
+    st.caption(
+        "Comparação com o período anterior de mesma duração."
+    )
+
+    temas_trend = []
+
+    for tema, atual in contador_temas_atual.most_common():
+
+        anterior = contador_temas_anterior.get(
+            tema,
+            0
+        )
+
+        if anterior == 0:
+            variacao = "🆕 novo"
+            ordem = 999
+        else:
+            percentual = (
+                (atual - anterior)
+                / anterior
+                * 100
+            )
+
+            if percentual > 5:
+                variacao = f"↑ {percentual:.0f}%"
+            elif percentual < -5:
+                variacao = f"↓ {abs(percentual):.0f}%"
+            else:
+                variacao = "→ estável"
+
+            ordem = percentual
+
+        temas_trend.append(
+            (tema, atual, anterior, variacao, ordem)
+        )
+
+    temas_trend.sort(
+        key=lambda x: (
+            x[1],
+            x[4]
+        ),
+        reverse=True
+    )
+
+    colunas = st.columns(4)
+
+    for i, (tema, atual, anterior, variacao, _) in enumerate(
+        temas_trend[:8]
+    ):
+
+        with colunas[i % 4]:
+
+            st.metric(
+                tema,
+                atual,
+                variacao
+            )
+
+    st.divider()
+
+
+# ============================================================
+# VALORES MENCIONADOS
+# ============================================================
+
+valores_contador = Counter()
+
+for noticia in filtradas:
+
+    for valor in noticia.get(
+        "valores",
+        []
+    ):
+
+        valores_contador[valor] += 1
+
+if valores_contador:
+
+    st.subheader(
+        "💰 Valores mencionados"
+    )
+
+    valores_lista = valores_contador.most_common(8)
+
+    st.caption(
+        "Valores identificados automaticamente nas matérias."
+    )
+
+    st.write(
+        " • ".join(
+            [
+                f"**{valor}** ({quantidade})"
+                for valor, quantidade
+                in valores_lista
+            ]
+        ),
+        unsafe_allow_html=True
+    )
+
+    st.divider()
+
 # ============================================================
 # O QUE MERECE ATENÇÃO HOJE
 # ============================================================
@@ -1588,6 +1845,69 @@ if atencao_hoje:
             f"{pessoas_atencao}"
             f"{temas_atencao}"
         )
+
+    st.divider()
+
+
+# ============================================================
+# INSTITUIÇÕES MAIS CITADAS
+# ============================================================
+
+contador_instituicoes = Counter()
+
+for noticia in filtradas:
+
+    for instituicao in noticia.get(
+        "instituicoes",
+        []
+    ):
+
+        contador_instituicoes[instituicao] += 1
+
+if contador_instituicoes:
+
+    st.subheader(
+        "🏛️ Instituições mais citadas"
+    )
+
+    colunas = st.columns(4)
+
+    for i, (instituicao, quantidade) in enumerate(
+        contador_instituicoes.most_common(8)
+    ):
+
+        with colunas[i % 4]:
+
+            st.metric(
+                instituicao,
+                quantidade
+            )
+
+    st.divider()
+
+
+# ============================================================
+# PESSOAS EM DESTAQUE
+# ============================================================
+
+if contador_pessoas:
+
+    st.subheader(
+        "👥 Pessoas em destaque"
+    )
+
+    colunas = st.columns(4)
+
+    for i, (pessoa, quantidade) in enumerate(
+        contador_pessoas.most_common(8)
+    ):
+
+        with colunas[i % 4]:
+
+            st.metric(
+                pessoa,
+                quantidade
+            )
 
     st.divider()
 
