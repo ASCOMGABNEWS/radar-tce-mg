@@ -1674,16 +1674,21 @@ st.markdown("""
 agora = datetime.now(FUSO_BRASIL)
 
 st.markdown(
-    """
-    <div style="display:flex; align-items:center; gap:20px;">
-        <img src="https://cdn-icons-png.flaticon.com/512/188/188595.png"
-             style="width:90px; height:90px; object-fit:contain;">
-        <div>
-            <h1 style="margin:0; color:#18233f;">Radar TCE-MG</h1>
-            <p style="margin:8px 0 0; color:#667085; font-size:20px;">
-                Monitoramento inteligente do Gab. Agostinho Patrus sobre notícias
-                relacionadas ao Tribunal de Contas de Minas Gerais
-            </p>
+    f"""
+    <div class="radar-header">
+        <div class="radar-brand">
+            <div class="radar-icon">🏛️</div>
+            <div>
+                <div class="radar-title">Radar TCE-MG</div>
+                <div class="radar-subtitle">
+                    Monitoramento inteligente do Gab. Agostinho Patrus sobre notícias<br>
+                    relacionadas ao Tribunal de Contas de Minas Gerais
+                </div>
+            </div>
+        </div>
+        <div class="radar-update">
+            Última atualização: <strong>{agora.strftime("%d/%m/%Y")}</strong><br>
+            Atualização automática a cada 5 minutos
         </div>
     </div>
     """,
@@ -2064,7 +2069,7 @@ if materias_relevantes_7d:
         )
 
         st.markdown(
-            f"{nivel}  •  📰 **{materia_destaque.get('veiculo', 'Fonte não identificada')}**  •  📅 {formatar_horario_noticia(materia_destaque.get('data'))}"
+            f"{nivel}  •  📰 **{materia_destaque.get('veiculo', 'Fonte não identificada')}**"
         )
 
         st.markdown(
