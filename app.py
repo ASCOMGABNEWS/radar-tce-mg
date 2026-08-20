@@ -182,6 +182,18 @@ FONTES = {
     "Conselheiros de Tribunais de Contas":
         'https://news.google.com/rss/search?q=%22conselheiro%22+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
+    "TCU":
+        'https://news.google.com/rss/search?q=(%22TCU%22+OR+%22Tribunal%20de%20Contas%20da%20Uni%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Ministros do TCU":
+        'https://news.google.com/rss/search?q=(%22ministro%20do%20TCU%22+OR+%22ministra%20do%20TCU%22+OR+%22presidente%20do%20TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Presidentes de TCE":
+        'https://news.google.com/rss/search?q=%22presidente%20do%20TCE%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "Conselheiros de TCE":
+        'https://news.google.com/rss/search?q=%22conselheiro%22+%22TCE%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
     "TCEs":
         'https://news.google.com/rss/search?q=%22TCE%22+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
@@ -560,6 +572,18 @@ def identificar_instituicoes(
             "tcu",
             "tribunal de contas da união"
         ],
+        "Outros Tribunais de Contas": [
+            "tce-ac", "tce-al", "tce-ap", "tce-am", "tce-ba",
+            "tce-ce", "tce-df", "tce-es", "tce-go", "tce-ma",
+            "tce-mt", "tce-ms", "tce-pa", "tce-pb", "tce-pr",
+            "tce-pe", "tce-pi", "tce-rj", "tce-rn", "tce-rs",
+            "tce-ro", "tce-rr", "tce-sc", "tce-sp", "tce-se",
+            "tce-to", "tribunal de contas do maranhão",
+            "tribunal de contas de são paulo",
+            "tribunal de contas do paraná",
+            "tribunal de contas do rio de janeiro",
+            "tribunal de contas do rio grande do sul"
+        ],
         "STF": [
             "stf",
             "supremo tribunal federal"
@@ -667,6 +691,19 @@ def calcular_relevancia(
     elif "tribunal de contas" in texto:
 
         score += 25
+
+    if "tcu" in texto or "tribunal de contas da união" in texto:
+        score += 10
+
+    if any(t in texto for t in [
+        "presidente do tce",
+        "conselheiro do tce",
+        "presidente do tribunal de contas",
+        "conselheiro do tribunal de contas",
+        "afastado do tce",
+        "afastamento do tce"
+    ]):
+        score += 10
 
 
     score += (
@@ -2038,6 +2075,8 @@ INSTITUICOES_FILTRO = {
     "TJMG": "TJMG",
     "Atricon": "Atricon",
     "IRB": "IRB",
+    "TCU": "TCU",
+    "Outros Tribunais de Contas": "Outros Tribunais de Contas",
 }
 
 st.subheader("🔎 Monitorar")
