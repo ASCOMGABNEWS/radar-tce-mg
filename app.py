@@ -1574,6 +1574,113 @@ with col3:
         )
 
 
+
+# ============================================================
+# MATÉRIA MAIS IMPORTANTE DOS ÚLTIMOS 7 DIAS
+# ============================================================
+
+# O destaque considera sempre os últimos 7 dias, independentemente
+# do período selecionado no filtro principal.
+limite_destaque_7d = datetime.now() - timedelta(days=7)
+
+noticias_7d = [
+    n for n in noticias
+    if n.get("data") and n["data"] >= limite_destaque_7d
+]
+
+materias_relevantes_7d = [
+    n for n in noticias_7d
+    if n.get("score", 0) >= 65
+]
+
+if materias_relevantes_7d:
+
+    materia_destaque = max(
+        materias_relevantes_7d,
+        key=lambda n: (
+            n.get("score", 0),
+            n.get("data") or datetime.min
+        )
+    )
+
+    with st.container(border=True):
+
+        st.markdown(
+            """
+            <div style="
+                background:rgba(100,116,139,.07);
+                border:1px solid rgba(100,116,139,.10);
+                border-radius:9px;
+                padding:8px 12px;
+                margin:-4px -4px 12px -4px;
+                font-size:17px;
+                font-weight:750;
+                color:#27324a;
+            ">
+                ⭐ Matéria mais importante dos últimos 7 dias
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        nivel = (
+            "🔴 Crítica"
+            if materia_destaque.get("score", 0) >= 85
+            else "🟠 Alta relevância"
+        )
+
+        st.markdown(
+            f"{nivel}  •  📰 **{materia_destaque.get('veiculo', 'Fonte não identificada')}**"
+        )
+
+        st.markdown(
+            f"### {materia_destaque.get('titulo', 'Sem título')}"
+        )
+
+        resumo_destaque = (
+            materia_destaque.get("resumo") or ""
+        ).strip()
+
+        if len(resumo_destaque) > 350:
+            resumo_destaque = resumo_destaque[:350].rstrip() + "..."
+
+        if resumo_destaque:
+            st.write(resumo_destaque)
+
+        col_dest_1, col_dest_2 = st.columns([1, 1], gap="small")
+
+        with col_dest_1:
+            st.link_button(
+                "**Ler matéria ↗**",
+                materia_destaque["link"],
+                key="ler_materia_destaque_7d"
+            )
+
+        with col_dest_2:
+
+            titulo_whatsapp = (
+                str(materia_destaque.get("titulo") or "")
+                .replace("*", "")
+                .strip()
+            )
+
+            texto_whatsapp = (
+                f"*{titulo_whatsapp}*\n\n"
+                f"{materia_destaque['link']}"
+            )
+
+            whatsapp_url = (
+                "https://wa.me/?text="
+                + quote(texto_whatsapp)
+            )
+
+            st.link_button(
+                "📲 Compartilhar no WhatsApp",
+                whatsapp_url,
+                key="whatsapp_materia_destaque_7d"
+            )
+
+
 # ============================================================
 # MÉTRICAS
 # ============================================================
