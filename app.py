@@ -153,6 +153,19 @@ FONTES = {
     "Tribunal de Contas MG":
         'https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%22+%22Minas%20Gerais%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
+    # Buscas institucionais complementares do TCE-MG
+    "TCE-MG / Conselheiros":
+        'https://news.google.com/rss/search?q=%22TCE-MG%22+conselheiro&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "TCE-MG / Conselheiros e Tribunal de Contas":
+        'https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%20de%20Minas%20Gerais%22+conselheiro&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "TCE-MG / Atricon":
+        'https://news.google.com/rss/search?q=%22TCE-MG%22+Atricon&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "TCE-MG / IRB":
+        'https://news.google.com/rss/search?q=%22TCE-MG%22+IRB&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
 
     # --------------------------------------------------------
     # PESSOAS
