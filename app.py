@@ -1,9 +1,12 @@
 import streamlit as st
-from urllib.parse import quote
 import feedparser
 from datetime import datetime, timedelta
 import re
 import html
+import os
+import json
+from urllib.request import Request, urlopen
+from urllib.parse import urlencode
 from collections import Counter
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
@@ -366,25 +369,12 @@ TEMAS = {
         "educacional"
     ],
 
-    "📚 Obras literárias": [
-        "obra literária",
-        "obras literárias",
-        "livro",
-        "livros",
-        "literatura",
-        "romance",
-        "poesia",
-        "poeta",
-    ],
-
     "🏗️ Obras públicas": [
         "obra pública",
         "obras públicas",
-        "licitação de obras",
-        "contrato de obras",
+        "obras",
         "infraestrutura",
-        "construção civil",
-        "empreendimento público",
+        "construção"
     ],
 
     "🏢 Instituições": [
@@ -727,6 +717,296 @@ def classificar_abrangencia(veiculo):
 # ============================================================
 
 @st.cache_data(ttl=300, show_spinner=False)
+
+# ============================================================
+# REDES SOCIAIS — INSTAGRAM + X
+# ============================================================
+
+def get_secret(name, default=""):
+    """Lê Streamlit Secrets ou variável de ambiente sem quebrar o app."""
+    try:
+        value = st.secrets.get(name, default)
+    except Exception:
+        value = os.getenv(name, default)
+    return value or default
+
+
+def requisicao_json(url, headers=None, timeout=12):
+    try:
+        req = Request(
+            url,
+            headers=headers or {
+                "User-Agent": "Radar-TCE-MG/1.0"
+            }
+        )
+
+        with urlopen(req, timeout=timeout) as response:
+            return json.loads(
+                response.read().decode("utf-8")
+            )
+
+    except Exception:
+        return {}
+
+
+def buscar_x():
+
+    token = get_secret("X_BEARER_TOKEN")
+
+    if not token:
+        return []
+
+    query = (
+        '("TCE-MG" OR "TCEMG" OR '
+        '"Tribunal de Contas de Minas Gerais" OR '
+        '"Agostinho Patrus") lang:pt -is:retweet'
+    )
+
+    parametros = urlencode({
+        "query": query,
+        "max_results": "50",
+        "tweet.fields": "created_at,author_id,lang,public_metrics",
+        "expansions": "author_id",
+        "user.fields": "name,username"
+    })
+
+    dados = requisicao_json(
+        "https://api.x.com/2/tweets/search/recent?"
+        + parametros,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "User-Agent": "Radar-TCE-MG/1.0"
+        }
+    )
+
+    usuarios = {
+        u.get("id"): u
+        for u in dados.get("includes", {}).get("users", [])
+    }
+
+    resultado = []
+
+    for post in dados.get("data", []):
+
+        texto = post.get("text", "").strip()
+
+        if not texto:
+            continue
+
+        autor = usuarios.get(
+            post.get("author_id"),
+            {}
+        )
+
+        username = autor.get("username", "")
+        nome_autor = autor.get("name", username)
+
+        tweet_id = post.get("id", "")
+
+        temas = identificar_temas(
+            texto,
+            texto
+        )
+
+        pessoas = identificar_pessoas(
+            texto,
+            texto
+        )
+
+        instituicoes = identificar_instituicoes(
+            texto,
+            texto
+        )
+
+        data = None
+
+        if post.get("created_at"):
+            try:
+                data = datetime.fromisoformat(
+                    post["created_at"].replace(
+                        "Z",
+                        "+00:00"
+                    )
+                ).replace(
+                    tzinfo=None
+                )
+            except Exception:
+                data = datetime.now()
+
+        score = calcular_score(
+            texto,
+            texto,
+            temas,
+            pessoas,
+            instituicoes
+        )
+
+        resultado.append({
+            "titulo": texto,
+            "resumo": f"@{username} — {nome_autor}",
+            "veiculo": "X",
+            "monitoramento": "X",
+            "tipo_fonte": "X",
+            "link": (
+                f"https://x.com/{username}/status/{tweet_id}"
+                if username and tweet_id
+                else "https://x.com"
+            ),
+            "data": data,
+            "temas": temas,
+            "pessoas": pessoas,
+            "instituicoes": instituicoes,
+            "score": score,
+            "bolinha": (
+                "🔴" if score >= 85
+                else "🟠" if score >= 65
+                else "🟡" if score >= 45
+                else "⚪"
+            ),
+            "abrangencia": "Nacional",
+            "fonte_tipo": "social",
+            "rede_social": "X"
+        })
+
+    return resultado
+
+
+def buscar_instagram():
+
+    token = get_secret("INSTAGRAM_ACCESS_TOKEN")
+    user_ids = get_secret(
+        "INSTAGRAM_USER_IDS"
+    )
+
+    if not token or not user_ids:
+        return []
+
+    resultado = []
+
+    for user_id in [
+        x.strip()
+        for x in str(user_ids).split(",")
+        if x.strip()
+    ]:
+
+        parametros = urlencode({
+            "fields": (
+                "id,caption,permalink,timestamp,"
+                "media_type,username"
+            ),
+            "limit": "50",
+            "access_token": token
+        })
+
+        dados = requisicao_json(
+            f"https://graph.facebook.com/{user_id}/media?"
+            + parametros
+        )
+
+        for post in dados.get("data", []):
+
+            texto = (
+                post.get("caption")
+                or ""
+            ).strip()
+
+            if not texto:
+                continue
+
+            temas = identificar_temas(
+                texto,
+                texto
+            )
+
+            pessoas = identificar_pessoas(
+                texto,
+                texto
+            )
+
+            instituicoes = identificar_instituicoes(
+                texto,
+                texto
+            )
+
+            data = None
+
+            if post.get("timestamp"):
+                try:
+                    data = datetime.fromisoformat(
+                        post["timestamp"].replace(
+                            "Z",
+                            "+00:00"
+                        )
+                    ).replace(
+                        tzinfo=None
+                    )
+                except Exception:
+                    data = datetime.now()
+
+            score = calcular_score(
+                texto,
+                texto,
+                temas,
+                pessoas,
+                instituicoes
+            )
+
+            username = (
+                post.get("username")
+                or "Instagram"
+            )
+
+            resultado.append({
+                "titulo": texto,
+                "resumo": f"@{username}",
+                "veiculo": "Instagram",
+                "monitoramento": "Instagram",
+                "tipo_fonte": "Instagram",
+                "link": post.get(
+                    "permalink",
+                    "https://www.instagram.com/"
+                ),
+                "data": data,
+                "temas": temas,
+                "pessoas": pessoas,
+                "instituicoes": instituicoes,
+                "score": score,
+                "bolinha": (
+                    "🔴" if score >= 85
+                    else "🟠" if score >= 65
+                    else "🟡" if score >= 45
+                    else "⚪"
+                ),
+                "abrangencia": "Nacional",
+                "fonte_tipo": "social",
+                "rede_social": "Instagram"
+            })
+
+    return resultado
+
+
+def buscar_redes_sociais():
+
+    posts = []
+
+    try:
+        posts.extend(
+            buscar_x()
+        )
+    except Exception:
+        pass
+
+    try:
+        posts.extend(
+            buscar_instagram()
+        )
+    except Exception:
+        pass
+
+    return posts
+
+
+
 def buscar_noticias():
 
     noticias = []
@@ -1285,6 +1565,12 @@ status_area.markdown(
 
 noticias = buscar_noticias()
 
+# Redes sociais são opcionais: sem credenciais, o Radar continua
+# funcionando normalmente apenas com a imprensa.
+noticias.extend(
+    buscar_redes_sociais()
+)
+
 status_area.empty()
 
 
@@ -1303,8 +1589,7 @@ periodo = st.radio(
         "Últimos 7 dias",
     ],
     horizontal=True,
-    label_visibility="collapsed",
-    key="periodo"
+    label_visibility="collapsed"
 )
 
 
@@ -1352,7 +1637,6 @@ for noticia in noticias_periodo:
 
 
 
-
 # ============================================================
 # PAINEL SUPERIOR
 # ============================================================
@@ -1375,12 +1659,14 @@ col1, col2, col3 = st.columns(
 def box_title(text):
     st.markdown(
         f"""
-        <div style="
+        <div class="dashboard-panel-title" style="
             background:rgba(100,116,139,.07);
             border:1px solid rgba(100,116,139,.10);
             border-radius:9px;
             padding:8px 12px;
             margin:-4px -4px 12px -4px;
+            position:relative;
+            z-index:5;
             font-size:17px;
             font-weight:750;
             color:#27324a;
@@ -1389,15 +1675,6 @@ def box_title(text):
         </div>
         """,
         unsafe_allow_html=True
-    )
-
-
-def filtro_link(label, param, value):
-    """Link que aplica o filtro e leva a tela direto às notícias."""
-    return (
-        f'<a href="?{param}={quote(str(value))}#noticias-monitoradas" '
-        f'style="text-decoration:none;color:#27324a;font-weight:650;">'
-        f'{label}</a>'
     )
 
 
@@ -1419,7 +1696,7 @@ with col1:
                     font-size:44px;
                     font-weight:800;
                     line-height:1;
-                    margin:-2px 0 0 0;
+                    margin:0;
                     color:#2f3340;
                 ">{len(criticas)}</div>
                 """,
@@ -1427,16 +1704,6 @@ with col1:
             )
 
             st.caption("merecem atenção imediata")
-
-            if criticas:
-                st.markdown(
-                    filtro_link(
-                        f"Ver {len(criticas)} matéria(s) →",
-                        "filtro_relevancia",
-                        "🔴 Crítica"
-                    ),
-                    unsafe_allow_html=True
-                )
 
         with r2:
 
@@ -1448,7 +1715,7 @@ with col1:
                     font-size:44px;
                     font-weight:800;
                     line-height:1;
-                    margin:-2px 0 0 0;
+                    margin:0;
                     color:#2f3340;
                 ">{len(altas)}</div>
                 """,
@@ -1457,179 +1724,135 @@ with col1:
 
             st.caption("potencialmente importantes")
 
-            if altas:
-                st.markdown(
-                    filtro_link(
-                        f"Ver {len(altas)} matéria(s) →",
-                        "filtro_relevancia",
-                        "🟠 Alta"
-                    ),
-                    unsafe_allow_html=True
-                )
-
 
 with col2:
 
     with st.container(border=True, height=310):
 
-        box_title("🔥 Assuntos quentes")
+        st.markdown(
+            """
+            <div style="
+                background:rgba(100,116,139,.07);
+                border:1px solid rgba(100,116,139,.10);
+                border-radius:9px;
+                padding:8px 12px;
+                margin:-4px -4px 12px -4px;
+                font-size:17px;
+                font-weight:750;
+                color:#27324a;
+            ">
+                🔥 Assuntos quentes
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
         temas_quentes = contador_temas.most_common(20)
 
-        if temas_quentes:
+        temas_html = ""
 
-            temas_html = ""
+        for tema, quantidade in temas_quentes:
 
-            for tema, quantidade in temas_quentes:
+            temas_html += f"""
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                padding:7px 3px;
+                font-size:14px;
+                color:#27324a;
+            ">
+                <span><strong>{tema}</strong></span>
+                <strong>{quantidade}</strong>
+            </div>
+            """
 
-                temas_html += f"""
-                <div style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                    gap:10px;
-                    padding:7px 3px;
-                    border-bottom:1px solid #eef1f5;
-                    font-size:14px;
-                ">
-                    <span>
-                        {filtro_link(tema, "filtro_tema", tema)}
-                    </span>
-                    <strong>{quantidade}</strong>
-                </div>
-                """
+        if not temas_html:
 
-            st.markdown(
-                f"""
-                <div style="
-                    height:232px;
-                    overflow-y:auto;
-                    overflow-x:hidden;
-                    padding-right:6px;
-                ">
-                    {temas_html}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            temas_html = """
+            <div style="color:#98a2b3;padding:8px 3px;">
+                Nenhum assunto identificado.
+            </div>
+            """
 
-        else:
-
-            st.caption("Nenhum assunto identificado.")
+        st.markdown(
+            f"""
+            <div style="
+                height:225px;
+                overflow-y:auto;
+                overflow-x:hidden;
+                padding-right:6px;
+            ">
+                {temas_html}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 
 with col3:
 
     with st.container(border=True, height=310):
 
-        box_title("👥 Pessoas mais citadas")
+        st.markdown(
+            """
+            <div style="
+                background:rgba(100,116,139,.07);
+                border:1px solid rgba(100,116,139,.10);
+                border-radius:9px;
+                padding:8px 12px;
+                margin:-4px -4px 12px -4px;
+                font-size:17px;
+                font-weight:750;
+                color:#27324a;
+            ">
+                👥 Pessoas mais citadas
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
         pessoas_quentes = contador_pessoas.most_common(20)
 
-        if pessoas_quentes:
+        pessoas_html = ""
 
-            pessoas_html = ""
+        for pessoa, quantidade in pessoas_quentes:
 
-            for pessoa, quantidade in pessoas_quentes:
+            pessoas_html += f"""
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                padding:7px 3px;
+                font-size:14px;
+                color:#27324a;
+            ">
+                <span><strong>{pessoa}</strong></span>
+                <strong>{quantidade}</strong>
+            </div>
+            """
 
-                pessoas_html += f"""
-                <div style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                    gap:10px;
-                    padding:7px 3px;
-                    border-bottom:1px solid #eef1f5;
-                    font-size:14px;
-                ">
-                    <span>
-                        {filtro_link(pessoa, "filtro_pessoa", pessoa)}
-                    </span>
-                    <strong>{quantidade}</strong>
-                </div>
-                """
+        if not pessoas_html:
 
-            st.markdown(
-                f"""
-                <div style="
-                    height:232px;
-                    overflow-y:auto;
-                    overflow-x:hidden;
-                    padding-right:6px;
-                ">
-                    {pessoas_html}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-        else:
-
-            st.caption("Nenhuma pessoa identificada.")
-
-
-# ============================================================
-# DESTAQUE — MATÉRIA MAIS IMPORTANTE DOS ÚLTIMOS 7 DIAS
-# ============================================================
-
-noticia_destaque_7d = None
-
-if noticias:
-
-    noticia_destaque_7d = max(
-        noticias,
-        key=lambda n: n.get("score", 0)
-    )
-
-if noticia_destaque_7d and noticia_destaque_7d.get("score", 0) >= 65:
-
-    with st.container(border=True):
+            pessoas_html = """
+            <div style="color:#98a2b3;padding:8px 3px;">
+                Nenhuma pessoa identificada.
+            </div>
+            """
 
         st.markdown(
-            "**⭐ Matéria mais importante dos últimos 7 dias**"
+            f"""
+            <div style="
+                height:225px;
+                overflow-y:auto;
+                overflow-x:hidden;
+                padding-right:6px;
+            ">
+                {pessoas_html}
+            </div>
+            """,
+            unsafe_allow_html=True
         )
-
-        nivel_destaque = (
-            "🔴 Crítica"
-            if noticia_destaque_7d["score"] >= 85
-            else "🟠 Alta relevância"
-        )
-
-        d1, d2 = st.columns(
-            [5.5, 1],
-            gap="medium"
-        )
-
-        with d1:
-
-            st.markdown(
-                f"### {noticia_destaque_7d['titulo']}"
-            )
-
-            st.caption(
-                f"{nivel_destaque}  •  "
-                f"📰 {noticia_destaque_7d['veiculo']}"
-            )
-
-            resumo_destaque = (
-                noticia_destaque_7d.get("resumo") or ""
-            )
-
-            if len(resumo_destaque) > 300:
-                resumo_destaque = (
-                    resumo_destaque[:300] + "..."
-                )
-
-            if resumo_destaque:
-                st.write(resumo_destaque)
-
-        with d2:
-
-            st.link_button(
-                "Ler matéria ↗",
-                noticia_destaque_7d["link"],
-                key="ler_destaque_7dias"
-            )
 
 
 # ============================================================
@@ -1671,30 +1894,6 @@ with st.container(border=True):
         )
 
 
-
-# Valores padrão usados pelos atalhos clicáveis do painel.
-if "filtro_pessoa" not in st.session_state:
-    st.session_state["filtro_pessoa"] = "Todas"
-
-if "filtro_tema" not in st.session_state:
-    st.session_state["filtro_tema"] = "Todos"
-
-if "filtro_relevancia" not in st.session_state:
-    st.session_state["filtro_relevancia"] = "Todas"
-
-# Atalhos vindos dos painéis superiores.
-# O fragmento #noticias-monitoradas faz o navegador descer automaticamente.
-qp = st.query_params
-
-if qp.get("filtro_pessoa"):
-    st.session_state["filtro_pessoa"] = qp.get("filtro_pessoa")
-
-if qp.get("filtro_tema"):
-    st.session_state["filtro_tema"] = qp.get("filtro_tema")
-
-if qp.get("filtro_relevancia"):
-    st.session_state["filtro_relevancia"] = qp.get("filtro_relevancia")
-
 # ============================================================
 # FILTROS
 # ============================================================
@@ -1710,15 +1909,13 @@ f1, f2, f3, f4 = st.columns(4)
 with f1:
     filtro_pessoa = st.selectbox(
         "👤 Pessoa",
-        ["Todas"] + todas_pessoas,
-        key="filtro_pessoa"
+        ["Todas"] + todas_pessoas
     )
 
 with f2:
     filtro_tema = st.selectbox(
         "🏷️ Tema",
-        ["Todos"] + list(TEMAS.keys()),
-        key="filtro_tema"
+        ["Todos"] + list(TEMAS.keys())
     )
 
 with f3:
@@ -1728,21 +1925,26 @@ with f3:
     )
 
 with f4:
+    filtro_canal = st.selectbox(
+        "📡 Canal",
+        ["Todos", "📰 Imprensa", "📸 Instagram", "𝕏 X"]
+    )
+
+f5, f6, f7 = st.columns(3)
+
+with f5:
     filtro_abrangencia = st.selectbox(
         "🌎 Abrangência",
         ["Todas", "Minas Gerais", "Nacional"]
     )
 
-f5, f6 = st.columns(2)
-
-with f5:
+with f6:
     filtro_relevancia = st.selectbox(
         "🎯 Relevância",
-        ["Todas", "🔴 Crítica", "🟠 Alta", "🟡 Média", "⚪ Menção"],
-        key="filtro_relevancia"
+        ["Todas", "🔴 Crítica", "🟠 Alta", "🟡 Média", "⚪ Menção"]
     )
 
-with f6:
+with f7:
     busca = st.text_input(
         "🔍 Buscar palavra",
         placeholder="Ex.: Copasa, mineração, transporte..."
@@ -1776,6 +1978,32 @@ if filtro_fonte != "Todas":
         n for n in filtradas
         if n["monitoramento"] == filtro_fonte
     ]
+
+if filtro_canal != "Todos":
+
+    tipo_canal = {
+        "📰 Imprensa": "imprensa",
+        "📸 Instagram": "social",
+        "𝕏 X": "social",
+    }[filtro_canal]
+
+    if filtro_canal == "📸 Instagram":
+        filtradas = [
+            n for n in filtradas
+            if n.get("rede_social") == "Instagram"
+        ]
+
+    elif filtro_canal == "𝕏 X":
+        filtradas = [
+            n for n in filtradas
+            if n.get("rede_social") == "X"
+        ]
+
+    else:
+        filtradas = [
+            n for n in filtradas
+            if n.get("fonte_tipo", "imprensa") == "imprensa"
+        ]
 
 if filtro_abrangencia != "Todas":
     filtradas = [
@@ -2052,12 +2280,13 @@ st.download_button(
 # RESULTADOS
 # ============================================================
 
-st.markdown(
-    '<div id="noticias-monitoradas"></div>',
-    unsafe_allow_html=True
-)
-
 st.subheader("📰 Notícias monitoradas")
+
+if filtro_canal == "📸 Instagram":
+    st.caption("📸 Mostrando publicações monitoradas do Instagram.")
+elif filtro_canal == "𝕏 X":
+    st.caption("𝕏 Mostrando posts monitorados do X.")
+
 
 st.caption(
     f"{len(filtradas)} notícias encontradas no período selecionado."
