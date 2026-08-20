@@ -907,7 +907,7 @@ st.markdown("""
 
 .block-container {
     max-width: 1280px;
-    padding-top: 1.4rem;
+    padding-top: 3.2rem;
     padding-bottom: 3rem;
 }
 
@@ -921,7 +921,7 @@ st.markdown("""
 
 .radar-brand {
     display:flex;
-    align-items:center;
+    align-items:flex-start;
     gap:14px;
 }
 
@@ -934,6 +934,7 @@ st.markdown("""
     font-size:30px;
     font-weight:800;
     letter-spacing:-.8px;
+    line-height:1.18;
     color:#18233a;
 }
 
@@ -1360,7 +1361,7 @@ with col1:
             st.markdown("🔴 **Críticas**")
 
             st.markdown(
-                f"<div style='font-size:42px;font-weight:800;line-height:1;margin:8px 0 0 0'>{len(criticas)}</div>",
+                f"<div style='font-size:42px;font-weight:800;line-height:1;margin:-2px 0 0 0'>{len(criticas)}</div>",
                 unsafe_allow_html=True
             )
 
@@ -1373,7 +1374,7 @@ with col1:
             st.markdown("🟠 **Alta relevância**")
 
             st.markdown(
-                f"<div style='font-size:42px;font-weight:800;line-height:1;margin:8px 0 0 0'>{len(altas)}</div>",
+                f"<div style='font-size:42px;font-weight:800;line-height:1;margin:-2px 0 0 0'>{len(altas)}</div>",
                 unsafe_allow_html=True
             )
 
