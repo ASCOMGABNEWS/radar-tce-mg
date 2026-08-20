@@ -1519,6 +1519,7 @@ status_area.markdown(
 
 noticias = buscar_noticias()
 
+
 status_area.empty()
 
 st.markdown("### 📡 Monitoramento em tempo real")
