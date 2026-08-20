@@ -1519,6 +1519,21 @@ status_area.markdown(
 
 noticias = buscar_noticias()
 
+# Análise de relevância com IA
+if client and noticias:
+    for noticia in noticias:
+        analise = analisar_relevancia_ia(
+            noticia.get("titulo", ""),
+            noticia.get("resumo", ""),
+            noticia.get("veiculo", ""),
+            noticia.get("abrangencia", ""),
+            noticia.get("instituicoes", "")
+        )
+
+        noticia["ia_nota"] = analise["nota"]
+        noticia["ia_nivel"] = analise["nivel"]
+        noticia["ia_motivo"] = analise["motivo"]
+
 status_area.empty()
 
 st.markdown("### 📡 Monitoramento em tempo real")
