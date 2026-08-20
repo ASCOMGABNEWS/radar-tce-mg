@@ -1337,6 +1337,7 @@ for noticia in noticias_periodo:
 
 
 
+
 # ============================================================
 # PAINEL SUPERIOR
 # ============================================================
@@ -1365,8 +1366,6 @@ def box_title(text):
             border-radius:9px;
             padding:8px 12px;
             margin:-4px -4px 12px -4px;
-            position:relative;
-            z-index:5;
             font-size:17px;
             font-weight:750;
             color:#27324a;
@@ -1396,7 +1395,7 @@ with col1:
                     font-size:44px;
                     font-weight:800;
                     line-height:1;
-                    margin:0;
+                    margin:-2px 0 0 0;
                     color:#2f3340;
                 ">{len(criticas)}</div>
                 """,
@@ -1404,6 +1403,14 @@ with col1:
             )
 
             st.caption("merecem atenção imediata")
+
+            if criticas:
+                if st.button(
+                    f"Ver {len(criticas)} matéria(s) →",
+                    key="ver_criticas"
+                ):
+                    st.session_state["filtro_relevancia"] = "🔴 Crítica"
+                    st.rerun()
 
         with r2:
 
@@ -1415,7 +1422,7 @@ with col1:
                     font-size:44px;
                     font-weight:800;
                     line-height:1;
-                    margin:0;
+                    margin:-2px 0 0 0;
                     color:#2f3340;
                 ">{len(altas)}</div>
                 """,
@@ -1424,135 +1431,151 @@ with col1:
 
             st.caption("potencialmente importantes")
 
+            if altas:
+                if st.button(
+                    f"Ver {len(altas)} matéria(s) →",
+                    key="ver_altas"
+                ):
+                    st.session_state["filtro_relevancia"] = "🟠 Alta"
+                    st.rerun()
+
 
 with col2:
 
     with st.container(border=True, height=310):
 
-        st.markdown(
-            """
-            <div style="
-                background:rgba(100,116,139,.07);
-                border:1px solid rgba(100,116,139,.10);
-                border-radius:9px;
-                padding:8px 12px;
-                margin:-4px -4px 12px -4px;
-                font-size:17px;
-                font-weight:750;
-                color:#27324a;
-            ">
-                🔥 Assuntos quentes
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        box_title("🔥 Assuntos quentes")
 
         temas_quentes = contador_temas.most_common(20)
 
-        temas_html = ""
+        with st.container(height=245):
 
-        for tema, quantidade in temas_quentes:
+            if temas_quentes:
 
-            temas_html += f"""
-            <div style="
-                display:flex;
-                justify-content:space-between;
-                align-items:center;
-                padding:7px 3px;
-                font-size:14px;
-                color:#27324a;
-            ">
-                <span><strong>{tema}</strong></span>
-                <strong>{quantidade}</strong>
-            </div>
-            """
+                for i, (tema, quantidade) in enumerate(temas_quentes):
 
-        if not temas_html:
+                    c1, c2 = st.columns(
+                        [6, 1],
+                        gap="small"
+                    )
 
-            temas_html = """
-            <div style="color:#98a2b3;padding:8px 3px;">
-                Nenhum assunto identificado.
-            </div>
-            """
+                    with c1:
+                        if st.button(
+                            tema,
+                            key=f"tema_quente_{i}_{tema}"
+                        ):
+                            st.session_state["filtro_tema"] = tema
+                            st.rerun()
 
-        st.markdown(
-            f"""
-            <div style="
-                height:225px;
-                overflow-y:auto;
-                overflow-x:hidden;
-                padding-right:6px;
-            ">
-                {temas_html}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+                    with c2:
+                        st.markdown(f"**{quantidade}**")
+
+            else:
+
+                st.caption(
+                    "Nenhum assunto identificado."
+                )
 
 
 with col3:
 
     with st.container(border=True, height=310):
 
-        st.markdown(
-            """
-            <div style="
-                background:rgba(100,116,139,.07);
-                border:1px solid rgba(100,116,139,.10);
-                border-radius:9px;
-                padding:8px 12px;
-                margin:-4px -4px 12px -4px;
-                font-size:17px;
-                font-weight:750;
-                color:#27324a;
-            ">
-                👥 Pessoas mais citadas
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        box_title("👥 Pessoas mais citadas")
 
         pessoas_quentes = contador_pessoas.most_common(20)
 
-        pessoas_html = ""
+        with st.container(height=245):
 
-        for pessoa, quantidade in pessoas_quentes:
+            if pessoas_quentes:
 
-            pessoas_html += f"""
-            <div style="
-                display:flex;
-                justify-content:space-between;
-                align-items:center;
-                padding:7px 3px;
-                font-size:14px;
-                color:#27324a;
-            ">
-                <span><strong>{pessoa}</strong></span>
-                <strong>{quantidade}</strong>
-            </div>
-            """
+                for i, (pessoa, quantidade) in enumerate(pessoas_quentes):
 
-        if not pessoas_html:
+                    c1, c2 = st.columns(
+                        [6, 1],
+                        gap="small"
+                    )
 
-            pessoas_html = """
-            <div style="color:#98a2b3;padding:8px 3px;">
-                Nenhuma pessoa identificada.
-            </div>
-            """
+                    with c1:
+                        if st.button(
+                            pessoa,
+                            key=f"pessoa_quente_{i}_{pessoa}"
+                        ):
+                            st.session_state["filtro_pessoa"] = pessoa
+                            st.rerun()
+
+                    with c2:
+                        st.markdown(f"**{quantidade}**")
+
+            else:
+
+                st.caption(
+                    "Nenhuma pessoa identificada."
+                )
+
+
+# ============================================================
+# DESTAQUE — MATÉRIA MAIS IMPORTANTE DOS ÚLTIMOS 7 DIAS
+# ============================================================
+
+noticia_destaque_7d = None
+
+if noticias:
+
+    noticia_destaque_7d = max(
+        noticias,
+        key=lambda n: n.get("score", 0)
+    )
+
+if noticia_destaque_7d and noticia_destaque_7d.get("score", 0) >= 65:
+
+    with st.container(border=True):
 
         st.markdown(
-            f"""
-            <div style="
-                height:225px;
-                overflow-y:auto;
-                overflow-x:hidden;
-                padding-right:6px;
-            ">
-                {pessoas_html}
-            </div>
-            """,
-            unsafe_allow_html=True
+            "**⭐ Matéria mais importante dos últimos 7 dias**"
         )
+
+        nivel_destaque = (
+            "🔴 Crítica"
+            if noticia_destaque_7d["score"] >= 85
+            else "🟠 Alta relevância"
+        )
+
+        d1, d2 = st.columns(
+            [5.5, 1],
+            gap="medium"
+        )
+
+        with d1:
+
+            st.markdown(
+                f"### {noticia_destaque_7d['titulo']}"
+            )
+
+            st.caption(
+                f"{nivel_destaque}  •  "
+                f"📰 {noticia_destaque_7d['veiculo']}"
+            )
+
+            resumo_destaque = (
+                noticia_destaque_7d.get("resumo") or ""
+            )
+
+            if len(resumo_destaque) > 300:
+                resumo_destaque = (
+                    resumo_destaque[:300] + "..."
+                )
+
+            if resumo_destaque:
+                st.write(resumo_destaque)
+
+        with d2:
+
+            st.link_button(
+                "Ler matéria ↗",
+                noticia_destaque_7d["link"],
+                key="ler_destaque_7dias"
+            )
 
 
 # ============================================================
@@ -1594,6 +1617,17 @@ with st.container(border=True):
         )
 
 
+
+# Valores padrão usados pelos atalhos clicáveis do painel.
+if "filtro_pessoa" not in st.session_state:
+    st.session_state["filtro_pessoa"] = "Todas"
+
+if "filtro_tema" not in st.session_state:
+    st.session_state["filtro_tema"] = "Todos"
+
+if "filtro_relevancia" not in st.session_state:
+    st.session_state["filtro_relevancia"] = "Todas"
+
 # ============================================================
 # FILTROS
 # ============================================================
@@ -1609,13 +1643,15 @@ f1, f2, f3, f4 = st.columns(4)
 with f1:
     filtro_pessoa = st.selectbox(
         "👤 Pessoa",
-        ["Todas"] + todas_pessoas
+        ["Todas"] + todas_pessoas,
+        key="filtro_pessoa"
     )
 
 with f2:
     filtro_tema = st.selectbox(
         "🏷️ Tema",
-        ["Todos"] + list(TEMAS.keys())
+        ["Todos"] + list(TEMAS.keys()),
+        key="filtro_tema"
     )
 
 with f3:
@@ -1635,7 +1671,8 @@ f5, f6 = st.columns(2)
 with f5:
     filtro_relevancia = st.selectbox(
         "🎯 Relevância",
-        ["Todas", "🔴 Crítica", "🟠 Alta", "🟡 Média", "⚪ Menção"]
+        ["Todas", "🔴 Crítica", "🟠 Alta", "🟡 Média", "⚪ Menção"],
+        key="filtro_relevancia"
     )
 
 with f6:
