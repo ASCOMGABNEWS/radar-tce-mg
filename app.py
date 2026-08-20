@@ -3,12 +3,13 @@ from zoneinfo import ZoneInfo
 FUSO_BRASIL = ZoneInfo("America/Sao_Paulo")
 
 def formatar_horario_noticia(data):
-    """Exibe o horário da notícia no fuso de Brasília."""
+    """Exibe a data da notícia no horário de Brasília."""
     if not data:
         return ""
     try:
         if data.tzinfo is None:
-            return data.strftime("%d/%m/%Y %H:%M")
+            # Compatibilidade com registros antigos: o feed representa UTC.
+            data = data.replace(tzinfo=ZoneInfo("UTC"))
         return data.astimezone(FUSO_BRASIL).strftime("%d/%m/%Y %H:%M")
     except Exception:
         return ""
@@ -474,9 +475,10 @@ def obter_data(item):
         ):
 
             data_utc = datetime(
-                *item.published_parsed[:6]
-            ).replace(tzinfo=ZoneInfo("UTC"))
-            return data_utc.astimezone(FUSO_BRASIL).replace(tzinfo=None)
+                *item.published_parsed[:6],
+                tzinfo=ZoneInfo("UTC")
+            )
+            return data_utc.astimezone(FUSO_BRASIL)
 
     except Exception:
         pass
@@ -950,7 +952,7 @@ def buscar_noticias():
     links = set()
 
     limite = (
-        datetime.now(FUSO_BRASIL).replace(tzinfo=None)
+        datetime.now(FUSO_BRASIL)
         - timedelta(days=7)
     )
 
@@ -1132,7 +1134,7 @@ def buscar_noticias():
             x["score"],
 
             x["data"]
-            or datetime.min
+            or datetime.min.replace(tzinfo=FUSO_BRASIL)
 
         ),
 
@@ -1150,6 +1152,49 @@ def buscar_noticias():
 
 st.markdown("""
 <style>
+.st-key-metricas-centralizadas [data-testid="stMetric"] {
+    text-align: center;
+}
+.st-key-metricas-centralizadas [data-testid="stMetricLabel"] {
+    justify-content: center;
+    width: 100%;
+}
+.st-key-metricas-centralizadas [data-testid="stMetricValue"] {
+    justify-content: center;
+    width: 100%;
+}
+.st-key-apenas-relevantes-box {
+    background: #eef0f3;
+    border-radius: 12px;
+    padding: 10px 14px 4px 14px;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.st-key-apenas-relevantes-box [data-testid="stCheckbox"] {
+    justify-content: center;
+}
+.st-key-abrangencia-estadual button {
+    background: #c62828 !important;
+    color: white !important;
+    border: 1px solid #c62828 !important;
+}
+.st-key-abrangencia-estadual button:hover {
+    background: #a91f1f !important;
+    color: white !important;
+    border-color: #a91f1f !important;
+}
+.st-key-abrangencia-nacional button {
+    background: #2e7d32 !important;
+    color: white !important;
+    border: 1px solid #2e7d32 !important;
+}
+.st-key-abrangencia-nacional button:hover {
+    background: #256628 !important;
+    color: white !important;
+    border-color: #256628 !important;
+}
 #MainMenu, footer {visibility: hidden;}
 
 .block-container {
@@ -1465,7 +1510,7 @@ st.markdown("""
 # CABEÇALHO
 # ============================================================
 
-agora = datetime.now(FUSO_BRASIL).replace(tzinfo=None)
+agora = datetime.now(FUSO_BRASIL)
 
 st.markdown(
     f"""
@@ -1809,7 +1854,7 @@ with col3:
 
 # O destaque considera sempre os últimos 7 dias, independentemente
 # do período selecionado no filtro principal.
-limite_destaque_7d = datetime.now(FUSO_BRASIL).replace(tzinfo=None) - timedelta(days=7)
+limite_destaque_7d = datetime.now(FUSO_BRASIL) - timedelta(days=7)
 
 noticias_7d = [
     n for n in noticias
@@ -1827,7 +1872,7 @@ if materias_relevantes_7d:
         materias_relevantes_7d,
         key=lambda n: (
             n.get("score", 0),
-            n.get("data") or datetime.min
+            n.get("data") or datetime.min.replace(tzinfo=FUSO_BRASIL)
         )
     )
 
@@ -1913,8 +1958,7 @@ if materias_relevantes_7d:
 # MÉTRICAS
 # ============================================================
 
-with st.container(border=True):
-
+with st.container(border=True, key="metricas-centralizadas"):
     m1, m2, m3, m4, m5 = st.columns(5)
 
     with m1:
@@ -1994,13 +2038,7 @@ with f4:
         ["Todas"] + list(INSTITUICOES_FILTRO.keys())
     )
 
-# Abrangência é controlada pelos botões ao lado de “Notícias monitoradas”.
-# Eles funcionam como filtros do próprio Streamlit e não são links.
-if "filtro_abrangencia" not in st.session_state:
-    st.session_state.filtro_abrangencia = "Todas"
-filtro_abrangencia = st.session_state.filtro_abrangencia
-
-f5, f6, f7 = st.columns(3)
+f5, f6, f7 = st.columns([1.05, 1.05, 0.85])
 
 with f5:
     filtro_relevancia = st.selectbox(
@@ -2015,9 +2053,15 @@ with f6:
     )
 
 with f7:
-    apenas_relevantes = st.checkbox(
-        "🎯 Apenas relevantes (🔴 + 🟠)"
-    )
+    with st.container(key="apenas-relevantes-box"):
+        apenas_relevantes = st.checkbox(
+            "🎯 Apenas relevantes (🔴 + 🟠)"
+        )
+
+# A abrangência agora é controlada pelos botões ao lado de
+# 'Notícias monitoradas', sem abrir outra página.
+filtro_abrangencia = st.session_state.get("abrangencia_botao", "Todas")
+
 
 # ============================================================
 # APLICA FILTROS
@@ -2161,7 +2205,7 @@ def gerar_pdf_clipping(noticias_clipping):
 
     story = []
 
-    data_geracao = datetime.now(FUSO_BRASIL).replace(tzinfo=None).strftime("%d/%m/%Y às %H:%M")
+    data_geracao = datetime.now().strftime("%d/%m/%Y às %H:%M")
 
     story.append(Paragraph("CLIPPING TCE-MG", titulo))
     story.append(
@@ -2313,7 +2357,7 @@ st.download_button(
     data=pdf_bytes,
     file_name=(
         f"clipping_tce_mg_"
-        f"{datetime.now(FUSO_BRASIL).replace(tzinfo=None).strftime('%Y-%m-%d')}.pdf"
+        f"{datetime.now().strftime('%Y-%m-%d')}.pdf"
     ),
     mime="application/pdf",
 )
@@ -2323,42 +2367,39 @@ st.download_button(
 # RESULTADOS
 # ============================================================
 
-# Botões de abrangência: filtros na mesma página.
-st.markdown("""
-<style>
-/* Esta é a linha que contém o título “Notícias monitoradas”. */
-div[data-testid="stHorizontalBlock"]:has(h3) div[data-testid="column"]:nth-child(2) button {
-    background:#d92d20 !important;
-    color:#ffffff !important;
-    border:1px solid #d92d20 !important;
-    font-weight:700 !important;
-}
-div[data-testid="stHorizontalBlock"]:has(h3) div[data-testid="column"]:nth-child(3) button {
-    background:#039855 !important;
-    color:#ffffff !important;
-    border:1px solid #039855 !important;
-    font-weight:700 !important;
-}
-</style>
-""", unsafe_allow_html=True)
+# ============================================================
+# RESULTADOS
+# ============================================================
+col_titulo, col_estadual, col_nacional = st.columns([4.6, 1.8, 1.8])
 
-titulo_col, mg_col, br_col = st.columns([5.2, 1.9, 1.9], gap="small")
-with titulo_col:
+with col_titulo:
     st.subheader("📰 Notícias monitoradas")
-with mg_col:
-    mg_clicado = st.button("🇧🇷  MG • Estadual", key="abrangencia_mg", use_container_width=True)
-    if mg_clicado:
-        st.session_state.filtro_abrangencia = (
-            "Todas" if st.session_state.filtro_abrangencia == "Minas Gerais" else "Minas Gerais"
-        )
-        st.rerun()
-with br_col:
-    br_clicado = st.button("🇧🇷  BR • Nacional", key="abrangencia_br", use_container_width=True)
-    if br_clicado:
-        st.session_state.filtro_abrangencia = (
-            "Todas" if st.session_state.filtro_abrangencia == "Nacional" else "Nacional"
-        )
-        st.rerun()
+
+with col_estadual:
+    with st.container(key="abrangencia-estadual"):
+        if st.button(
+            "Abrangência Estadual - MG",
+            key="btn_abrangencia_estadual",
+            use_container_width=True
+        ):
+            if st.session_state.get("abrangencia_botao", "Todas") == "Minas Gerais":
+                st.session_state["abrangencia_botao"] = "Todas"
+            else:
+                st.session_state["abrangencia_botao"] = "Minas Gerais"
+            st.rerun()
+
+with col_nacional:
+    with st.container(key="abrangencia-nacional"):
+        if st.button(
+            "Abrangência Nacional - BR",
+            key="btn_abrangencia_nacional",
+            use_container_width=True
+        ):
+            if st.session_state.get("abrangencia_botao", "Todas") == "Nacional":
+                st.session_state["abrangencia_botao"] = "Todas"
+            else:
+                st.session_state["abrangencia_botao"] = "Nacional"
+            st.rerun()
 
 st.caption(
     f"{len(filtradas)} notícias encontradas no período selecionado."
