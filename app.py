@@ -880,6 +880,17 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
+st.markdown("""
+<style>
+.nav-note {
+    font-size: 12px;
+    opacity: .65;
+    margin-bottom: 8px;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # ============================================================
 # CABEÇALHO
 # ============================================================
@@ -991,67 +1002,559 @@ noticias_periodo = [
 ]
 
 
+
 # ============================================================
-# RADAR DE ATENÇÃO
+# CONTADORES PARA O PAINEL
 # ============================================================
 
-criticas = [
+contador_temas = Counter()
+contador_pessoas = Counter()
 
-    n for n in noticias_periodo
+for noticia in noticias_periodo:
 
-    if n["score"] >= 85
-]
+    for tema in noticia["temas"]:
+        contador_temas[tema] += 1
 
+    for pessoa in noticia["pessoas"]:
+        contador_pessoas[pessoa] += 1
 
-altas = [
+# ============================================================
+# PAINEL INTERATIVO
+# ============================================================
 
-    n for n in noticias_periodo
-
-    if 65 <= n["score"] < 85
-]
-
-
-st.subheader(
-    "🚨 Radar de atenção"
-)
-
-
-col1, col2 = st.columns(
-    2
-)
-
-
-with col1:
-
-    st.metric(
-        "🔴 Críticas",
-        len(criticas)
-    )
+tabs = st.tabs([
+    "🏠 Radar",
+    "📰 Notícias",
+    "👥 Pessoas",
+    "🏷️ Assuntos",
+    "🗞️ Veículos",
+    "🏛️ Instituições",
+    "📄 Clipping",
+])
 
 
-with col2:
+# ============================================================
+# ABA RADAR
+# ============================================================
 
-    st.metric(
-        "🟠 Alta relevância",
-        len(altas)
-    )
+with tabs[0]:
 
+    criticas = [
+        n for n in noticias_periodo
+        if n["score"] >= 85
+    ]
 
-if criticas:
+    altas = [
+        n for n in noticias_periodo
+        if 65 <= n["score"] < 85
+    ]
 
-    st.markdown(
-        "#### 🔴 Atenção imediata"
-    )
+    st.subheader("🚨 O que merece atenção")
 
+    atencao = [
+        n for n in noticias_periodo
+        if n["score"] >= 65
+    ]
 
-    for noticia in criticas[:5]:
+    if atencao:
 
-        st.markdown(
-            f"**{noticia['titulo']}**"
+        for noticia in atencao[:6]:
+
+            data_atencao = ""
+
+            if noticia["data"]:
+                data_atencao = noticia["data"].strftime(
+                    "%d/%m %H:%M"
+                )
+
+            st.markdown(
+                f"{noticia['bolinha']} "
+                f"**{noticia['titulo']}**"
+            )
+
+            st.caption(
+                f"🗞️ {noticia['veiculo']} • "
+                f"📅 {data_atencao}"
+            )
+
+            st.link_button(
+                "Ler matéria ↗",
+                noticia["link"]
+            )
+
+            st.divider()
+
+    else:
+
+        st.info(
+            "Nenhuma matéria de alta relevância "
+            "no período selecionado."
+        )
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric(
+            "📰 Notícias",
+            len(noticias_periodo)
+        )
+
+    with col2:
+        st.metric(
+            "🔴 Críticas",
+            len(criticas)
+        )
+
+    with col3:
+        st.metric(
+            "🟠 Alta",
+            len(altas)
+        )
+
+    with col4:
+        st.metric(
+            "👥 Pessoas citadas",
+            len(contador_pessoas)
+            if "contador_pessoas" in globals()
+            else 0
         )
 
 
-st.divider()
+# ============================================================
+# ABA NOTÍCIAS
+# ============================================================
+
+with tabs[1]:
+
+    st.subheader("📰 Todas as notícias")
+
+    st.caption(
+        "Use os filtros abaixo para refinar o monitoramento."
+    )
+
+    todas_pessoas = []
+
+    for grupo in PESSOAS.values():
+        todas_pessoas.extend(grupo.keys())
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+
+        filtro_pessoa = st.selectbox(
+            "👤 Pessoa",
+            ["Todas"] + todas_pessoas,
+            key="tab_pessoa"
+        )
+
+    with col2:
+
+        filtro_tema = st.selectbox(
+            "🏷️ Tema",
+            ["Todos"] + list(TEMAS.keys()),
+            key="tab_tema"
+        )
+
+    with col3:
+
+        filtro_fonte = st.selectbox(
+            "🗞️ Fonte",
+            ["Todas"] + list(FONTES.keys()),
+            key="tab_fonte"
+        )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        filtro_relevancia = st.selectbox(
+            "🎯 Relevância",
+            [
+                "Todas",
+                "🔴 Crítica",
+                "🟠 Alta",
+                "🟡 Média",
+                "⚪ Menção"
+            ],
+            key="tab_relevancia"
+        )
+
+    with col2:
+
+        busca = st.text_input(
+            "🔍 Buscar palavra",
+            placeholder="Ex.: Copasa, mineração, transporte...",
+            key="tab_busca"
+        )
+
+    apenas_relevantes = st.checkbox(
+        "🎯 Apenas relevantes (🔴 + 🟠)",
+        key="tab_apenas_relevantes"
+    )
+
+    filtradas_tabs = noticias_periodo
+
+    if filtro_pessoa != "Todas":
+        filtradas_tabs = [
+            n for n in filtradas_tabs
+            if filtro_pessoa in n["pessoas"]
+        ]
+
+    if filtro_tema != "Todos":
+        filtradas_tabs = [
+            n for n in filtradas_tabs
+            if filtro_tema in n["temas"]
+        ]
+
+    if filtro_fonte != "Todas":
+        filtradas_tabs = [
+            n for n in filtradas_tabs
+            if n["monitoramento"] == filtro_fonte
+        ]
+
+    if filtro_relevancia != "Todas":
+
+        mapa_relevancia = {
+            "🔴 Crítica": "🔴",
+            "🟠 Alta": "🟠",
+            "🟡 Média": "🟡",
+            "⚪ Menção": "⚪",
+        }
+
+        filtradas_tabs = [
+            n for n in filtradas_tabs
+            if n["bolinha"] ==
+            mapa_relevancia[filtro_relevancia]
+        ]
+
+    if apenas_relevantes:
+
+        filtradas_tabs = [
+            n for n in filtradas_tabs
+            if n["score"] >= 65
+        ]
+
+    if busca:
+
+        termo = busca.lower()
+
+        filtradas_tabs = [
+            n for n in filtradas_tabs
+            if termo in (
+                n["titulo"]
+                + " "
+                + n["resumo"]
+            ).lower()
+        ]
+
+    st.write(
+        f"**{len(filtradas_tabs)} notícias encontradas**"
+    )
+
+    for noticia in filtradas_tabs:
+
+        data_formatada = ""
+
+        if noticia["data"]:
+            data_formatada = noticia["data"].strftime(
+                "%d/%m/%Y %H:%M"
+            )
+
+        st.markdown(
+            f"### {noticia['bolinha']} "
+            f"**{noticia['titulo']}**"
+        )
+
+        st.caption(
+            f"🗞️ {noticia['veiculo']} • "
+            f"📅 {data_formatada}"
+        )
+
+        if noticia["pessoas"]:
+
+            st.markdown(
+                " ".join(
+                    [
+                        f"`👤 {p}`"
+                        for p in noticia["pessoas"]
+                    ]
+                )
+            )
+
+        if noticia["temas"]:
+
+            st.markdown(
+                " ".join(
+                    [
+                        f"`{tema}`"
+                        for tema in noticia["temas"]
+                    ]
+                )
+            )
+
+        resumo = noticia["resumo"]
+
+        if len(resumo) > 500:
+            resumo = resumo[:500] + "..."
+
+        if resumo:
+            st.write(resumo)
+
+        st.link_button(
+            "Ler matéria ↗",
+            noticia["link"]
+        )
+
+        st.divider()
+
+
+# ============================================================
+# ABA PESSOAS
+# ============================================================
+
+with tabs[2]:
+
+    st.subheader("👥 Pessoas mais citadas")
+
+    contador_pessoas_tabs = Counter()
+
+    for noticia in noticias_periodo:
+
+        for pessoa in noticia["pessoas"]:
+            contador_pessoas_tabs[pessoa] += 1
+
+    if contador_pessoas_tabs:
+
+        for pessoa, quantidade in contador_pessoas_tabs.most_common():
+
+            if st.button(
+                f"👤 {pessoa}  •  {quantidade} notícia(s)",
+                key=f"pessoa_{pessoa}"
+            ):
+
+                st.session_state["pessoa_selecionada"] = pessoa
+
+        pessoa_selecionada = st.session_state.get(
+            "pessoa_selecionada"
+        )
+
+        if pessoa_selecionada:
+
+            st.divider()
+
+            st.subheader(
+                f"Notícias sobre {pessoa_selecionada}"
+            )
+
+            for noticia in noticias_periodo:
+
+                if pessoa_selecionada in noticia["pessoas"]:
+
+                    st.markdown(
+                        f"{noticia['bolinha']} "
+                        f"**{noticia['titulo']}**"
+                    )
+
+                    st.caption(
+                        f"{noticia['veiculo']}"
+                    )
+
+                    st.link_button(
+                        "Ler matéria ↗",
+                        noticia["link"],
+                        key=f"pessoa_link_{hash(noticia['link'])}"
+                    )
+
+
+# ============================================================
+# ABA ASSUNTOS
+# ============================================================
+
+with tabs[3]:
+
+    st.subheader("🏷️ Assuntos em destaque")
+
+    contador_temas_tabs = Counter()
+
+    for noticia in noticias_periodo:
+
+        for tema in noticia["temas"]:
+            contador_temas_tabs[tema] += 1
+
+    if contador_temas_tabs:
+
+        for tema, quantidade in contador_temas_tabs.most_common():
+
+            if st.button(
+                f"{tema}  •  {quantidade} notícia(s)",
+                key=f"tema_{tema}"
+            ):
+
+                st.session_state["tema_selecionado"] = tema
+
+        tema_selecionado = st.session_state.get(
+            "tema_selecionado"
+        )
+
+        if tema_selecionado:
+
+            st.divider()
+
+            st.subheader(
+                f"Notícias sobre {tema_selecionado}"
+            )
+
+            for noticia in noticias_periodo:
+
+                if tema_selecionado in noticia["temas"]:
+
+                    st.markdown(
+                        f"{noticia['bolinha']} "
+                        f"**{noticia['titulo']}**"
+                    )
+
+                    st.caption(
+                        noticia["veiculo"]
+                    )
+
+                    st.link_button(
+                        "Ler matéria ↗",
+                        noticia["link"],
+                        key=f"tema_link_{hash(noticia['link'])}"
+                    )
+
+
+# ============================================================
+# ABA VEÍCULOS
+# ============================================================
+
+with tabs[4]:
+
+    st.subheader("🗞️ Veículos que mais repercutiram")
+
+    contador_veiculos_tabs = Counter()
+
+    for noticia in noticias_periodo:
+
+        veiculo = noticia["veiculo"]
+
+        if veiculo:
+            contador_veiculos_tabs[veiculo] += 1
+
+    veiculo_selecionado = st.selectbox(
+        "Escolha um veículo para ver as matérias",
+        ["Todos"] + [
+            v for v, _ in contador_veiculos_tabs.most_common()
+        ],
+        key="veiculo_tab"
+    )
+
+    for veiculo, quantidade in contador_veiculos_tabs.most_common():
+
+        if veiculo_selecionado != "Todos" and veiculo != veiculo_selecionado:
+            continue
+
+        st.markdown(
+            f"**{veiculo}** — {quantidade} matéria(s)"
+        )
+
+        for noticia in noticias_periodo:
+
+            if noticia["veiculo"] == veiculo:
+
+                st.markdown(
+                    f"{noticia['bolinha']} "
+                    f"**{noticia['titulo']}**"
+                )
+
+                st.link_button(
+                    "Ler matéria ↗",
+                    noticia["link"],
+                    key=f"veiculo_link_{hash(noticia['link'])}"
+                )
+
+
+# ============================================================
+# ABA INSTITUIÇÕES
+# ============================================================
+
+with tabs[5]:
+
+    st.subheader("🏛️ Instituições mais citadas")
+
+    contador_instituicoes_tabs = Counter()
+
+    for noticia in noticias_periodo:
+
+        for instituicao in noticia.get(
+            "instituicoes",
+            []
+        ):
+
+            contador_instituicoes_tabs[instituicao] += 1
+
+    if contador_instituicoes_tabs:
+
+        for instituicao, quantidade in (
+            contador_instituicoes_tabs.most_common()
+        ):
+
+            st.markdown(
+                f"**🏛️ {instituicao}** — "
+                f"{quantidade} citação(ões)"
+            )
+
+            with st.expander(
+                f"Ver matérias — {instituicao}"
+            ):
+
+                for noticia in noticias_periodo:
+
+                    if instituicao in noticia.get(
+                        "instituicoes",
+                        []
+                    ):
+
+                        st.markdown(
+                            f"{noticia['bolinha']} "
+                            f"**{noticia['titulo']}**"
+                        )
+
+                        st.link_button(
+                            "Ler matéria ↗",
+                            noticia["link"],
+                            key=f"inst_link_{hash(noticia['link'])}"
+                        )
+
+
+# ============================================================
+# ABA CLIPPING
+# ============================================================
+
+with tabs[6]:
+
+    st.subheader("📄 Clipping")
+
+    st.write(
+        "O PDF será gerado com o recorte de notícias "
+        "selecionado no painel."
+    )
+
+    pdf_bytes = gerar_pdf_clipping(
+        noticias_periodo
+    )
+
+    st.download_button(
+        label="📄 Baixar clipping em PDF",
+        data=pdf_bytes,
+        file_name=(
+            f"clipping_tce_mg_"
+            f"{datetime.now().strftime('%Y-%m-%d')}.pdf"
+        ),
+        mime="application/pdf",
+    )
+
+
 
 
 # ============================================================
@@ -1231,849 +1734,3 @@ with col5:
 
 
 st.divider()
-
-
-# ============================================================
-# FILTROS
-# ============================================================
-
-st.subheader(
-    "🔎 Monitorar"
-)
-
-
-todas_pessoas = []
-
-
-for grupo in PESSOAS.values():
-
-    todas_pessoas.extend(
-        grupo.keys()
-    )
-
-
-col1, col2, col3 = st.columns(
-    3
-)
-
-
-with col1:
-
-    filtro_pessoa = st.selectbox(
-
-        "👤 Pessoa",
-
-        [
-            "Todas"
-        ]
-        + todas_pessoas
-    )
-
-
-with col2:
-
-    filtro_tema = st.selectbox(
-
-        "🏷️ Tema",
-
-        [
-            "Todos"
-        ]
-        + list(
-            TEMAS.keys()
-        )
-    )
-
-
-with col3:
-
-    filtro_fonte = st.selectbox(
-
-        "🗞️ Fonte",
-
-        [
-            "Todas"
-        ]
-        + list(
-            FONTES.keys()
-        )
-    )
-
-
-col1, col2 = st.columns(
-    2
-)
-
-
-with col1:
-
-    filtro_relevancia = st.selectbox(
-
-        "🎯 Relevância",
-
-        [
-            "Todas",
-            "🔴 Crítica",
-            "🟠 Alta",
-            "🟡 Média",
-            "⚪ Menção"
-        ]
-    )
-
-
-with col2:
-
-    busca = st.text_input(
-
-        "🔍 Buscar palavra",
-
-        placeholder=
-        "Ex.: Copasa, mineração, transporte..."
-    )
-
-apenas_relevantes = st.checkbox(
-    "🎯 Apenas relevantes (🔴 + 🟠)"
-)
-
-
-# ============================================================
-# APLICA FILTROS
-# ============================================================
-
-filtradas = noticias_periodo
-
-
-if filtro_pessoa != "Todas":
-
-    filtradas = [
-
-        n for n in filtradas
-
-        if filtro_pessoa
-        in n["pessoas"]
-
-    ]
-
-
-if filtro_tema != "Todos":
-
-    filtradas = [
-
-        n for n in filtradas
-
-        if filtro_tema
-        in n["temas"]
-
-    ]
-
-
-if filtro_fonte != "Todas":
-
-    filtradas = [
-
-        n for n in filtradas
-
-        if n["monitoramento"]
-        == filtro_fonte
-
-    ]
-
-
-if filtro_relevancia != "Todas":
-
-    mapa_relevancia = {
-
-        "🔴 Crítica": "🔴",
-        "🟠 Alta": "🟠",
-        "🟡 Média": "🟡",
-        "⚪ Menção": "⚪",
-    }
-
-
-    filtradas = [
-
-        n for n in filtradas
-
-        if n["bolinha"]
-        == mapa_relevancia[
-            filtro_relevancia
-        ]
-
-    ]
-
-
-if apenas_relevantes:
-
-    filtradas = [
-        n for n in filtradas
-        if n["score"] >= 65
-    ]
-
-
-if busca:
-
-    termo = busca.lower()
-
-    filtradas = [
-
-        n for n in filtradas
-
-        if termo
-        in (
-            n["titulo"]
-            + " "
-            + n["resumo"]
-        ).lower()
-
-    ]
-
-
-
-# ============================================================
-# DOWNLOAD DO CLIPPING
-# ============================================================
-
-def gerar_pdf_clipping(noticias_clipping):
-
-    buffer = BytesIO()
-
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        rightMargin=1.6 * cm,
-        leftMargin=1.6 * cm,
-        topMargin=1.6 * cm,
-        bottomMargin=1.6 * cm,
-    )
-
-    styles = getSampleStyleSheet()
-
-    titulo = ParagraphStyle(
-        "TituloClipping",
-        parent=styles["Title"],
-        fontSize=20,
-        leading=24,
-        alignment=TA_CENTER,
-        spaceAfter=8,
-    )
-
-    subtitulo = ParagraphStyle(
-        "SubtituloClipping",
-        parent=styles["Normal"],
-        fontSize=10,
-        leading=14,
-        alignment=TA_CENTER,
-        textColor=colors.grey,
-        spaceAfter=18,
-    )
-
-    secao = ParagraphStyle(
-        "SecaoClipping",
-        parent=styles["Heading2"],
-        fontSize=13,
-        leading=16,
-        spaceBefore=12,
-        spaceAfter=8,
-    )
-
-    manchete = ParagraphStyle(
-        "MancheteClipping",
-        parent=styles["Heading3"],
-        fontSize=11.5,
-        leading=15,
-        spaceAfter=5,
-    )
-
-    corpo = ParagraphStyle(
-        "CorpoClipping",
-        parent=styles["Normal"],
-        fontSize=9,
-        leading=13,
-        spaceAfter=6,
-    )
-
-    meta = ParagraphStyle(
-        "MetaClipping",
-        parent=styles["Normal"],
-        fontSize=8,
-        leading=11,
-        textColor=colors.grey,
-        spaceAfter=5,
-    )
-
-    story = []
-
-    data_geracao = datetime.now().strftime("%d/%m/%Y às %H:%M")
-
-    story.append(Paragraph("CLIPPING TCE-MG", titulo))
-    story.append(
-        Paragraph(
-            f"Gerado em {data_geracao} • "
-            f"{len(noticias_clipping)} notícia(s)",
-            subtitulo,
-        )
-    )
-
-    # Destaques
-    criticas_pdf = [
-        n for n in noticias_clipping
-        if n["score"] >= 85
-    ]
-    altas_pdf = [
-        n for n in noticias_clipping
-        if 65 <= n["score"] < 85
-    ]
-
-    if criticas_pdf or altas_pdf:
-        story.append(Paragraph("DESTAQUES", secao))
-
-        for noticia in (criticas_pdf[:5] + altas_pdf[:5]):
-            story.append(
-                Paragraph(
-                    f"{noticia['bolinha']} {noticia['titulo']}",
-                    manchete,
-                )
-            )
-            story.append(
-                Paragraph(
-                    f"<b>{noticia['veiculo']}</b>",
-                    meta,
-                )
-            )
-
-    # Notícias
-    story.append(Paragraph("NOTÍCIAS", secao))
-
-    for noticia in noticias_clipping:
-
-        data = ""
-
-        if noticia["data"]:
-            data = noticia["data"].strftime("%d/%m/%Y %H:%M")
-
-        pessoas = ", ".join(noticia["pessoas"])
-        temas = ", ".join(noticia["temas"])
-        resumo = noticia["resumo"]
-
-        if len(resumo) > 700:
-            resumo = resumo[:700] + "..."
-
-        story.append(
-            Paragraph(
-                f"{noticia['bolinha']} {noticia['titulo']}",
-                manchete,
-            )
-        )
-
-        story.append(
-            Paragraph(
-                f"{noticia['veiculo']} • {data}",
-                meta,
-            )
-        )
-
-        if pessoas:
-            story.append(
-                Paragraph(
-                    f"<b>Pessoas:</b> {pessoas}",
-                    corpo,
-                )
-            )
-
-        if temas:
-            story.append(
-                Paragraph(
-                    f"<b>Temas:</b> {temas}",
-                    corpo,
-                )
-            )
-
-        if resumo:
-            story.append(
-                Paragraph(
-                    resumo,
-                    corpo,
-                )
-            )
-
-        story.append(
-            Paragraph(
-                f'<link href="{noticia["link"]}" color="blue">'
-                f"{noticia['link']}</link>",
-                meta,
-            )
-        )
-
-        story.append(Spacer(1, 0.18 * cm))
-
-    # Assuntos
-    contador_temas_pdf = Counter()
-
-    for noticia in noticias_clipping:
-        for tema in noticia["temas"]:
-            contador_temas_pdf[tema] += 1
-
-    if contador_temas_pdf:
-        story.append(PageBreak())
-        story.append(Paragraph("ASSUNTOS EM DESTAQUE", secao))
-
-        for tema, quantidade in contador_temas_pdf.most_common(10):
-            story.append(
-                Paragraph(
-                    f"{tema} — {quantidade} notícia(s)",
-                    corpo,
-                )
-            )
-
-    # Pessoas
-    contador_pessoas_pdf = Counter()
-
-    for noticia in noticias_clipping:
-        for pessoa in noticia["pessoas"]:
-            contador_pessoas_pdf[pessoa] += 1
-
-    if contador_pessoas_pdf:
-        story.append(Paragraph("PESSOAS MAIS CITADAS", secao))
-
-        for pessoa, quantidade in contador_pessoas_pdf.most_common(10):
-            story.append(
-                Paragraph(
-                    f"{pessoa} — {quantidade} notícia(s)",
-                    corpo,
-                )
-            )
-
-    doc.build(story)
-
-    buffer.seek(0)
-    return buffer.getvalue()
-
-
-pdf_bytes = gerar_pdf_clipping(filtradas)
-
-st.download_button(
-    label="📄 Baixar clipping em PDF",
-    data=pdf_bytes,
-    file_name=(
-        f"clipping_tce_mg_"
-        f"{datetime.now().strftime('%Y-%m-%d')}.pdf"
-    ),
-    mime="application/pdf",
-)
-
-st.divider()
-
-
-
-
-# ============================================================
-# ASSUNTOS EM ALTA
-# ============================================================
-
-duracao_periodo = agora - limite_periodo
-limite_anterior = limite_periodo - duracao_periodo
-
-noticias_anteriores = [
-    n for n in noticias
-    if (
-        n["data"]
-        and limite_anterior <= n["data"] < limite_periodo
-    )
-]
-
-contador_temas_anterior = Counter()
-
-for noticia in noticias_anteriores:
-    for tema in noticia["temas"]:
-        contador_temas_anterior[tema] += 1
-
-contador_temas_atual = Counter()
-
-for noticia in filtradas:
-    for tema in noticia["temas"]:
-        contador_temas_atual[tema] += 1
-
-if contador_temas_atual:
-
-    st.subheader(
-        "📈 Assuntos em alta"
-    )
-
-    st.caption(
-        "Comparação com o período anterior de mesma duração."
-    )
-
-    temas_trend = []
-
-    for tema, atual in contador_temas_atual.most_common():
-
-        anterior = contador_temas_anterior.get(
-            tema,
-            0
-        )
-
-        if anterior == 0:
-            variacao = "🆕 novo"
-            ordem = 999
-        else:
-            percentual = (
-                (atual - anterior)
-                / anterior
-                * 100
-            )
-
-            if percentual > 5:
-                variacao = f"↑ {percentual:.0f}%"
-            elif percentual < -5:
-                variacao = f"↓ {abs(percentual):.0f}%"
-            else:
-                variacao = "→ estável"
-
-            ordem = percentual
-
-        temas_trend.append(
-            (tema, atual, anterior, variacao, ordem)
-        )
-
-    temas_trend.sort(
-        key=lambda x: (
-            x[1],
-            x[4]
-        ),
-        reverse=True
-    )
-
-    colunas = st.columns(4)
-
-    for i, (tema, atual, anterior, variacao, _) in enumerate(
-        temas_trend[:8]
-    ):
-
-        with colunas[i % 4]:
-
-            st.markdown(
-                f"""
-                <div class="insight-box">
-                    <div class="insight-title">{tema}</div>
-                    <div><b>{atual}</b> notícia(s) &nbsp; {variacao}</div>
-                    <div class="insight-subtitle">no período selecionado</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-    st.divider()
-
-
-# ============================================================
-# O QUE MERECE ATENÇÃO HOJE
-# ============================================================
-
-# As notícias mais relevantes do recorte atual.
-# Mantém a lista completa abaixo; este bloco é apenas um resumo rápido.
-atencao_hoje = [
-    n for n in filtradas
-    if n["score"] >= 65
-]
-
-if atencao_hoje:
-
-    st.subheader(
-        "🚨 O que merece atenção hoje"
-    )
-
-    st.caption(
-        "Seleção automática das matérias mais relevantes no recorte atual."
-    )
-
-    colunas = st.columns(2)
-
-    for i, noticia in enumerate(atencao_hoje[:6]):
-
-        data_atencao = ""
-
-        if noticia["data"]:
-            data_atencao = noticia["data"].strftime(
-                "%d/%m %H:%M"
-            )
-
-        detalhes = (
-            f"{noticia['veiculo']} • {data_atencao}"
-        )
-
-        with colunas[i % 2]:
-
-            st.markdown(
-                f"""
-                <div class="insight-box">
-                    <div class="insight-title">
-                        {noticia['bolinha']} {noticia['titulo']}
-                    </div>
-                    <div class="insight-subtitle">
-                        {detalhes}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-    st.divider()
-
-
-# ============================================================
-# INSTITUIÇÕES MAIS CITADAS
-# ============================================================
-
-contador_instituicoes = Counter()
-
-for noticia in filtradas:
-
-    for instituicao in noticia.get(
-        "instituicoes",
-        []
-    ):
-
-        contador_instituicoes[instituicao] += 1
-
-if contador_instituicoes:
-
-    st.subheader(
-        "🏛️ Instituições mais citadas"
-    )
-
-    colunas = st.columns(4)
-
-    for i, (instituicao, quantidade) in enumerate(
-        contador_instituicoes.most_common(8)
-    ):
-
-        with colunas[i % 4]:
-
-            st.markdown(
-                f"""
-                <div class="insight-box">
-                    <div class="insight-title">🏛️ {instituicao}</div>
-                    <div><b>{quantidade}</b> citação(ões)</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-    st.divider()
-
-
-# ============================================================
-# PESSOAS EM DESTAQUE
-# ============================================================
-
-if contador_pessoas:
-
-    st.subheader(
-        "👥 Pessoas em destaque"
-    )
-
-    colunas = st.columns(4)
-
-    for i, (pessoa, quantidade) in enumerate(
-        contador_pessoas.most_common(8)
-    ):
-
-        with colunas[i % 4]:
-
-            st.markdown(
-                f"""
-                <div class="insight-box">
-                    <div class="insight-title">👤 {pessoa}</div>
-                    <div><b>{quantidade}</b> citação(ões)</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-    st.divider()
-
-# ============================================================
-# RANKING DE VEÍCULOS
-# ============================================================
-
-contador_veiculos = Counter()
-
-for noticia in filtradas:
-
-    veiculo = noticia["veiculo"]
-
-    if veiculo and veiculo != "Fonte não identificada":
-
-        contador_veiculos[veiculo] += 1
-
-
-if contador_veiculos:
-
-    st.subheader(
-        "📰 Veículos que mais repercutiram"
-    )
-
-    ranking_veiculos = (
-        contador_veiculos
-        .most_common(8)
-    )
-
-    colunas = st.columns(4)
-
-    for i, (veiculo, quantidade) in enumerate(
-        ranking_veiculos
-    ):
-
-        with colunas[i % 4]:
-
-            st.markdown(
-                f"""
-                <div class="insight-box">
-                    <div class="insight-title">📰 {veiculo}</div>
-                    <div><b>{quantidade}</b> matéria(s)</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-    st.divider()
-
-# ============================================================
-# RESULTADOS
-# ============================================================
-
-st.subheader(
-
-    f"📰 {len(filtradas)} notícias encontradas"
-)
-
-
-if not filtradas:
-
-    st.info(
-        "Nenhuma notícia encontrada "
-        "com os filtros selecionados."
-    )
-
-
-else:
-
-    for noticia in filtradas:
-
-        data_formatada = ""
-
-
-        if noticia["data"]:
-
-            data_formatada = (
-
-                noticia["data"]
-                .strftime(
-                    "%d/%m/%Y %H:%M"
-                )
-
-            )
-
-
-        # ----------------------------------------------------
-        # TÍTULO — SOMENTE A BOLINHA
-        # ----------------------------------------------------
-
-        st.markdown(
-
-            f"### "
-            f"{noticia['bolinha']} "
-            f"**{noticia['titulo']}**"
-        )
-
-
-        # ----------------------------------------------------
-        # INFORMAÇÕES
-        # ----------------------------------------------------
-
-        st.caption(
-
-            f"🗞️ {noticia['veiculo']}  •  "
-            f"📅 {data_formatada}"
-        )
-
-
-        # ----------------------------------------------------
-        # PESSOAS
-        # ----------------------------------------------------
-
-        if noticia["pessoas"]:
-
-            st.markdown(
-
-                " ".join(
-
-                    [
-                        f"`👤 {p}`"
-                        for p
-                        in noticia["pessoas"]
-                    ]
-
-                )
-
-            )
-
-
-        # ----------------------------------------------------
-        # TEMAS
-        # ----------------------------------------------------
-
-        if noticia["temas"]:
-
-            st.markdown(
-
-                " ".join(
-
-                    [
-                        f"`{tema}`"
-                        for tema
-                        in noticia["temas"]
-                    ]
-
-                )
-
-            )
-
-
-        # ----------------------------------------------------
-        # RESUMO
-        # ----------------------------------------------------
-
-        if noticia["resumo"]:
-
-            resumo = noticia[
-                "resumo"
-            ]
-
-
-            if len(resumo) > 500:
-
-                resumo = (
-                    resumo[:500]
-                    + "..."
-                )
-
-
-            st.write(
-                resumo
-            )
-
-
-        # ----------------------------------------------------
-        # LINK
-        # ----------------------------------------------------
-
-        st.link_button(
-
-            "Ler matéria ↗",
-
-            noticia["link"]
-        )
-
-
-        st.divider()
