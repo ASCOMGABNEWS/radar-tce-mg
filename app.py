@@ -111,6 +111,9 @@ FONTES = {
     "G1 - Tribunais de Contas":
         'https://news.google.com/rss/search?q=site%3Ag1.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
+    "G1 - Daniel Brandão / TCE-MA":
+        'https://news.google.com/rss/search?q=site%3Ag1.globo.com%2Fma%2Fmaranhao+(%22Daniel+Brand%C3%A3o%22+OR+%22Tribunal+de+Contas+do+Maranh%C3%A3o%22+OR+%22TCE-MA%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
     "Folha de S.Paulo":
         'https://news.google.com/rss/search?q=site%3Afolha.uol.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
@@ -119,6 +122,9 @@ FONTES = {
 
     "O Globo - Tribunais de Contas":
         'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "O Globo - TCE-MA":
+        'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22Daniel+Brand%C3%A3o%22+OR+%22Tribunal+de+Contas+do+Maranh%C3%A3o%22+OR+%22TCE-MA%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "STF - Tribunais de Contas":
         'https://news.google.com/rss/search?q=(%22STF%22+OR+%22Supremo+Tribunal+Federal%22)+(%22Tribunal+de+Contas%22+OR+%22TCE%22+OR+%22TCU%22+OR+%22controle+externo%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
@@ -590,6 +596,10 @@ def identificar_instituicoes(
     ).lower()
 
     mapa = {
+        "TCE-MG": [
+            "tce-mg", "tce mg", "tribunal de contas de minas gerais",
+            "tribunal de contas do estado de minas gerais"
+        ],
         "Governo de Minas": [
             "governo de minas",
             "governo de mg"
@@ -612,7 +622,12 @@ def identificar_instituicoes(
             "tribunal de contas de são paulo",
             "tribunal de contas do paraná",
             "tribunal de contas do rio de janeiro",
-            "tribunal de contas do rio grande do sul"
+            "tribunal de contas do rio grande do sul",
+            "tribunal de contas do estado do maranhão",
+            "tribunal de contas do estado de goiás",
+            "tribunal de contas do estado de são paulo",
+            "tribunal de contas do estado do paraná",
+            "tribunal de contas do estado do rio de janeiro"
         ],
         "STF": [
             "stf",
@@ -791,8 +806,27 @@ def calcular_relevancia(
             "corrupção", "crime",
         ])
 
-        if gravidade_maxima and (autoridade_tc or "tcu" in texto or "tce" in texto):
+        if gravidade_maxima and (autoridade_tc or "tcu" in texto or "tce" in texto or "tribunal de contas" in texto):
             score = max(score, 85)
+
+    # Regra explícita para casos como presidente/conselheiro de TCE afastado,
+    # mesmo quando o RSS entrega um título/resumo com formulação diferente.
+    autoridade_ou_tc = (
+        autoridade_tc
+        or "tce" in texto
+        or "tcu" in texto
+        or "tribunal de contas" in texto
+    )
+    fato_grave_forte = any(t in texto for t in [
+        "afastado", "afastada", "afastamento",
+        "prisão", "preso", "presa",
+        "operação", "busca e apreensão",
+        "corrupção", "fraude", "improbidade", "crime",
+        "denúncia", "denunciado", "denunciada",
+        "investigação", "investigado", "investigada",
+    ])
+    if autoridade_ou_tc and fato_grave_forte:
+        score = max(score, 85)
 
     # Ações institucionais relevantes.
     termos_acao = [
@@ -840,7 +874,9 @@ FONTES_NACIONAIS = {
     "Globo",
     "G1",
     "G1 - Tribunais de Contas",
+    "G1 - Daniel Brandão / TCE-MA",
     "O Globo - Tribunais de Contas",
+    "O Globo - TCE-MA",
     "STF - Tribunais de Contas",
     "Poder360",
     "JOTA",
@@ -877,68 +913,53 @@ FONTES_MINAS = {
 # Termos que identificam claramente outros estados. Uma notícia sobre
 # um TCE de outro estado é Nacional para este Radar, não Minas Gerais.
 OUTROS_ESTADOS = (
-    "tce-pi", "tce pi", "tce-piauí", "tce piauí",
-    "tce-ma", "tce ma", "tce-maranhão", "tce maranhão",
-    "tce-sp", "tce sp", "tce-são paulo",
-    "tce-rj", "tce rj", "tce-rio de janeiro",
-    "tce-pr", "tce pr", "tce-paraná",
-    "tce-sc", "tce sc", "tce-santa catarina",
-    "tce-rs", "tce rs", "tce-rio grande do sul",
-    "tce-go", "tce go", "tce-goiás",
-    "tce-ba", "tce ba", "tce-bahia",
-    "tce-pe", "tce pe", "tce-pernambuco",
-    "tce-ce", "tce ce", "tce-ceará",
-    "tce-es", "tce es", "tce-espírito santo",
-    "tce-df", "tce df",
-    "tce-ms", "tce ms", "tce-mato grosso do sul",
-    "tce-mt", "tce mt", "tce-mato grosso",
-    "tce-pa", "tce pa", "tce-pará",
-    "tce-am", "tce am", "tce-amazonas",
-    "tce-ro", "tce ro", "tce-rondônia",
-    "tce-to", "tce to", "tce-tocantins",
-    "tce-ac", "tce ac", "tce-acre",
-    "tce-al", "tce al", "tce-alagoas",
-    "tce-se", "tce se", "tce-sergipe",
-    "tce-pb", "tce pb", "tce-paraíba",
-    "tce-rn", "tce rn", "tce-rio grande do norte",
+    "acre", "alagoas", "amapá", "amazonas", "bahia", "ceará", "distrito federal",
+    "espírito santo", "goiás", "maranhão", "mato grosso", "mato grosso do sul",
+    "pará", "paraíba", "paraná", "pernambuco", "piauí", "rio de janeiro",
+    "rio grande do norte", "rio grande do sul", "rondônia", "roraima", "santa catarina",
+    "são paulo", "sergipe", "tocantins",
+    "tce-ac", "tce-al", "tce-ap", "tce-am", "tce-ba", "tce-ce", "tce-df", "tce-es",
+    "tce-go", "tce-ma", "tce-mt", "tce-ms", "tce-pa", "tce-pb", "tce-pr", "tce-pe",
+    "tce-pi", "tce-rj", "tce-rn", "tce-rs", "tce-ro", "tce-rr", "tce-sc", "tce-sp",
+    "tce-se", "tce-to",
 )
 
 def classificar_abrangencia(veiculo, titulo="", resumo=""):
     texto = " ".join([
-        str(veiculo or ""),
         str(titulo or ""),
-        str(resumo or "")
+        str(resumo or ""),
+        str(veiculo or "")
     ]).lower()
 
-    # Primeiro: fontes claramente mineiras.
+    # Fontes mineiras são sempre estaduais.
     if any(f.lower() in str(veiculo or "").lower() for f in FONTES_MINAS):
         return "Minas Gerais"
 
-    # Segundo: uma matéria explicitamente sobre outro TCE/estado
-    # nunca deve cair como Minas só porque a fonte é um portal nacional.
+    # TCEs de outros estados / referências estaduais explícitas nunca são MG.
     if any(termo in texto for termo in OUTROS_ESTADOS):
         return "Nacional"
 
-    # Terceiro: conteúdo explicitamente ligado a Minas/TCE-MG.
-    termos_minas = (
+    # Só reconhecer MG com expressões explícitas. Não usar "mg" solto,
+    # pois isso gera falsos positivos em palavras comuns.
+    termos_mg = (
         "tce-mg", "tce mg", "tce de minas gerais",
         "tribunal de contas de minas gerais",
-        "tribunal de contas de mg", "minas gerais",
-        "minas", "belo horizonte", "mg"
+        "tribunal de contas do estado de minas gerais",
+        "tribunal de contas de mg",
+        "minas gerais", "governo de minas", "estado de minas gerais",
+        "belo horizonte", "minas gerais"
     )
 
-    if any(termo in texto for termo in termos_minas):
+    if any(termo in texto for termo in termos_mg):
         return "Minas Gerais"
 
-    # Portais nacionais e notícias institucionais sem estado definido
-    # ficam como Nacional por padrão.
     return "Nacional"
 
 
 # ============================================================
 # COLETA
 # ============================================================
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def analisar_relevancia_ia(titulo, resumo, veiculo, abrangencia, instituicoes):
     try:
         if not client:
