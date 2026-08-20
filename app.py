@@ -1,15 +1,9 @@
 import streamlit as st
 import feedparser
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-# Horário oficial do Radar: Brasília (UTC-3).
-FUSO_RADAR = ZoneInfo("America/Sao_Paulo")
-
-def agora_radar():
-    return datetime.now(FUSO_RADAR)
 
 import re
 import html
@@ -729,10 +723,8 @@ def buscar_noticias():
 
     links = set()
 
-    # Os RSS retornam datas sem fuso. Mantemos o limite como datetime
-    # sem timezone para evitar comparação entre datetimes aware/naive.
     limite = (
-        agora_radar().replace(tzinfo=None)
+        datetime.now()
         - timedelta(days=7)
     )
 
@@ -1245,7 +1237,7 @@ st.markdown("""
 # CABEÇALHO
 # ============================================================
 
-agora = agora_radar()
+agora = datetime.now()
 
 st.markdown(
     f"""
@@ -1320,18 +1312,14 @@ periodo = st.radio(
 )
 
 
-# Datas vindas dos RSS são naive; use o horário de Brasília apenas para
-# exibição e normalize o limite para comparação segura.
-agora_comparacao = agora_radar().replace(tzinfo=None)
-
 if periodo == "Últimas 6 horas":
-    limite_periodo = agora_comparacao - timedelta(hours=6)
+    limite_periodo = agora - timedelta(hours=6)
 elif periodo == "Últimas 24 horas":
-    limite_periodo = agora_comparacao - timedelta(hours=24)
+    limite_periodo = agora - timedelta(hours=24)
 elif periodo == "Últimos 3 dias":
-    limite_periodo = agora_comparacao - timedelta(days=3)
+    limite_periodo = agora - timedelta(days=3)
 else:
-    limite_periodo = agora_comparacao - timedelta(days=7)
+    limite_periodo = agora - timedelta(days=7)
 
 
 noticias_periodo = [
@@ -1836,7 +1824,7 @@ def gerar_pdf_clipping(noticias_clipping):
 
     story = []
 
-    data_geracao = agora_radar().strftime("%d/%m/%Y às %H:%M")
+    data_geracao = datetime.now().strftime("%d/%m/%Y às %H:%M")
 
     story.append(Paragraph("CLIPPING TCE-MG", titulo))
     story.append(
@@ -1989,7 +1977,7 @@ st.download_button(
     data=pdf_bytes,
     file_name=(
         f"clipping_tce_mg_"
-        f"{agora_radar().strftime('%Y-%m-%d')}.pdf"
+        f"{datetime.now().strftime('%Y-%m-%d')}.pdf"
     ),
     mime="application/pdf",
 )
