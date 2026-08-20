@@ -650,17 +650,6 @@ def calcular_relevancia(
     )
 
 
-def extrair_valores(texto):
-
-    encontrados = re.findall(
-        r"R\$\s?\d+(?:[.,]\d+)*(?:\s?(?:mil|milhão|milhões|bilhão|bilhões))?",
-        texto,
-        flags=re.IGNORECASE
-    )
-
-    return encontrados
-
-
 def classificar(score):
 
     if score >= 85:
@@ -772,10 +761,6 @@ def buscar_noticias():
                 resumo
             )
 
-            valores = extrair_valores(
-                titulo + " " + resumo
-            )
-
 
             # ------------------------------------------------
             # CORREÇÃO DAS PESSOAS
@@ -844,9 +829,6 @@ def buscar_noticias():
 
                 "instituicoes":
                     instituicoes,
-
-                "valores":
-                    valores,
             })
 
 
@@ -867,6 +849,36 @@ def buscar_noticias():
 
     return noticias
 
+
+
+# ============================================================
+# VISUAL — PAINÉIS
+# ============================================================
+
+st.markdown("""
+<style>
+
+.insight-box {
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin: 8px 0 14px 0;
+}
+
+.insight-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.insight-subtitle {
+    font-size: 12px;
+    opacity: .68;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 # ============================================================
 # CABEÇALHO
@@ -1739,54 +1751,19 @@ if contador_temas_atual:
 
         with colunas[i % 4]:
 
-            st.metric(
-                tema,
-                atual,
-                variacao
+            st.markdown(
+                f"""
+                <div class="insight-box">
+                    <div class="insight-title">{tema}</div>
+                    <div><b>{atual}</b> notícia(s) &nbsp; {variacao}</div>
+                    <div class="insight-subtitle">no período selecionado</div>
+                </div>
+                """,
+                unsafe_allow_html=True
             )
 
     st.divider()
 
-
-# ============================================================
-# VALORES MENCIONADOS
-# ============================================================
-
-valores_contador = Counter()
-
-for noticia in filtradas:
-
-    for valor in noticia.get(
-        "valores",
-        []
-    ):
-
-        valores_contador[valor] += 1
-
-if valores_contador:
-
-    st.subheader(
-        "💰 Valores mencionados"
-    )
-
-    valores_lista = valores_contador.most_common(8)
-
-    st.caption(
-        "Valores identificados automaticamente nas matérias."
-    )
-
-    st.write(
-        " • ".join(
-            [
-                f"**{valor}** ({quantidade})"
-                for valor, quantidade
-                in valores_lista
-            ]
-        ),
-        unsafe_allow_html=True
-    )
-
-    st.divider()
 
 # ============================================================
 # O QUE MERECE ATENÇÃO HOJE
@@ -1809,7 +1786,9 @@ if atencao_hoje:
         "Seleção automática das matérias mais relevantes no recorte atual."
     )
 
-    for noticia in atencao_hoje[:5]:
+    colunas = st.columns(2)
+
+    for i, noticia in enumerate(atencao_hoje[:6]):
 
         data_atencao = ""
 
@@ -1818,33 +1797,25 @@ if atencao_hoje:
                 "%d/%m %H:%M"
             )
 
-        pessoas_atencao = ""
-
-        if noticia["pessoas"]:
-            pessoas_atencao = (
-                " • 👤 "
-                + ", ".join(noticia["pessoas"][:3])
-            )
-
-        temas_atencao = ""
-
-        if noticia["temas"]:
-            temas_atencao = (
-                " • 🏷️ "
-                + ", ".join(noticia["temas"][:3])
-            )
-
-        st.markdown(
-            f"{noticia['bolinha']} "
-            f"**{noticia['titulo']}**"
+        detalhes = (
+            f"{noticia['veiculo']} • {data_atencao}"
         )
 
-        st.caption(
-            f"🗞️ {noticia['veiculo']} • "
-            f"📅 {data_atencao}"
-            f"{pessoas_atencao}"
-            f"{temas_atencao}"
-        )
+        with colunas[i % 2]:
+
+            st.markdown(
+                f"""
+                <div class="insight-box">
+                    <div class="insight-title">
+                        {noticia['bolinha']} {noticia['titulo']}
+                    </div>
+                    <div class="insight-subtitle">
+                        {detalhes}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
     st.divider()
 
@@ -1878,9 +1849,14 @@ if contador_instituicoes:
 
         with colunas[i % 4]:
 
-            st.metric(
-                instituicao,
-                quantidade
+            st.markdown(
+                f"""
+                <div class="insight-box">
+                    <div class="insight-title">🏛️ {instituicao}</div>
+                    <div><b>{quantidade}</b> citação(ões)</div>
+                </div>
+                """,
+                unsafe_allow_html=True
             )
 
     st.divider()
@@ -1904,9 +1880,14 @@ if contador_pessoas:
 
         with colunas[i % 4]:
 
-            st.metric(
-                pessoa,
-                quantidade
+            st.markdown(
+                f"""
+                <div class="insight-box">
+                    <div class="insight-title">👤 {pessoa}</div>
+                    <div><b>{quantidade}</b> citação(ões)</div>
+                </div>
+                """,
+                unsafe_allow_html=True
             )
 
     st.divider()
@@ -1945,9 +1926,14 @@ if contador_veiculos:
 
         with colunas[i % 4]:
 
-            st.metric(
-                veiculo,
-                quantidade
+            st.markdown(
+                f"""
+                <div class="insight-box">
+                    <div class="insight-title">📰 {veiculo}</div>
+                    <div><b>{quantidade}</b> matéria(s)</div>
+                </div>
+                """,
+                unsafe_allow_html=True
             )
 
     st.divider()
