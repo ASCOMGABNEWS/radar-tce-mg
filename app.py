@@ -2069,7 +2069,7 @@ if materias_relevantes_7d:
         )
 
         st.markdown(
-            f"{nivel}  •  📰 **{materia_destaque.get('veiculo', 'Fonte não identificada')}**"
+            f"{nivel}  •  📰 **{materia_destaque.get('veiculo', 'Fonte não identificada')}**  •  📅 {formatar_horario_noticia(materia_destaque.get('data'))}"
         )
 
         st.markdown(
