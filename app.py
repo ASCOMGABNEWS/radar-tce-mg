@@ -17,71 +17,6 @@ st.set_page_config(
 
 
 # ============================================================
-# VISUAL — CARDS
-# ============================================================
-
-st.markdown("""
-<style>
-.news-card {
-    background: rgba(255,255,255,0.035);
-    border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 16px;
-    padding: 18px 20px;
-    margin: 12px 0;
-    box-shadow: 0 6px 22px rgba(0,0,0,0.10);
-}
-
-.news-card-title {
-    color: #f4f6f8;
-    font-size: 17px;
-    line-height: 1.42;
-    font-weight: 700;
-}
-
-.news-card-meta {
-    color: #8f9aa7;
-    font-size: 12px;
-    margin-top: 8px;
-}
-
-.news-card-tag {
-    display: inline-block;
-    margin: 9px 5px 0 0;
-    padding: 4px 8px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.055);
-    border: 1px solid rgba(255,255,255,0.07);
-    color: #c3cbd4;
-    font-size: 11px;
-}
-
-.news-card-summary {
-    color: #b9c2cc;
-    font-size: 13px;
-    line-height: 1.55;
-    margin-top: 12px;
-}
-
-.news-card-link {
-    display: inline-block;
-    margin-top: 14px;
-    padding: 7px 11px;
-    border-radius: 9px;
-    background: rgba(255,255,255,0.055);
-    border: 1px solid rgba(255,255,255,0.08);
-    color: #e3e8ed !important;
-    text-decoration: none !important;
-    font-size: 12px;
-}
-
-.news-card-link:hover {
-    background: rgba(255,255,255,0.09);
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-# ============================================================
 # FONTES
 # ============================================================
 
@@ -1389,115 +1324,104 @@ else:
 
 
         # ----------------------------------------------------
-        # DADOS VISUAIS
+        # TÍTULO — SOMENTE A BOLINHA
         # ----------------------------------------------------
-
-        titulo = noticia["titulo"]
-        resumo = noticia["resumo"]
-
-        if len(resumo) > 500:
-
-            resumo = resumo[:500] + "..."
-
-
-        # Favicon do portal. Se não houver domínio,
-        # usamos apenas o nome do veículo.
-        try:
-
-            from urllib.parse import urlparse
-
-            dominio = urlparse(
-                noticia["link"]
-            ).netloc.replace(
-                "www.",
-                ""
-            )
-
-        except Exception:
-
-            dominio = ""
-
-
-        if dominio:
-
-            favicon = (
-                "https://www.google.com/s2/favicons"
-                f"?domain={dominio}&sz=64"
-            )
-
-            fonte_html = (
-                f'<img src="{favicon}" '
-                f'style="width:18px;height:18px;'
-                f'border-radius:4px;vertical-align:middle;'
-                f'margin-right:6px;" '
-                f'onerror="this.style.display=\'none\'">'
-                f'{noticia["veiculo"]}'
-            )
-
-        else:
-
-            fonte_html = noticia["veiculo"]
-
-
-        pessoas_html = ""
-
-        for pessoa in noticia["pessoas"]:
-
-            pessoas_html += (
-                f'<span class="news-card-tag">'
-                f'👤 {pessoa}'
-                f'</span>'
-            )
-
-
-        temas_html = ""
-
-        for tema in noticia["temas"]:
-
-            temas_html += (
-                f'<span class="news-card-tag">'
-                f'{tema}'
-                f'</span>'
-            )
-
-
-        # ----------------------------------------------------
-        # CARD
-        # ----------------------------------------------------
-
-        card = f"""
-<div class="news-card">
-
-    <div class="news-card-title">
-        {noticia["bolinha"]} {titulo}
-    </div>
-
-    <div class="news-card-meta">
-        {fonte_html} &nbsp;•&nbsp; 📅 {data_formatada}
-    </div>
-
-    <div>
-        {pessoas_html}
-        {temas_html}
-    </div>
-
-    <div class="news-card-summary">
-        {resumo}
-    </div>
-
-    <a
-        class="news-card-link"
-        href="{noticia["link"]}"
-        target="_blank"
-        rel="noopener noreferrer"
-    >
-        Ler matéria ↗
-    </a>
-
-</div>
-"""
 
         st.markdown(
-            card,
-            unsafe_allow_html=True
+
+            f"### "
+            f"{noticia['bolinha']} "
+            f"**{noticia['titulo']}**"
         )
+
+
+        # ----------------------------------------------------
+        # INFORMAÇÕES
+        # ----------------------------------------------------
+
+        st.caption(
+
+            f"🗞️ {noticia['veiculo']}  •  "
+            f"📅 {data_formatada}"
+        )
+
+
+        # ----------------------------------------------------
+        # PESSOAS
+        # ----------------------------------------------------
+
+        if noticia["pessoas"]:
+
+            st.markdown(
+
+                " ".join(
+
+                    [
+                        f"`👤 {p}`"
+                        for p
+                        in noticia["pessoas"]
+                    ]
+
+                )
+
+            )
+
+
+        # ----------------------------------------------------
+        # TEMAS
+        # ----------------------------------------------------
+
+        if noticia["temas"]:
+
+            st.markdown(
+
+                " ".join(
+
+                    [
+                        f"`{tema}`"
+                        for tema
+                        in noticia["temas"]
+                    ]
+
+                )
+
+            )
+
+
+        # ----------------------------------------------------
+        # RESUMO
+        # ----------------------------------------------------
+
+        if noticia["resumo"]:
+
+            resumo = noticia[
+                "resumo"
+            ]
+
+
+            if len(resumo) > 500:
+
+                resumo = (
+                    resumo[:500]
+                    + "..."
+                )
+
+
+            st.write(
+                resumo
+            )
+
+
+        # ----------------------------------------------------
+        # LINK
+        # ----------------------------------------------------
+
+        st.link_button(
+
+            "Ler matéria ↗",
+
+            noticia["link"]
+        )
+
+
+        st.divider()
