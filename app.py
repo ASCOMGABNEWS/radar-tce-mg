@@ -1444,77 +1444,9 @@ st.markdown("""
 }
 
 
-/* Métricas superiores centralizadas */
-.metrics-strip {
-    width:100%;
-    max-width:1180px;
-    margin:0 auto;
-    display:grid;
-    grid-template-columns:repeat(5, 1fr);
-    align-items:center;
-    text-align:center;
-}
-
-.metric-item {
-    padding:6px 12px 8px;
-}
-
-.metric-label {
-    font-size:15px;
-    font-weight:650;
-    color:#344054;
-    white-space:nowrap;
-}
-
-.metric-critical { color:#d92d20; }
-.metric-high { color:#e76f00; }
-.metric-medium { color:#b58100; }
-
-.metric-value {
-    margin-top:4px;
-    font-size:42px;
-    line-height:1.05;
-    font-weight:800;
-    color:#2f3340;
-}
-
-.abrangencia-btn {
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    min-height:38px;
-    margin-top:4px;
-    padding:8px 12px;
-    border-radius:9px;
-    text-decoration:none !important;
-    font-size:12px;
-    font-weight:750;
-    line-height:1.15;
-    text-align:center;
-    box-sizing:border-box;
-    transition:opacity .15s ease, transform .15s ease;
-}
-
-.abrangencia-btn:hover {
-    opacity:.88;
-    transform:translateY(-1px);
-}
-
-.abrangencia-mg {
-    background:#d92d20;
-    color:#fff !important;
-}
-
-.abrangencia-br {
-    background:#198754;
-    color:#fff !important;
-}
-
 @media (max-width: 800px) {
     .news-card { grid-template-columns:1fr; }
     .news-time { display:none; }
-    .metrics-strip { grid-template-columns:1fr 1fr; }
-    .metric-item:first-child { grid-column:1 / -1; }
 }
 
 /* Títulos dos painéis ficam fixos; somente o conteúdo interno pode rolar. */
@@ -1981,33 +1913,38 @@ if materias_relevantes_7d:
 # ============================================================
 
 with st.container(border=True):
-    st.markdown(
-        f"""
-        <div class="metrics-strip">
-            <div class="metric-item">
-                <div class="metric-label">📰 Total de notícias</div>
-                <div class="metric-value">{len(noticias_periodo)}</div>
-            </div>
-            <div class="metric-item">
-                <div class="metric-label metric-critical">🔴 Críticas</div>
-                <div class="metric-value">{len(criticas)}</div>
-            </div>
-            <div class="metric-item">
-                <div class="metric-label metric-high">🟠 Altas</div>
-                <div class="metric-value">{len(altas)}</div>
-            </div>
-            <div class="metric-item">
-                <div class="metric-label metric-medium">🟡 Médias</div>
-                <div class="metric-value">{len(medias)}</div>
-            </div>
-            <div class="metric-item">
-                <div class="metric-label">⚪ Menções</div>
-                <div class="metric-value">{len(mencoes)}</div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+
+    m1, m2, m3, m4, m5 = st.columns(5)
+
+    with m1:
+        st.metric(
+            "📰 Total de notícias",
+            len(noticias_periodo)
+        )
+
+    with m2:
+        st.metric(
+            "🔴 Críticas",
+            len(criticas)
+        )
+
+    with m3:
+        st.metric(
+            "🟠 Altas",
+            len(altas)
+        )
+
+    with m4:
+        st.metric(
+            "🟡 Médias",
+            len(medias)
+        )
+
+    with m5:
+        st.metric(
+            "⚪ Menções",
+            len(mencoes)
+        )
 
 
 # ============================================================
@@ -2056,7 +1993,12 @@ with f4:
         ["Todas"] + list(INSTITUICOES_FILTRO.keys())
     )
 
-f5, f6 = st.columns(2)
+# Abrangência funciona como filtro na própria página.
+# Os botões apenas alteram o estado do filtro; não são links.
+if "filtro_abrangencia" not in st.session_state:
+    st.session_state.filtro_abrangencia = "Todas"
+
+f5, f6, f7 = st.columns(3)
 
 with f5:
     filtro_relevancia = st.selectbox(
@@ -2070,21 +2012,16 @@ with f6:
         placeholder="Ex.: Copasa, mineração, transporte..."
     )
 
-# A abrangência agora é controlada pelos botões ao lado de
-# "Notícias monitoradas", deixando a área de filtros mais limpa.
-abrangencia_ativa = st.query_params.get("abrangencia", "")
-if isinstance(abrangencia_ativa, list):
-    abrangencia_ativa = abrangencia_ativa[0] if abrangencia_ativa else ""
-
-apenas_relevantes = st.checkbox(
-    "🎯 Apenas relevantes (🔴 + 🟠)"
-)
-
+with f7:
+    apenas_relevantes = st.checkbox(
+        "🎯 Apenas relevantes (🔴 + 🟠)"
+    )
 
 # ============================================================
 # APLICA FILTROS
 # ============================================================
 
+filtro_abrangencia = st.session_state.get("filtro_abrangencia", "Todas")
 filtradas = noticias_periodo
 
 if filtro_pessoa != "Todas":
@@ -2111,10 +2048,10 @@ if filtro_instituicao != "Todas":
         if filtro_instituicao in n.get("instituicoes", [])
     ]
 
-if abrangencia_ativa in ("Minas Gerais", "Nacional"):
+if filtro_abrangencia != "Todas":
     filtradas = [
         n for n in filtradas
-        if n.get("abrangencia") == abrangencia_ativa
+        if n.get("abrangencia") == filtro_abrangencia
     ]
 
 if filtro_relevancia != "Todas":
@@ -2385,44 +2322,69 @@ st.download_button(
 # RESULTADOS
 # ============================================================
 
-cab1, cab2, cab3 = st.columns([5.6, 1.7, 1.7], gap="small")
+# ============================================================
+# TÍTULO + FILTROS DE ABRANGÊNCIA
+# ============================================================
 
-with cab1:
+st.markdown(
+    """
+    <style>
+    div[data-testid="stButton"] button {
+        border-radius: 8px;
+        font-weight: 700;
+        height: 38px;
+    }
+
+    div[data-testid="stButton"] button.estado-mg {
+        background: #d92d20;
+        color: white;
+    }
+
+    div[data-testid="stButton"] button.nacional-br {
+        background: #039855;
+        color: white;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+titulo_col, mg_col, br_col = st.columns([5.2, 1.7, 1.7], gap="small")
+
+with titulo_col:
     st.subheader("📰 Notícias monitoradas")
 
-with cab2:
-    href_mg = "?abrangencia=" if abrangencia_ativa == "Minas Gerais" else "?abrangencia=Minas%20Gerais"
-    texto_mg = "✕ Limpar Estadual - MG" if abrangencia_ativa == "Minas Gerais" else "Abrangência Estadual - MG"
-    st.markdown(
-        f"""
-        <a class="abrangencia-btn abrangencia-mg" href="{href_mg}">
-            {texto_mg}
-        </a>
-        """,
-        unsafe_allow_html=True
+with mg_col:
+    mg_clicado = st.button(
+        "Abrangência Estadual - MG",
+        key="filtro_mg",
+        use_container_width=True,
     )
+    if mg_clicado:
+        st.session_state.filtro_abrangencia = (
+            "Todas"
+            if st.session_state.filtro_abrangencia == "Minas Gerais"
+            else "Minas Gerais"
+        )
+        st.rerun()
 
-with cab3:
-    href_br = "?abrangencia=" if abrangencia_ativa == "Nacional" else "?abrangencia=Nacional"
-    texto_br = "✕ Limpar Nacional - BR" if abrangencia_ativa == "Nacional" else "Abrangência Nacional - BR"
-    st.markdown(
-        f"""
-        <a class="abrangencia-btn abrangencia-br" href="{href_br}">
-            {texto_br}
-        </a>
-        """,
-        unsafe_allow_html=True
+with br_col:
+    br_clicado = st.button(
+        "Abrangência Nacional - BR",
+        key="filtro_br",
+        use_container_width=True,
     )
+    if br_clicado:
+        st.session_state.filtro_abrangencia = (
+            "Todas"
+            if st.session_state.filtro_abrangencia == "Nacional"
+            else "Nacional"
+        )
+        st.rerun()
 
-if abrangencia_ativa in ("Minas Gerais", "Nacional"):
-    st.caption(
-        f"{len(filtradas)} notícias encontradas • filtro ativo: {abrangencia_ativa}. "
-        f"Clique no botão ativo para limpar."
-    )
-else:
-    st.caption(
-        f"{len(filtradas)} notícias encontradas no período selecionado."
-    )
+st.caption(
+    f"{len(filtradas)} notícias encontradas no período selecionado."
+)
 
 if not filtradas:
 
@@ -2526,5 +2488,5 @@ else:
 # ============================================================
 
 st.caption(
-    "As notícias são classificadas automaticamente com base em relevância para o TCE-MG."
+    "As notícias são classificadas automaticamente com base em relevância para o TCE-MG. Uso exclusivo gabinete interno."
 )
