@@ -2,16 +2,14 @@ from zoneinfo import ZoneInfo
 
 FUSO_BRASIL = ZoneInfo("America/Sao_Paulo")
 
-def agora_brasilia():
-    return datetime.now(FUSO_BRASIL).replace(tzinfo=None)
-
-
 def formatar_horario_noticia(data):
-    """Exibe o horário da notícia já normalizado para Brasília."""
+    """Exibe o horário da notícia no fuso de Brasília."""
     if not data:
         return ""
     try:
-        return data.strftime("%d/%m/%Y %H:%M")
+        if data.tzinfo is None:
+            return data.strftime("%d/%m/%Y %H:%M")
+        return data.astimezone(FUSO_BRASIL).strftime("%d/%m/%Y %H:%M")
     except Exception:
         return ""
 import streamlit as st
@@ -475,9 +473,9 @@ def obter_data(item):
             and item.published_parsed
         ):
 
-            data_utc = datetime(*item.published_parsed[:6]).replace(
-                tzinfo=ZoneInfo("UTC")
-            )
+            data_utc = datetime(
+                *item.published_parsed[:6]
+            ).replace(tzinfo=ZoneInfo("UTC"))
             return data_utc.astimezone(FUSO_BRASIL).replace(tzinfo=None)
 
     except Exception:
@@ -952,7 +950,7 @@ def buscar_noticias():
     links = set()
 
     limite = (
-        agora_brasilia()
+        datetime.now(FUSO_BRASIL).replace(tzinfo=None)
         - timedelta(days=7)
     )
 
@@ -1467,7 +1465,7 @@ st.markdown("""
 # CABEÇALHO
 # ============================================================
 
-agora = agora_brasilia()
+agora = datetime.now(FUSO_BRASIL).replace(tzinfo=None)
 
 st.markdown(
     f"""
@@ -1811,7 +1809,7 @@ with col3:
 
 # O destaque considera sempre os últimos 7 dias, independentemente
 # do período selecionado no filtro principal.
-limite_destaque_7d = agora_brasilia() - timedelta(days=7)
+limite_destaque_7d = datetime.now(FUSO_BRASIL).replace(tzinfo=None) - timedelta(days=7)
 
 noticias_7d = [
     n for n in noticias
@@ -1996,10 +1994,11 @@ with f4:
         ["Todas"] + list(INSTITUICOES_FILTRO.keys())
     )
 
-# Abrangência funciona como filtro na própria página.
-# Os botões apenas alteram o estado do filtro; não são links.
+# Abrangência é controlada pelos botões ao lado de “Notícias monitoradas”.
+# Eles funcionam como filtros do próprio Streamlit e não são links.
 if "filtro_abrangencia" not in st.session_state:
     st.session_state.filtro_abrangencia = "Todas"
+filtro_abrangencia = st.session_state.filtro_abrangencia
 
 f5, f6, f7 = st.columns(3)
 
@@ -2024,7 +2023,6 @@ with f7:
 # APLICA FILTROS
 # ============================================================
 
-filtro_abrangencia = st.session_state.get("filtro_abrangencia", "Todas")
 filtradas = noticias_periodo
 
 if filtro_pessoa != "Todas":
@@ -2163,7 +2161,7 @@ def gerar_pdf_clipping(noticias_clipping):
 
     story = []
 
-    data_geracao = agora_brasilia().strftime("%d/%m/%Y às %H:%M")
+    data_geracao = datetime.now(FUSO_BRASIL).replace(tzinfo=None).strftime("%d/%m/%Y às %H:%M")
 
     story.append(Paragraph("CLIPPING TCE-MG", titulo))
     story.append(
@@ -2315,7 +2313,7 @@ st.download_button(
     data=pdf_bytes,
     file_name=(
         f"clipping_tce_mg_"
-        f"{agora_brasilia().strftime('%Y-%m-%d')}.pdf"
+        f"{datetime.now(FUSO_BRASIL).replace(tzinfo=None).strftime('%Y-%m-%d')}.pdf"
     ),
     mime="application/pdf",
 )
@@ -2325,75 +2323,40 @@ st.download_button(
 # RESULTADOS
 # ============================================================
 
-# ============================================================
-# TÍTULO + FILTROS DE ABRANGÊNCIA
-# ============================================================
+# Botões de abrangência: filtros na mesma página.
+st.markdown("""
+<style>
+/* Esta é a linha que contém o título “Notícias monitoradas”. */
+div[data-testid="stHorizontalBlock"]:has(h3) div[data-testid="column"]:nth-child(2) button {
+    background:#d92d20 !important;
+    color:#ffffff !important;
+    border:1px solid #d92d20 !important;
+    font-weight:700 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(h3) div[data-testid="column"]:nth-child(3) button {
+    background:#039855 !important;
+    color:#ffffff !important;
+    border:1px solid #039855 !important;
+    font-weight:700 !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
-st.markdown(
-    """
-    <style>
-    div[data-testid="stButton"] button {
-        border-radius: 8px;
-        font-weight: 700;
-        height: 38px;
-    }
-
-    /* Botões de abrangência: a linha é identificada pelo título acima e
-       recebe as cores nos dois controles específicos. */
-    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stButton"] button) div[data-testid="column"]:nth-child(2) div[data-testid="stButton"] button,
-    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stButton"] button) div[data-testid="column"]:nth-child(3) div[data-testid="stButton"] button {
-        color: #ffffff !important;
-        border: none !important;
-    }
-
-    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stButton"] button) div[data-testid="column"]:nth-child(2) div[data-testid="stButton"] button {
-        background: #d92d20 !important;
-    }
-
-    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stButton"] button) div[data-testid="column"]:nth-child(3) div[data-testid="stButton"] button {
-        background: #039855 !important;
-    }
-
-    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stButton"] button) div[data-testid="column"]:nth-child(2) div[data-testid="stButton"] button:hover,
-    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stButton"] button) div[data-testid="column"]:nth-child(3) div[data-testid="stButton"] button:hover {
-        filter: brightness(.92);
-        color: #ffffff !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-titulo_col, mg_col, br_col = st.columns([5.2, 1.7, 1.7], gap="small")
-
+titulo_col, mg_col, br_col = st.columns([5.2, 1.9, 1.9], gap="small")
 with titulo_col:
     st.subheader("📰 Notícias monitoradas")
-
 with mg_col:
-    mg_clicado = st.button(
-        "Abrangência Estadual - MG",
-        key="filtro_mg",
-        use_container_width=True,
-    )
+    mg_clicado = st.button("🇧🇷  MG • Estadual", key="abrangencia_mg", use_container_width=True)
     if mg_clicado:
         st.session_state.filtro_abrangencia = (
-            "Todas"
-            if st.session_state.filtro_abrangencia == "Minas Gerais"
-            else "Minas Gerais"
+            "Todas" if st.session_state.filtro_abrangencia == "Minas Gerais" else "Minas Gerais"
         )
         st.rerun()
-
 with br_col:
-    br_clicado = st.button(
-        "Abrangência Nacional - BR",
-        key="filtro_br",
-        use_container_width=True,
-    )
+    br_clicado = st.button("🇧🇷  BR • Nacional", key="abrangencia_br", use_container_width=True)
     if br_clicado:
         st.session_state.filtro_abrangencia = (
-            "Todas"
-            if st.session_state.filtro_abrangencia == "Nacional"
-            else "Nacional"
+            "Todas" if st.session_state.filtro_abrangencia == "Nacional" else "Nacional"
         )
         st.rerun()
 
