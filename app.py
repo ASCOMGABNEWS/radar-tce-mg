@@ -2049,36 +2049,28 @@ else:
                 if resumo:
                     st.write(resumo)
 
-                st.link_button(
-                    "Ler matéria ↗",
-                    noticia["link"],
-                    key=f"ler_materia_{i}_{hash(noticia['link'])}"
+                col_ler, col_whatsapp = st.columns(
+                    [1, 1],
+                    gap="small"
                 )
 
-                # Compartilhamento no WhatsApp no formato usado no clipping:
-                # *Título em negrito*
-                # _Bigode em itálico_
-                # link puro em uma nova linha.
+                with col_ler:
+
+                    st.link_button(
+                        "**Ler matéria ↗**",
+                        noticia["link"],
+                        key=f"ler_materia_{i}_{hash(noticia['link'])}"
+                    )
+
+                # WhatsApp: título em negrito, espaço e link.
                 titulo_whatsapp = (
                     str(noticia.get("titulo") or "")
                     .replace("*", "")
                     .strip()
                 )
 
-                bigode_whatsapp = (
-                    str(noticia.get("resumo") or "")
-                    .replace("_", "")
-                    .strip()
-                )
-
-                if len(bigode_whatsapp) > 300:
-                    bigode_whatsapp = (
-                        bigode_whatsapp[:300].rstrip() + "..."
-                    )
-
                 texto_whatsapp = (
-                    f"*{titulo_whatsapp}*\n"
-                    f"_{bigode_whatsapp}_\n"
+                    f"*{titulo_whatsapp}*\n\n"
                     f"{noticia['link']}"
                 )
 
@@ -2087,11 +2079,13 @@ else:
                     + quote(texto_whatsapp)
                 )
 
-                st.link_button(
-                    "📲 Compartilhar no WhatsApp",
-                    whatsapp_url,
-                    key=f"whatsapp_materia_{i}_{hash(noticia['link'])}"
-                )
+                with col_whatsapp:
+
+                    st.link_button(
+                        "📲 Compartilhar no WhatsApp",
+                        whatsapp_url,
+                        key=f"whatsapp_materia_{i}_{hash(noticia['link'])}"
+                    )
 
             with col_time:
 
