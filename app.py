@@ -3,6 +3,7 @@ import feedparser
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 # Horário oficial do Radar: Brasília (UTC-3).
 FUSO_RADAR = ZoneInfo("America/Sao_Paulo")
@@ -740,8 +741,23 @@ def buscar_noticias():
 
         try:
 
+            # Não deixe uma fonte RSS fora do ar travar o Radar inteiro.
+            request = Request(
+                url,
+                headers={
+                    "User-Agent": "Radar-TCE-MG/1.0"
+                }
+            )
+
+            with urlopen(
+                request,
+                timeout=6
+            ) as resposta:
+
+                conteudo = resposta.read()
+
             feed = feedparser.parse(
-                url
+                conteudo
             )
 
         except Exception:
