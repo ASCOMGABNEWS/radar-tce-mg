@@ -6,8 +6,6 @@ from collections import Counter
 from io import BytesIO
 from html import escape
 
-import pandas as pd
-from docx import Document
 from docx.shared import Pt
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -1512,183 +1510,304 @@ if busca:
 # DOWNLOAD DO CLIPPING
 # ============================================================
 
-st.subheader("📥 Baixar clipping")
-
-st.caption(
-    f"O arquivo será gerado com as {len(filtradas)} notícia(s) "
-    "que estão aparecendo abaixo, respeitando todos os filtros."
+from io import BytesIO
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib import colors
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    PageBreak,
 )
+from reportlab.lib.units import cm
 
-col1, col2, col3 = st.columns(3)
 
-with col1:
-    excel = gerar_excel(filtradas)
-    st.download_button(
-        "📊 Excel",
-        data=excel,
-        file_name=f"clipping_tce_mg_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        use_container_width=True,
+def gerar_pdf_clipping(noticias_clipping):
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=1.6 * cm,
+        leftMargin=1.6 * cm,
+        topMargin=1.6 * cm,
+        bottomMargin=1.6 * cm,
     )
 
-with col2:
-    word = gerar_word(filtradas)
-    st.download_button(
-        "📝 Word",
-        data=word,
-        file_name=f"clipping_tce_mg_{datetime.now().strftime('%Y%m%d_%H%M')}.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        use_container_width=True,
+    styles = getSampleStyleSheet()
+
+    titulo = ParagraphStyle(
+        "TituloClipping",
+        parent=styles["Title"],
+        fontSize=20,
+        leading=24,
+        alignment=TA_CENTER,
+        spaceAfter=8,
     )
 
-with col3:
-    pdf = gerar_pdf(filtradas)
-    st.download_button(
-        "📄 PDF",
-        data=pdf,
-        file_name=f"clipping_tce_mg_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
-        mime="application/pdf",
-        use_container_width=True,
+    subtitulo = ParagraphStyle(
+        "SubtituloClipping",
+        parent=styles["Normal"],
+        fontSize=10,
+        leading=14,
+        alignment=TA_CENTER,
+        textColor=colors.grey,
+        spaceAfter=18,
     )
 
-st.divider()
-
-# ============================================================
-# RESULTADOS
-# ============================================================
-
-st.subheader(
-
-    f"📰 {len(filtradas)} notícias encontradas"
-)
-
-
-if not filtradas:
-
-    st.info(
-        "Nenhuma notícia encontrada "
-        "com os filtros selecionados."
+    secao = ParagraphStyle(
+        "SecaoClipping",
+        parent=styles["Heading2"],
+        fontSize=13,
+        leading=16,
+        spaceBefore=12,
+        spaceAfter=8,
     )
 
+    manchete = ParagraphStyle(
+        "MancheteClipping",
+        parent=styles["Heading3"],
+        fontSize=11.5,
+        leading=15,
+        spaceAfter=5,
+    )
 
-else:
+    corpo = ParagraphStyle(
+        "CorpoClipping",
+        parent=styles["Normal"],
+        fontSize=9,
+        leading=13,
+        spaceAfter=6,
+    )
 
-    for noticia in filtradas:
+    meta = ParagraphStyle(
+        "MetaClipping",
+        parent=styles["Normal"],
+        fontSize=8,
+        leading=11,
+        textColor=colors.grey,
+        spaceAfter=5,
+    )
 
-        data_formatada = ""
+    story = []
 
+    data_geracao = datetime.now().strftime("%d/%m/%Y às %H:%M")
+
+    story.append(
+        Paragraph(
+            "CLIPPING TCE-MG",
+            titulo,
+        )
+    )
+
+    story.append(
+        Paragraph(
+            f"Gerado em {data_geracao} • "
+            f"{len(noticias_clipping)} notícia(s)",
+            subtitulo,
+        )
+    )
+
+    # Destaques
+    criticas_pdf = [
+        n for n in noticias_clipping
+        if n["score"] >= 85
+    ]
+
+    altas_pdf = [
+        n for n in noticias_clipping
+        if 65 <= n["score"] < 85
+    ]
+
+    if criticas_pdf or altas_pdf:
+
+        story.append(
+            Paragraph(
+                "DESTAQUES",
+                secao,
+            )
+        )
+
+        for noticia in (
+            criticas_pdf[:5] + altas_pdf[:5]
+        ):
+
+            story.append(
+                Paragraph(
+                    f"{noticia['bolinha']} "
+                    f"{noticia['titulo']}",
+                    manchete,
+                )
+            )
+
+            story.append(
+                Paragraph(
+                    f"<b>{noticia['veiculo']}</b>",
+                    meta,
+                )
+            )
+
+    # Notícias
+    story.append(
+        Paragraph(
+            "NOTÍCIAS",
+            secao,
+        )
+    )
+
+    for noticia in noticias_clipping:
+
+        data = ""
 
         if noticia["data"]:
-
-            data_formatada = (
-
-                noticia["data"]
-                .strftime(
-                    "%d/%m/%Y %H:%M"
-                )
-
+            data = noticia["data"].strftime(
+                "%d/%m/%Y %H:%M"
             )
 
-
-        # ----------------------------------------------------
-        # TÍTULO — SOMENTE A BOLINHA
-        # ----------------------------------------------------
-
-        st.markdown(
-
-            f"### "
-            f"{noticia['bolinha']} "
-            f"**{noticia['titulo']}**"
+        pessoas = ", ".join(
+            noticia["pessoas"]
         )
 
-
-        # ----------------------------------------------------
-        # INFORMAÇÕES
-        # ----------------------------------------------------
-
-        st.caption(
-
-            f"🗞️ {noticia['veiculo']}  •  "
-            f"📅 {data_formatada}"
+        temas = ", ".join(
+            noticia["temas"]
         )
 
+        resumo = noticia["resumo"]
 
-        # ----------------------------------------------------
-        # PESSOAS
-        # ----------------------------------------------------
+        if len(resumo) > 700:
+            resumo = resumo[:700] + "..."
 
-        if noticia["pessoas"]:
-
-            st.markdown(
-
-                " ".join(
-
-                    [
-                        f"`👤 {p}`"
-                        for p
-                        in noticia["pessoas"]
-                    ]
-
-                )
-
+        story.append(
+            Paragraph(
+                f"{noticia['bolinha']} "
+                f"{noticia['titulo']}",
+                manchete,
             )
-
-
-        # ----------------------------------------------------
-        # TEMAS
-        # ----------------------------------------------------
-
-        if noticia["temas"]:
-
-            st.markdown(
-
-                " ".join(
-
-                    [
-                        f"`{tema}`"
-                        for tema
-                        in noticia["temas"]
-                    ]
-
-                )
-
-            )
-
-
-        # ----------------------------------------------------
-        # RESUMO
-        # ----------------------------------------------------
-
-        if noticia["resumo"]:
-
-            resumo = noticia[
-                "resumo"
-            ]
-
-
-            if len(resumo) > 500:
-
-                resumo = (
-                    resumo[:500]
-                    + "..."
-                )
-
-
-            st.write(
-                resumo
-            )
-
-
-        # ----------------------------------------------------
-        # LINK
-        # ----------------------------------------------------
-
-        st.link_button(
-
-            "Ler matéria ↗",
-
-            noticia["link"]
         )
 
+        story.append(
+            Paragraph(
+                f"{noticia['veiculo']} • {data}",
+                meta,
+            )
+        )
 
-        st.divider()
+        if pessoas:
+            story.append(
+                Paragraph(
+                    f"<b>Pessoas:</b> {pessoas}",
+                    corpo,
+                )
+            )
+
+        if temas:
+            story.append(
+                Paragraph(
+                    f"<b>Temas:</b> {temas}",
+                    corpo,
+                )
+            )
+
+        if resumo:
+            story.append(
+                Paragraph(
+                    resumo,
+                    corpo,
+                )
+            )
+
+        story.append(
+            Paragraph(
+                f'<link href="{noticia["link"]}" '
+                f'color="blue">{noticia["link"]}</link>',
+                meta,
+            )
+        )
+
+        story.append(
+            Spacer(
+                1,
+                0.18 * cm
+            )
+        )
+
+    # Assuntos
+    contador_temas_pdf = Counter()
+
+    for noticia in noticias_clipping:
+        for tema in noticia["temas"]:
+            contador_temas_pdf[tema] += 1
+
+    if contador_temas_pdf:
+
+        story.append(
+            PageBreak()
+        )
+
+        story.append(
+            Paragraph(
+                "ASSUNTOS EM DESTAQUE",
+                secao,
+            )
+        )
+
+        for tema, quantidade in (
+            contador_temas_pdf.most_common(10)
+        ):
+
+            story.append(
+                Paragraph(
+                    f"{tema} — {quantidade} notícia(s)",
+                    corpo,
+                )
+            )
+
+    # Pessoas
+    contador_pessoas_pdf = Counter()
+
+    for noticia in noticias_clipping:
+        for pessoa in noticia["pessoas"]:
+            contador_pessoas_pdf[pessoa] += 1
+
+    if contador_pessoas_pdf:
+
+        story.append(
+            Paragraph(
+                "PESSOAS MAIS CITADAS",
+                secao,
+            )
+        )
+
+        for pessoa, quantidade in (
+            contador_pessoas_pdf.most_common(10)
+        ):
+
+            story.append(
+                Paragraph(
+                    f"{pessoa} — {quantidade} notícia(s)",
+                    corpo,
+                )
+            )
+
+    doc.build(story)
+
+    buffer.seek(0)
+
+    return buffer.getvalue()
+
+
+pdf_bytes = gerar_pdf_clipping(
+    filtradas
+)
+
+st.download_button(
+    label="📄 Baixar clipping em PDF",
+    data=pdf_bytes,
+    file_name=(
+        f"clipping_tce_mg_"
+        f"{datetime.now().strftime('%Y-%m-%d')}.pdf"
+    ),
+    mime="application/pdf",
+)
