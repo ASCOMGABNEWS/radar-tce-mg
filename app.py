@@ -1328,6 +1328,7 @@ for noticia in noticias_periodo:
 
 
 
+
 # ============================================================
 # PAINEL SUPERIOR
 # ============================================================
@@ -1342,17 +1343,36 @@ altas = [
     if 65 <= n["score"] < 85
 ]
 
-# As três caixas têm a mesma altura.
 col1, col2, col3 = st.columns(
     [1.05, 1.25, 1.25],
     gap="medium"
 )
 
+def box_title(text):
+    st.markdown(
+        f"""
+        <div style="
+            background:rgba(100,116,139,.07);
+            border:1px solid rgba(100,116,139,.10);
+            border-radius:9px;
+            padding:8px 12px;
+            margin:-4px -4px 12px -4px;
+            font-size:17px;
+            font-weight:750;
+            color:#27324a;
+        ">
+            {text}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
 with col1:
 
     with st.container(border=True, height=310):
 
-        st.markdown("**🚨 Radar de atenção**")
+        box_title("🚨 Radar de atenção")
 
         r1, r2 = st.columns(2, gap="small")
 
@@ -1361,37 +1381,48 @@ with col1:
             st.markdown("🔴 **Críticas**")
 
             st.markdown(
-                f"<div style='font-size:42px;font-weight:800;line-height:1;margin:-2px 0 0 0'>{len(criticas)}</div>",
+                f"""
+                <div style="
+                    font-size:44px;
+                    font-weight:800;
+                    line-height:1;
+                    margin:0;
+                    color:#2f3340;
+                ">{len(criticas)}</div>
+                """,
                 unsafe_allow_html=True
             )
 
-            st.caption(
-                "merecem atenção imediata"
-            )
+            st.caption("merecem atenção imediata")
 
         with r2:
 
             st.markdown("🟠 **Alta relevância**")
 
             st.markdown(
-                f"<div style='font-size:42px;font-weight:800;line-height:1;margin:-2px 0 0 0'>{len(altas)}</div>",
+                f"""
+                <div style="
+                    font-size:44px;
+                    font-weight:800;
+                    line-height:1;
+                    margin:0;
+                    color:#2f3340;
+                ">{len(altas)}</div>
+                """,
                 unsafe_allow_html=True
             )
 
-            st.caption(
-                "potencialmente importantes"
-            )
+            st.caption("potencialmente importantes")
 
 
 with col2:
 
     with st.container(border=True, height=310):
 
-        st.markdown("**🔥 Assuntos quentes**")
+        box_title("🔥 Assuntos quentes")
 
         temas_quentes = contador_temas.most_common(20)
 
-        # Rolagem interna para não aumentar a altura da caixa.
         with st.container(height=245):
 
             if temas_quentes:
@@ -1404,16 +1435,10 @@ with col2:
                     )
 
                     with c1:
-
-                        st.markdown(
-                            f"**{tema}**"
-                        )
+                        st.markdown(f"**{tema}**")
 
                     with c2:
-
-                        st.markdown(
-                            f"**{quantidade}**"
-                        )
+                        st.markdown(f"**{quantidade}**")
 
             else:
 
@@ -1426,7 +1451,7 @@ with col3:
 
     with st.container(border=True, height=310):
 
-        st.markdown("**👥 Pessoas mais citadas**")
+        box_title("👥 Pessoas mais citadas")
 
         pessoas_quentes = contador_pessoas.most_common(10)
 
@@ -1442,16 +1467,10 @@ with col3:
                     )
 
                     with c1:
-
-                        st.markdown(
-                            f"**{pessoa}**"
-                        )
+                        st.markdown(f"**{pessoa}**")
 
                     with c2:
-
-                        st.markdown(
-                            f"**{quantidade}**"
-                        )
+                        st.markdown(f"**{quantidade}**")
 
             else:
 
