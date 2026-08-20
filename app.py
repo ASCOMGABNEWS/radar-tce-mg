@@ -1304,14 +1304,18 @@ periodo = st.radio(
 )
 
 
+# Datas vindas dos RSS são naive; use o horário de Brasília apenas para
+# exibição e normalize o limite para comparação segura.
+agora_comparacao = agora_radar().replace(tzinfo=None)
+
 if periodo == "Últimas 6 horas":
-    limite_periodo = agora - timedelta(hours=6)
+    limite_periodo = agora_comparacao - timedelta(hours=6)
 elif periodo == "Últimas 24 horas":
-    limite_periodo = agora - timedelta(hours=24)
+    limite_periodo = agora_comparacao - timedelta(hours=24)
 elif periodo == "Últimos 3 dias":
-    limite_periodo = agora - timedelta(days=3)
+    limite_periodo = agora_comparacao - timedelta(days=3)
 else:
-    limite_periodo = agora - timedelta(days=7)
+    limite_periodo = agora_comparacao - timedelta(days=7)
 
 
 noticias_periodo = [
