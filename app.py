@@ -1158,12 +1158,15 @@ def buscar_noticias():
 st.markdown("""
 <style>
 .st-key-metricas-centralizadas [data-testid="stMetric"] {
-    text-align: center;
+    text-align: center !important;
+    align-items: center !important;
 }
 .st-key-metricas-centralizadas [data-testid="stMetricLabel"] {
-    justify-content: center;
-    width: 100%;
-    text-align: center;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    text-align: center !important;
     font-weight: 800 !important;
 }
 .st-key-metricas-centralizadas [data-testid="stMetricLabel"] p {
@@ -1172,20 +1175,15 @@ st.markdown("""
     width: 100%;
 }
 .st-key-metricas-centralizadas [data-testid="stMetricValue"] {
-    justify-content: center;
-    width: 100%;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    text-align: center !important;
 }
-.st-key-apenas-relevantes-box {
-    background: #eef0f3;
-    border-radius: 12px;
-    padding: 10px 14px 4px 14px;
-    min-height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.st-key-apenas-relevantes-box [data-testid="stCheckbox"] {
-    justify-content: center;
+.st-key-metricas-centralizadas [data-testid="stMetricValue"] > div {
+    width: 100% !important;
+    text-align: center !important;
 }
 .st-key-abrangencia-estadual button {
     background: #c62828 !important;
@@ -1231,11 +1229,6 @@ st.markdown("""
     justify-content: center;
     width: 100%;
 }
-.st-key-apenas-relevantes-box {
-    min-height: 56px;
-    box-sizing: border-box;
-}
-
 #MainMenu, footer {visibility: hidden;}
 
 .block-container {
@@ -2080,7 +2073,7 @@ with f4:
     )
 
 with st.container(key="filtros-centralizados"):
-    f5, f6, f7 = st.columns(3, gap="medium")
+    f5, f6 = st.columns(2, gap="medium")
 
     with f5:
         filtro_relevancia = st.selectbox(
@@ -2093,12 +2086,6 @@ with st.container(key="filtros-centralizados"):
             "🔍 Buscar palavra",
             placeholder="Ex.: Copasa, mineração, transporte..."
         )
-
-    with f7:
-        with st.container(key="apenas-relevantes-box"):
-            apenas_relevantes = st.checkbox(
-                "🎯 Apenas relevantes (🔴 + 🟠)"
-            )
 
 # A abrangência agora é controlada pelos botões ao lado de
 # 'Notícias monitoradas', sem abrir outra página.
@@ -2153,12 +2140,6 @@ if filtro_relevancia != "Todas":
     filtradas = [
         n for n in filtradas
         if n["bolinha"] == mapa_relevancia[filtro_relevancia]
-    ]
-
-if apenas_relevantes:
-    filtradas = [
-        n for n in filtradas
-        if n["score"] >= 65
     ]
 
 if busca:
