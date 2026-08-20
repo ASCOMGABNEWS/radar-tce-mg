@@ -3,10 +3,6 @@ import feedparser
 from datetime import datetime, timedelta
 import re
 import html
-import os
-import json
-from urllib.request import Request, urlopen
-from urllib.parse import urlencode
 from collections import Counter
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
@@ -717,296 +713,6 @@ def classificar_abrangencia(veiculo):
 # ============================================================
 
 @st.cache_data(ttl=300, show_spinner=False)
-
-# ============================================================
-# REDES SOCIAIS — INSTAGRAM + X
-# ============================================================
-
-def get_secret(name, default=""):
-    """Lê Streamlit Secrets ou variável de ambiente sem quebrar o app."""
-    try:
-        value = st.secrets.get(name, default)
-    except Exception:
-        value = os.getenv(name, default)
-    return value or default
-
-
-def requisicao_json(url, headers=None, timeout=12):
-    try:
-        req = Request(
-            url,
-            headers=headers or {
-                "User-Agent": "Radar-TCE-MG/1.0"
-            }
-        )
-
-        with urlopen(req, timeout=timeout) as response:
-            return json.loads(
-                response.read().decode("utf-8")
-            )
-
-    except Exception:
-        return {}
-
-
-def buscar_x():
-
-    token = get_secret("X_BEARER_TOKEN")
-
-    if not token:
-        return []
-
-    query = (
-        '("TCE-MG" OR "TCEMG" OR '
-        '"Tribunal de Contas de Minas Gerais" OR '
-        '"Agostinho Patrus") lang:pt -is:retweet'
-    )
-
-    parametros = urlencode({
-        "query": query,
-        "max_results": "50",
-        "tweet.fields": "created_at,author_id,lang,public_metrics",
-        "expansions": "author_id",
-        "user.fields": "name,username"
-    })
-
-    dados = requisicao_json(
-        "https://api.x.com/2/tweets/search/recent?"
-        + parametros,
-        headers={
-            "Authorization": f"Bearer {token}",
-            "User-Agent": "Radar-TCE-MG/1.0"
-        }
-    )
-
-    usuarios = {
-        u.get("id"): u
-        for u in dados.get("includes", {}).get("users", [])
-    }
-
-    resultado = []
-
-    for post in dados.get("data", []):
-
-        texto = post.get("text", "").strip()
-
-        if not texto:
-            continue
-
-        autor = usuarios.get(
-            post.get("author_id"),
-            {}
-        )
-
-        username = autor.get("username", "")
-        nome_autor = autor.get("name", username)
-
-        tweet_id = post.get("id", "")
-
-        temas = identificar_temas(
-            texto,
-            texto
-        )
-
-        pessoas = identificar_pessoas(
-            texto,
-            texto
-        )
-
-        instituicoes = identificar_instituicoes(
-            texto,
-            texto
-        )
-
-        data = None
-
-        if post.get("created_at"):
-            try:
-                data = datetime.fromisoformat(
-                    post["created_at"].replace(
-                        "Z",
-                        "+00:00"
-                    )
-                ).replace(
-                    tzinfo=None
-                )
-            except Exception:
-                data = datetime.now()
-
-        score = calcular_score(
-            texto,
-            texto,
-            temas,
-            pessoas,
-            instituicoes
-        )
-
-        resultado.append({
-            "titulo": texto,
-            "resumo": f"@{username} — {nome_autor}",
-            "veiculo": "X",
-            "monitoramento": "X",
-            "tipo_fonte": "X",
-            "link": (
-                f"https://x.com/{username}/status/{tweet_id}"
-                if username and tweet_id
-                else "https://x.com"
-            ),
-            "data": data,
-            "temas": temas,
-            "pessoas": pessoas,
-            "instituicoes": instituicoes,
-            "score": score,
-            "bolinha": (
-                "🔴" if score >= 85
-                else "🟠" if score >= 65
-                else "🟡" if score >= 45
-                else "⚪"
-            ),
-            "abrangencia": "Nacional",
-            "fonte_tipo": "social",
-            "rede_social": "X"
-        })
-
-    return resultado
-
-
-def buscar_instagram():
-
-    token = get_secret("INSTAGRAM_ACCESS_TOKEN")
-    user_ids = get_secret(
-        "INSTAGRAM_USER_IDS"
-    )
-
-    if not token or not user_ids:
-        return []
-
-    resultado = []
-
-    for user_id in [
-        x.strip()
-        for x in str(user_ids).split(",")
-        if x.strip()
-    ]:
-
-        parametros = urlencode({
-            "fields": (
-                "id,caption,permalink,timestamp,"
-                "media_type,username"
-            ),
-            "limit": "50",
-            "access_token": token
-        })
-
-        dados = requisicao_json(
-            f"https://graph.facebook.com/{user_id}/media?"
-            + parametros
-        )
-
-        for post in dados.get("data", []):
-
-            texto = (
-                post.get("caption")
-                or ""
-            ).strip()
-
-            if not texto:
-                continue
-
-            temas = identificar_temas(
-                texto,
-                texto
-            )
-
-            pessoas = identificar_pessoas(
-                texto,
-                texto
-            )
-
-            instituicoes = identificar_instituicoes(
-                texto,
-                texto
-            )
-
-            data = None
-
-            if post.get("timestamp"):
-                try:
-                    data = datetime.fromisoformat(
-                        post["timestamp"].replace(
-                            "Z",
-                            "+00:00"
-                        )
-                    ).replace(
-                        tzinfo=None
-                    )
-                except Exception:
-                    data = datetime.now()
-
-            score = calcular_score(
-                texto,
-                texto,
-                temas,
-                pessoas,
-                instituicoes
-            )
-
-            username = (
-                post.get("username")
-                or "Instagram"
-            )
-
-            resultado.append({
-                "titulo": texto,
-                "resumo": f"@{username}",
-                "veiculo": "Instagram",
-                "monitoramento": "Instagram",
-                "tipo_fonte": "Instagram",
-                "link": post.get(
-                    "permalink",
-                    "https://www.instagram.com/"
-                ),
-                "data": data,
-                "temas": temas,
-                "pessoas": pessoas,
-                "instituicoes": instituicoes,
-                "score": score,
-                "bolinha": (
-                    "🔴" if score >= 85
-                    else "🟠" if score >= 65
-                    else "🟡" if score >= 45
-                    else "⚪"
-                ),
-                "abrangencia": "Nacional",
-                "fonte_tipo": "social",
-                "rede_social": "Instagram"
-            })
-
-    return resultado
-
-
-def buscar_redes_sociais():
-
-    posts = []
-
-    try:
-        posts.extend(
-            buscar_x()
-        )
-    except Exception:
-        pass
-
-    try:
-        posts.extend(
-            buscar_instagram()
-        )
-    except Exception:
-        pass
-
-    return posts
-
-
-
 def buscar_noticias():
 
     noticias = []
@@ -1565,12 +1271,6 @@ status_area.markdown(
 
 noticias = buscar_noticias()
 
-# Redes sociais são opcionais: sem credenciais, o Radar continua
-# funcionando normalmente apenas com a imprensa.
-noticias.extend(
-    buscar_redes_sociais()
-)
-
 status_area.empty()
 
 
@@ -1898,6 +1598,14 @@ with st.container(border=True):
 # FILTROS
 # ============================================================
 
+INSTITUICOES_FILTRO = {
+    "MPMG": "MPMG",
+    "ALMG": "ALMG",
+    "Procuradoria": "Procuradoria",
+    "TJMG": "TJMG",
+    "Atricon": "Atricon",
+}
+
 st.subheader("🔎 Monitorar")
 
 todas_pessoas = []
@@ -1925,9 +1633,9 @@ with f3:
     )
 
 with f4:
-    filtro_canal = st.selectbox(
-        "📡 Canal",
-        ["Todos", "📰 Imprensa", "📸 Instagram", "𝕏 X"]
+    filtro_instituicao = st.selectbox(
+        "🏛️ Instituição",
+        ["Todas"] + list(INSTITUICOES_FILTRO.keys())
     )
 
 f5, f6, f7 = st.columns(3)
@@ -1979,31 +1687,11 @@ if filtro_fonte != "Todas":
         if n["monitoramento"] == filtro_fonte
     ]
 
-if filtro_canal != "Todos":
-
-    tipo_canal = {
-        "📰 Imprensa": "imprensa",
-        "📸 Instagram": "social",
-        "𝕏 X": "social",
-    }[filtro_canal]
-
-    if filtro_canal == "📸 Instagram":
-        filtradas = [
-            n for n in filtradas
-            if n.get("rede_social") == "Instagram"
-        ]
-
-    elif filtro_canal == "𝕏 X":
-        filtradas = [
-            n for n in filtradas
-            if n.get("rede_social") == "X"
-        ]
-
-    else:
-        filtradas = [
-            n for n in filtradas
-            if n.get("fonte_tipo", "imprensa") == "imprensa"
-        ]
+if filtro_instituicao != "Todas":
+    filtradas = [
+        n for n in filtradas
+        if filtro_instituicao in n.get("instituicoes", [])
+    ]
 
 if filtro_abrangencia != "Todas":
     filtradas = [
@@ -2281,12 +1969,6 @@ st.download_button(
 # ============================================================
 
 st.subheader("📰 Notícias monitoradas")
-
-if filtro_canal == "📸 Instagram":
-    st.caption("📸 Mostrando publicações monitoradas do Instagram.")
-elif filtro_canal == "𝕏 X":
-    st.caption("𝕏 Mostrando posts monitorados do X.")
-
 
 st.caption(
     f"{len(filtradas)} notícias encontradas no período selecionado."
