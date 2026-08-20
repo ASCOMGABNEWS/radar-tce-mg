@@ -880,45 +880,318 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
+# ============================================================
+# INTERFACE
+# ============================================================
+
+st.markdown("""
+<style>
+#MainMenu, footer {visibility: hidden;}
+
+.block-container {
+    max-width: 1280px;
+    padding-top: 1.4rem;
+    padding-bottom: 3rem;
+}
+
+.radar-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:24px;
+    margin-bottom:14px;
+}
+
+.radar-brand {
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+
+.radar-icon {
+    font-size:42px;
+    line-height:1;
+}
+
+.radar-title {
+    font-size:30px;
+    font-weight:800;
+    letter-spacing:-.8px;
+    color:#18233a;
+}
+
+.radar-subtitle {
+    font-size:14px;
+    color:#667085;
+    margin-top:3px;
+}
+
+.radar-update {
+    text-align:right;
+    font-size:13px;
+    color:#667085;
+}
+
+.radar-update strong {
+    color:#18233a;
+}
+
+.section-card {
+    background:rgba(255,255,255,.72);
+    border:1px solid #e4e8ef;
+    border-radius:14px;
+    padding:16px 18px;
+    box-shadow:0 2px 10px rgba(16,24,40,.035);
+    min-height:210px;
+}
+
+.section-title {
+    font-size:16px;
+    font-weight:750;
+    color:#18233a;
+    margin-bottom:13px;
+}
+
+.mini-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:9px;
+}
+
+.mini-card {
+    border:1px solid #e4e8ef;
+    border-radius:12px;
+    padding:13px;
+    background:#fff;
+    text-align:center;
+}
+
+.mini-label {
+    font-size:12px;
+    color:#344054;
+    font-weight:650;
+}
+
+.mini-number {
+    font-size:27px;
+    font-weight:800;
+    margin-top:5px;
+    color:#18233a;
+}
+
+.mini-note {
+    font-size:11px;
+    color:#667085;
+    margin-top:2px;
+}
+
+.hot-row {
+    display:grid;
+    grid-template-columns:1fr 34px;
+    align-items:center;
+    gap:8px;
+    margin:7px 0;
+}
+
+.hot-name {
+    font-size:12px;
+    color:#344054;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.hot-bar {
+    height:4px;
+    background:#eef1f5;
+    border-radius:10px;
+    margin-top:4px;
+    overflow:hidden;
+}
+
+.hot-fill {
+    height:100%;
+    background:#f4b400;
+    border-radius:10px;
+}
+
+.hot-count {
+    text-align:right;
+    font-size:12px;
+    color:#344054;
+    font-weight:700;
+}
+
+.person-row {
+    display:grid;
+    grid-template-columns:1fr 36px;
+    gap:8px;
+    margin:7px 0;
+}
+
+.person-name {
+    font-size:12px;
+    color:#344054;
+}
+
+.person-bar {
+    height:4px;
+    background:#eef1f5;
+    border-radius:10px;
+    margin-top:4px;
+    overflow:hidden;
+}
+
+.person-fill {
+    height:100%;
+    background:#f4b400;
+    border-radius:10px;
+}
+
+.person-count {
+    text-align:right;
+    font-size:12px;
+    font-weight:700;
+    color:#344054;
+}
+
+.metric-strip {
+    background:rgba(255,255,255,.72);
+    border:1px solid #e4e8ef;
+    border-radius:14px;
+    padding:13px 4px;
+    margin:10px 0 14px 0;
+}
+
+.news-card {
+    display:grid;
+    grid-template-columns:105px 1fr 82px;
+    gap:18px;
+    align-items:start;
+    background:rgba(255,255,255,.82);
+    border:1px solid #e4e8ef;
+    border-radius:14px;
+    padding:15px 17px;
+    margin:8px 0;
+    box-shadow:0 2px 8px rgba(16,24,40,.025);
+}
+
+.news-source {
+    text-align:center;
+    border-right:1px solid #edf0f4;
+    padding-right:14px;
+    min-height:84px;
+}
+
+.news-logo {
+    width:48px;
+    height:48px;
+    object-fit:contain;
+    border-radius:8px;
+    margin-bottom:4px;
+}
+
+.news-source-name {
+    font-size:10px;
+    font-weight:700;
+    color:#344054;
+}
+
+.news-title {
+    font-size:16px;
+    line-height:1.35;
+    font-weight:750;
+    margin-bottom:7px;
+}
+
+.news-title a {
+    color:#18233a;
+    text-decoration:none;
+}
+
+.news-title a:hover {
+    color:#164194;
+    text-decoration:underline;
+}
+
+.news-meta {
+    font-size:11px;
+    color:#667085;
+    margin-bottom:7px;
+}
+
+.tag {
+    display:inline-block;
+    background:#f6f8fa;
+    border:1px solid #e7eaee;
+    border-radius:12px;
+    padding:3px 7px;
+    margin:0 4px 4px 0;
+    font-size:10px;
+    color:#475467;
+}
+
+.news-summary {
+    font-size:12px;
+    line-height:1.55;
+    color:#667085;
+    margin-top:5px;
+}
+
+.news-time {
+    text-align:right;
+    font-size:11px;
+    color:#667085;
+}
+
+.period-box {
+    background:#fff;
+    border:1px solid #e4e8ef;
+    border-radius:12px;
+    padding:7px 12px 3px 12px;
+    margin:8px 0 12px 0;
+}
+
+@media (max-width: 800px) {
+    .news-card { grid-template-columns:75px 1fr; }
+    .news-time { display:none; }
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 # ============================================================
 # CABEÇALHO
 # ============================================================
 
-st.title(
-    "🏛️ Radar TCE-MG"
+agora = datetime.now()
+
+st.markdown(
+    f"""
+    <div class="radar-header">
+        <div class="radar-brand">
+            <div class="radar-icon">🏛️</div>
+            <div>
+                <div class="radar-title">Radar TCE-MG</div>
+                <div class="radar-subtitle">
+                    Monitoramento inteligente de notícias<br>
+                    relacionadas ao Tribunal de Contas de Minas Gerais
+                </div>
+            </div>
+        </div>
+        <div class="radar-update">
+            Última atualização: <strong>{agora.strftime('%d/%m/%Y %H:%M')}</strong><br>
+            Atualização automática a cada 5 minutos
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
 )
 
-st.caption(
-    "Monitoramento inteligente de notícias "
-    "relacionadas ao Tribunal de Contas de Minas Gerais"
-)
-
-
-col1, col2 = st.columns(
-    [1, 5]
-)
-
-
-with col1:
-
-    if st.button(
-        "🔄 Atualizar agora"
-    ):
-
-        st.cache_data.clear()
-
-        st.rerun()
-
-
-with col2:
-
-    st.caption(
-        "Monitoramento em tempo real - Gabinete Agostinho Patrus • "
-        "atualização automática a cada 5 minutos"
-    )
-
-
-st.divider()
+if st.button("🔄 Atualizar agora"):
+    st.cache_data.clear()
+    st.rerun()
 
 
 # ============================================================
@@ -932,403 +1205,231 @@ noticias = buscar_noticias()
 # PERÍODO
 # ============================================================
 
-periodo = st.radio(
+with st.container():
 
-    "🕐 Período",
+    st.markdown('<div class="period-box">', unsafe_allow_html=True)
 
-    [
-        "Últimas 6 horas",
-        "Últimas 24 horas",
-        "Últimos 3 dias",
-        "Últimos 7 dias",
-    ],
+    periodo = st.radio(
+        "Período",
+        [
+            "Últimas 6 horas",
+            "Últimas 24 horas",
+            "Últimos 3 dias",
+            "Últimos 7 dias",
+        ],
+        horizontal=True,
+        label_visibility="collapsed"
+    )
 
-    horizontal=True
-)
-
-
-agora = datetime.now()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 if periodo == "Últimas 6 horas":
-
-    limite_periodo = (
-        agora
-        - timedelta(hours=6)
-    )
-
+    limite_periodo = agora - timedelta(hours=6)
 elif periodo == "Últimas 24 horas":
-
-    limite_periodo = (
-        agora
-        - timedelta(hours=24)
-    )
-
+    limite_periodo = agora - timedelta(hours=24)
 elif periodo == "Últimos 3 dias":
-
-    limite_periodo = (
-        agora
-        - timedelta(days=3)
-    )
-
+    limite_periodo = agora - timedelta(days=3)
 else:
-
-    limite_periodo = (
-        agora
-        - timedelta(days=7)
-    )
+    limite_periodo = agora - timedelta(days=7)
 
 
 noticias_periodo = [
-
     n for n in noticias
-
-    if (
-        n["data"]
-        and n["data"]
-        >= limite_periodo
-    )
+    if n["data"] and n["data"] >= limite_periodo
 ]
 
 
 # ============================================================
-# RADAR DE ATENÇÃO
+# CONTADORES DO PAINEL
 # ============================================================
 
-criticas = [
-
-    n for n in noticias_periodo
-
-    if n["score"] >= 85
-]
-
-
-altas = [
-
-    n for n in noticias_periodo
-
-    if 65 <= n["score"] < 85
-]
-
-
-st.subheader(
-    "🚨 Radar de atenção"
-)
-
-
-col1, col2 = st.columns(
-    2
-)
-
-
-with col1:
-
-    st.metric(
-        "🔴 Críticas",
-        len(criticas)
-    )
-
-
-with col2:
-
-    st.metric(
-        "🟠 Alta relevância",
-        len(altas)
-    )
-
-
-if criticas:
-
-    st.markdown(
-        "#### 🔴 Atenção imediata"
-    )
-
-
-    for noticia in criticas[:5]:
-
-        st.markdown(
-            f"**{noticia['titulo']}**"
-        )
-
-
-st.divider()
-
-
-# ============================================================
-# CONTADORES
-# ============================================================
+criticas = [n for n in noticias_periodo if n["score"] >= 85]
+altas = [n for n in noticias_periodo if 65 <= n["score"] < 85]
+medias = [n for n in noticias_periodo if 45 <= n["score"] < 65]
+mencoes = [n for n in noticias_periodo if n["score"] < 45]
 
 contador_temas = Counter()
-
 contador_pessoas = Counter()
-
+contador_veiculos = Counter()
+contador_instituicoes = Counter()
 
 for noticia in noticias_periodo:
-
     for tema in noticia["temas"]:
-
-        contador_temas[
-            tema
-        ] += 1
-
-
+        contador_temas[tema] += 1
     for pessoa in noticia["pessoas"]:
-
-        contador_pessoas[
-            pessoa
-        ] += 1
+        contador_pessoas[pessoa] += 1
+    if noticia["veiculo"]:
+        contador_veiculos[noticia["veiculo"]] += 1
+    for instituicao in noticia.get("instituicoes", []):
+        contador_instituicoes[instituicao] += 1
 
 
 # ============================================================
-# ASSUNTOS + PESSOAS
+# PAINEL SUPERIOR
 # ============================================================
 
-col1, col2 = st.columns(
-    2
-)
-
+col1, col2, col3 = st.columns([1.05, 1.25, 1.25])
 
 with col1:
 
-    st.subheader(
-        "🔥 Assuntos quentes"
+    st.markdown(
+        '<div class="section-card">'
+        '<div class="section-title">🚨 Radar de atenção</div>',
+        unsafe_allow_html=True
     )
 
+    st.markdown(
+        f"""
+        <div class="mini-grid">
+            <div class="mini-card">
+                <div class="mini-label">🔴 Críticas</div>
+                <div class="mini-number">{len(criticas)}</div>
+                <div class="mini-note">merecem atenção imediata</div>
+            </div>
+            <div class="mini-card">
+                <div class="mini-label">🟠 Alta relevância</div>
+                <div class="mini-number">{len(altas)}</div>
+                <div class="mini-note">potencialmente importantes</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    if contador_temas:
-
-        temas_quentes = (
-            contador_temas
-            .most_common(8)
-        )
-
-
-        for tema, quantidade in temas_quentes:
-
-            st.markdown(
-                f"**{tema}** — "
-                f"{quantidade} notícia(s)"
-            )
-
-    else:
-
-        st.info(
-            "Nenhum tema identificado."
-        )
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 with col2:
 
-    st.subheader(
-        "👥 Pessoas mais citadas"
+    st.markdown(
+        '<div class="section-card">'
+        '<div class="section-title">🔥 Assuntos quentes</div>',
+        unsafe_allow_html=True
     )
 
+    temas_quentes = contador_temas.most_common(8)
+    max_tema = max([q for _, q in temas_quentes], default=1)
 
-    if contador_pessoas:
+    for tema, quantidade in temas_quentes:
 
-        pessoas_quentes = (
-            contador_pessoas
-            .most_common(8)
+        pct = int((quantidade / max_tema) * 100)
+
+        st.markdown(
+            f"""
+            <div class="hot-row">
+                <div>
+                    <div class="hot-name">{tema}</div>
+                    <div class="hot-bar">
+                        <div class="hot-fill" style="width:{pct}%"></div>
+                    </div>
+                </div>
+                <div class="hot-count">{quantidade}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
+    st.markdown("</div>", unsafe_allow_html=True)
 
-        for pessoa, quantidade in pessoas_quentes:
 
-            st.markdown(
-                f"**{pessoa}** — "
-                f"{quantidade} notícia(s)"
-            )
+with col3:
 
-    else:
+    st.markdown(
+        '<div class="section-card">'
+        '<div class="section-title">👥 Pessoas mais citadas</div>',
+        unsafe_allow_html=True
+    )
 
-        st.info(
-            "Nenhuma pessoa monitorada citada."
+    pessoas_quentes = contador_pessoas.most_common(6)
+    max_pessoa = max([q for _, q in pessoas_quentes], default=1)
+
+    for pessoa, quantidade in pessoas_quentes:
+
+        pct = int((quantidade / max_pessoa) * 100)
+
+        st.markdown(
+            f"""
+            <div class="person-row">
+                <div>
+                    <div class="person-name">{pessoa}</div>
+                    <div class="person-bar">
+                        <div class="person-fill" style="width:{pct}%"></div>
+                    </div>
+                </div>
+                <div class="person-count">{quantidade}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
-
-st.divider()
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 # ============================================================
 # MÉTRICAS
 # ============================================================
 
-criticas_total = len([
+st.markdown('<div class="metric-strip">', unsafe_allow_html=True)
 
-    n for n in noticias_periodo
+m1, m2, m3, m4, m5 = st.columns(5)
 
-    if n["score"] >= 85
-])
+with m1:
+    st.metric("📰 Total de notícias", len(noticias_periodo))
+with m2:
+    st.metric("🔴 Críticas", len(criticas))
+with m3:
+    st.metric("🟠 Altas", len(altas))
+with m4:
+    st.metric("🟡 Médias", len(medias))
+with m5:
+    st.metric("⚪ Menções", len(mencoes))
 
-
-altas_total = len([
-
-    n for n in noticias_periodo
-
-    if 65 <= n["score"] < 85
-])
-
-
-medias_total = len([
-
-    n for n in noticias_periodo
-
-    if 45 <= n["score"] < 65
-])
-
-
-mencoes_total = len([
-
-    n for n in noticias_periodo
-
-    if n["score"] < 45
-])
-
-
-col1, col2, col3, col4, col5 = st.columns(
-    5
-)
-
-
-with col1:
-
-    st.metric(
-        "📰 Notícias",
-        len(noticias_periodo)
-    )
-
-
-with col2:
-
-    st.metric(
-        "🔴 Críticas",
-        criticas_total
-    )
-
-
-with col3:
-
-    st.metric(
-        "🟠 Altas",
-        altas_total
-    )
-
-
-with col4:
-
-    st.metric(
-        "🟡 Médias",
-        medias_total
-    )
-
-
-with col5:
-
-    st.metric(
-        "⚪ Menções",
-        mencoes_total
-    )
-
-
-st.divider()
+st.markdown("</div>", unsafe_allow_html=True)
 
 
 # ============================================================
 # FILTROS
 # ============================================================
 
-st.subheader(
-    "🔎 Monitorar"
-)
-
+st.subheader("🔎 Monitorar")
 
 todas_pessoas = []
-
-
 for grupo in PESSOAS.values():
+    todas_pessoas.extend(grupo.keys())
 
-    todas_pessoas.extend(
-        grupo.keys()
-    )
+f1, f2, f3 = st.columns(3)
 
-
-col1, col2, col3 = st.columns(
-    3
-)
-
-
-with col1:
-
+with f1:
     filtro_pessoa = st.selectbox(
-
         "👤 Pessoa",
-
-        [
-            "Todas"
-        ]
-        + todas_pessoas
+        ["Todas"] + todas_pessoas
     )
 
-
-with col2:
-
+with f2:
     filtro_tema = st.selectbox(
-
         "🏷️ Tema",
-
-        [
-            "Todos"
-        ]
-        + list(
-            TEMAS.keys()
-        )
+        ["Todos"] + list(TEMAS.keys())
     )
 
-
-with col3:
-
+with f3:
     filtro_fonte = st.selectbox(
-
         "🗞️ Fonte",
-
-        [
-            "Todas"
-        ]
-        + list(
-            FONTES.keys()
-        )
+        ["Todas"] + list(FONTES.keys())
     )
 
+f4, f5 = st.columns(2)
 
-col1, col2 = st.columns(
-    2
-)
-
-
-with col1:
-
+with f4:
     filtro_relevancia = st.selectbox(
-
         "🎯 Relevância",
-
-        [
-            "Todas",
-            "🔴 Crítica",
-            "🟠 Alta",
-            "🟡 Média",
-            "⚪ Menção"
-        ]
+        ["Todas", "🔴 Crítica", "🟠 Alta", "🟡 Média", "⚪ Menção"]
     )
 
-
-with col2:
-
+with f5:
     busca = st.text_input(
-
         "🔍 Buscar palavra",
-
-        placeholder=
-        "Ex.: Copasa, mineração, transporte..."
+        placeholder="Ex.: Copasa, mineração, transporte..."
     )
 
 apenas_relevantes = st.checkbox(
@@ -1342,91 +1443,54 @@ apenas_relevantes = st.checkbox(
 
 filtradas = noticias_periodo
 
-
 if filtro_pessoa != "Todas":
-
     filtradas = [
-
         n for n in filtradas
-
-        if filtro_pessoa
-        in n["pessoas"]
-
+        if filtro_pessoa in n["pessoas"]
     ]
-
 
 if filtro_tema != "Todos":
-
     filtradas = [
-
         n for n in filtradas
-
-        if filtro_tema
-        in n["temas"]
-
+        if filtro_tema in n["temas"]
     ]
-
 
 if filtro_fonte != "Todas":
-
     filtradas = [
-
         n for n in filtradas
-
-        if n["monitoramento"]
-        == filtro_fonte
-
+        if n["monitoramento"] == filtro_fonte
     ]
-
 
 if filtro_relevancia != "Todas":
 
     mapa_relevancia = {
-
         "🔴 Crítica": "🔴",
         "🟠 Alta": "🟠",
         "🟡 Média": "🟡",
         "⚪ Menção": "⚪",
     }
 
-
     filtradas = [
-
         n for n in filtradas
-
-        if n["bolinha"]
-        == mapa_relevancia[
-            filtro_relevancia
-        ]
-
+        if n["bolinha"] == mapa_relevancia[filtro_relevancia]
     ]
 
-
 if apenas_relevantes:
-
     filtradas = [
         n for n in filtradas
         if n["score"] >= 65
     ]
-
 
 if busca:
 
     termo = busca.lower()
 
     filtradas = [
-
         n for n in filtradas
-
-        if termo
-        in (
-            n["titulo"]
-            + " "
-            + n["resumo"]
+        if termo in (
+            n["titulo"] + " " + n["resumo"]
         ).lower()
-
     ]
-
 
 
 # ============================================================
@@ -1663,436 +1727,113 @@ st.download_button(
 
 st.divider()
 
-
-
-
-
-# ============================================================
-# PAINEL AUXILIAR
-# ============================================================
-
-st.markdown("""
-<style>
-.aux-box {
-    background: rgba(255,255,255,0.035);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
-    padding: 16px 18px;
-    margin: 4px 0 14px 0;
-    min-height: 130px;
-}
-.aux-title {
-    font-size: 15px;
-    font-weight: 700;
-    margin-bottom: 10px;
-}
-.aux-item {
-    font-size: 12px;
-    line-height: 1.65;
-    opacity: .88;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-# ------------------------------------------------------------
-# O QUE MERECE ATENÇÃO
-# ------------------------------------------------------------
-
-st.markdown(
-    '<div class="aux-box">'
-    '<div class="aux-title">🚨 O que merece atenção hoje</div>',
-    unsafe_allow_html=True
-)
-
-atencao_aux = [
-    n for n in noticias_periodo
-    if n["score"] >= 65
-]
-
-if atencao_aux:
-
-    for i, noticia in enumerate(atencao_aux[:5]):
-
-        st.markdown(
-            f"{noticia['bolinha']} "
-            f"**{noticia['titulo']}**"
-        )
-
-        st.link_button(
-            "Ler matéria ↗",
-            noticia["link"],
-            key=f"attention_aux_{i}_{hash(noticia['link'])}"
-        )
-
-else:
-
-    st.caption(
-        "Nenhuma matéria de alta relevância no período."
-    )
-
-st.markdown("</div>", unsafe_allow_html=True)
-
-
-# ------------------------------------------------------------
-# CAIXAS SECUNDÁRIAS
-# ------------------------------------------------------------
-
-col_a, col_b = st.columns(2)
-
-
-# ASSUNTOS
-with col_a:
-
-    st.markdown(
-        '<div class="aux-box">'
-        '<div class="aux-title">📈 Assuntos em alta</div>',
-        unsafe_allow_html=True
-    )
-
-    contador_temas_aux = Counter()
-
-    for noticia in noticias_periodo:
-
-        for tema in noticia["temas"]:
-            contador_temas_aux[tema] += 1
-
-    if contador_temas_aux:
-
-        for i, (tema, quantidade) in enumerate(
-            contador_temas_aux.most_common(6)
-        ):
-
-            if st.button(
-                f"{tema}  •  {quantidade} notícia(s)",
-                key=f"aux_tema_{i}_{tema}"
-            ):
-
-                st.session_state["aux_filtro_tipo"] = "tema"
-                st.session_state["aux_filtro_valor"] = tema
-
-    else:
-
-        st.caption("Nenhum assunto identificado.")
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-# VEÍCULOS
-with col_b:
-
-    st.markdown(
-        '<div class="aux-box">'
-        '<div class="aux-title">📰 Veículos que mais repercutiram</div>',
-        unsafe_allow_html=True
-    )
-
-    contador_veiculos_aux = Counter()
-
-    for noticia in noticias_periodo:
-
-        if noticia["veiculo"]:
-            contador_veiculos_aux[noticia["veiculo"]] += 1
-
-    for i, (veiculo, quantidade) in enumerate(
-        contador_veiculos_aux.most_common(6)
-    ):
-
-        if st.button(
-            f"{veiculo}  •  {quantidade} matéria(s)",
-            key=f"aux_veiculo_{i}_{veiculo}"
-        ):
-
-            st.session_state["aux_filtro_tipo"] = "veiculo"
-            st.session_state["aux_filtro_valor"] = veiculo
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-col_c, col_d = st.columns(2)
-
-
-# PESSOAS
-with col_c:
-
-    st.markdown(
-        '<div class="aux-box">'
-        '<div class="aux-title">👥 Pessoas mais citadas</div>',
-        unsafe_allow_html=True
-    )
-
-    contador_pessoas_aux = Counter()
-
-    for noticia in noticias_periodo:
-
-        for pessoa in noticia["pessoas"]:
-            contador_pessoas_aux[pessoa] += 1
-
-    for i, (pessoa, quantidade) in enumerate(
-        contador_pessoas_aux.most_common(6)
-    ):
-
-        if st.button(
-            f"{pessoa}  •  {quantidade} notícia(s)",
-            key=f"aux_pessoa_{i}_{pessoa}"
-        ):
-
-            st.session_state["aux_filtro_tipo"] = "pessoa"
-            st.session_state["aux_filtro_valor"] = pessoa
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-# INSTITUIÇÕES
-with col_d:
-
-    st.markdown(
-        '<div class="aux-box">'
-        '<div class="aux-title">🏛️ Instituições mais citadas</div>',
-        unsafe_allow_html=True
-    )
-
-    contador_instituicoes_aux = Counter()
-
-    for noticia in noticias_periodo:
-
-        for instituicao in noticia.get(
-            "instituicoes",
-            []
-        ):
-
-            contador_instituicoes_aux[instituicao] += 1
-
-    for i, (instituicao, quantidade) in enumerate(
-        contador_instituicoes_aux.most_common(6)
-    ):
-
-        if st.button(
-            f"{instituicao}  •  {quantidade} citação(ões)",
-            key=f"aux_inst_{i}_{instituicao}"
-        ):
-
-            st.session_state["aux_filtro_tipo"] = "instituicao"
-            st.session_state["aux_filtro_valor"] = instituicao
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-# ------------------------------------------------------------
-# RESULTADO DE UMA SELEÇÃO
-# ------------------------------------------------------------
-
-if (
-    "aux_filtro_tipo" in st.session_state
-    and "aux_filtro_valor" in st.session_state
-):
-
-    tipo = st.session_state["aux_filtro_tipo"]
-    valor = st.session_state["aux_filtro_valor"]
-
-    st.subheader(
-        f"🔎 {valor}"
-    )
-
-    if tipo == "tema":
-
-        selecionadas = [
-            n for n in noticias_periodo
-            if valor in n["temas"]
-        ]
-
-    elif tipo == "veiculo":
-
-        selecionadas = [
-            n for n in noticias_periodo
-            if n["veiculo"] == valor
-        ]
-
-    elif tipo == "pessoa":
-
-        selecionadas = [
-            n for n in noticias_periodo
-            if valor in n["pessoas"]
-        ]
-
-    else:
-
-        selecionadas = [
-            n for n in noticias_periodo
-            if valor in n.get(
-                "instituicoes",
-                []
-            )
-        ]
-
-    st.caption(
-        f"{len(selecionadas)} matéria(s) encontrada(s)"
-    )
-
-    for i, noticia in enumerate(selecionadas):
-
-        st.markdown(
-            f"{noticia['bolinha']} "
-            f"**{noticia['titulo']}**"
-        )
-
-        st.caption(
-            noticia["veiculo"]
-        )
-
-        st.link_button(
-            "Ler matéria ↗",
-            noticia["link"],
-            key=f"aux_result_{i}_{hash(noticia['link'])}"
-        )
-
-    if st.button(
-        "✕ Limpar seleção",
-        key="aux_limpar"
-    ):
-
-        del st.session_state["aux_filtro_tipo"]
-        del st.session_state["aux_filtro_valor"]
-        st.rerun()
-
-st.divider()
-
 # ============================================================
 # RESULTADOS
 # ============================================================
 
 st.subheader(
-
     f"📰 {len(filtradas)} notícias encontradas"
 )
-
 
 if not filtradas:
 
     st.info(
-        "Nenhuma notícia encontrada "
-        "com os filtros selecionados."
+        "Nenhuma notícia encontrada com os filtros selecionados."
     )
 
-
 else:
+
+    def favicon_url(noticia):
+
+        try:
+            from urllib.parse import urlparse
+            dominio = urlparse(noticia["link"]).netloc
+            dominio = dominio.replace("www.", "")
+            return (
+                "https://www.google.com/s2/favicons"
+                f"?domain={dominio}&sz=128"
+            )
+        except Exception:
+            return ""
 
     for noticia in filtradas:
 
         data_formatada = ""
 
-
         if noticia["data"]:
-
-            data_formatada = (
-
-                noticia["data"]
-                .strftime(
-                    "%d/%m/%Y %H:%M"
-                )
-
+            data_formatada = noticia["data"].strftime(
+                "%d/%m/%Y %H:%M"
             )
 
+        logo = favicon_url(noticia)
 
-        # ----------------------------------------------------
-        # TÍTULO — SOMENTE A BOLINHA
-        # ----------------------------------------------------
+        pessoas_html = "".join(
+            [
+                f'<span class="tag">👤 {p}</span>'
+                for p in noticia["pessoas"]
+            ]
+        )
+
+        temas_html = "".join(
+            [
+                f'<span class="tag">{tema}</span>'
+                for tema in noticia["temas"]
+            ]
+        )
+
+        resumo = noticia["resumo"] or ""
+
+        if len(resumo) > 420:
+            resumo = resumo[:420] + "..."
 
         st.markdown(
+            f"""
+            <div class="news-card">
 
-            f"### "
-            f"{noticia['bolinha']} "
-            f"**{noticia['titulo']}**"
+                <div class="news-source">
+                    <img class="news-logo"
+                         src="{logo}"
+                         onerror="this.style.display='none';">
+                    <div class="news-source-name">
+                        {noticia["veiculo"]}
+                    </div>
+                </div>
+
+                <div>
+
+                    <div class="news-title">
+                        {noticia["bolinha"]}
+                        <a href="{noticia["link"]}"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                           {noticia["titulo"]}
+                        </a>
+                    </div>
+
+                    <div class="news-meta">
+                        {pessoas_html}
+                        {temas_html}
+                    </div>
+
+                    <div class="news-summary">
+                        {resumo}
+                    </div>
+
+                </div>
+
+                <div class="news-time">
+                    {data_formatada}
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
+# ============================================================
+# RODAPÉ
+# ============================================================
 
-        # ----------------------------------------------------
-        # INFORMAÇÕES
-        # ----------------------------------------------------
-
-        st.caption(
-
-            f"🗞️ {noticia['veiculo']}  •  "
-            f"📅 {data_formatada}"
-        )
-
-
-        # ----------------------------------------------------
-        # PESSOAS
-        # ----------------------------------------------------
-
-        if noticia["pessoas"]:
-
-            st.markdown(
-
-                " ".join(
-
-                    [
-                        f"`👤 {p}`"
-                        for p
-                        in noticia["pessoas"]
-                    ]
-
-                )
-
-            )
-
-
-        # ----------------------------------------------------
-        # TEMAS
-        # ----------------------------------------------------
-
-        if noticia["temas"]:
-
-            st.markdown(
-
-                " ".join(
-
-                    [
-                        f"`{tema}`"
-                        for tema
-                        in noticia["temas"]
-                    ]
-
-                )
-
-            )
-
-
-        # ----------------------------------------------------
-        # RESUMO
-        # ----------------------------------------------------
-
-        if noticia["resumo"]:
-
-            resumo = noticia[
-                "resumo"
-            ]
-
-
-            if len(resumo) > 500:
-
-                resumo = (
-                    resumo[:500]
-                    + "..."
-                )
-
-
-            st.write(
-                resumo
-            )
-
-
-        # ----------------------------------------------------
-        # LINK
-        # ----------------------------------------------------
-
-        st.link_button(
-
-            "Ler matéria ↗",
-
-            noticia["link"]
-        )
-
-
-        st.divider()
+st.caption(
+    "As notícias são classificadas automaticamente com base em relevância para o TCE-MG."
+)
