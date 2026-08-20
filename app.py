@@ -1861,9 +1861,7 @@ st.download_button(
 # RESULTADOS
 # ============================================================
 
-st.subheader(
-    "📰 Notícias monitoradas"
-)
+st.subheader("📰 Notícias monitoradas")
 
 st.caption(
     f"{len(filtradas)} notícias encontradas no período selecionado."
@@ -1877,83 +1875,65 @@ if not filtradas:
 
 else:
 
-    for noticia in filtradas:
+    for i, noticia in enumerate(filtradas):
 
         data_formatada = ""
 
-        if noticia["data"]:
+        if noticia.get("data"):
             data_formatada = noticia["data"].strftime(
                 "%d/%m/%Y %H:%M"
             )
 
-        pessoas_html = "".join(
-            [
-                f'<span class="tag">👤 {esc_html(p)}</span>'
-                for p in noticia["pessoas"]
-            ]
-        )
+        with st.container(border=True):
 
-        temas_html = "".join(
-            [
-                f'<span class="tag">{esc_html(tema)}</span>'
-                for tema in noticia["temas"]
-            ]
-        )
+            col_main, col_time = st.columns(
+                [6, 1],
+                gap="medium"
+            )
 
-        resumo = esc_html(
-            noticia["resumo"] or ""
-        )
+            with col_main:
 
-        if len(resumo) > 420:
-            resumo = resumo[:420] + "..."
+                st.markdown(
+                    f"{noticia['bolinha']} **{noticia['titulo']}**"
+                )
 
-        titulo_html = esc_html(
-            noticia["titulo"]
-        )
+                meta = f"📰 {noticia['veiculo']}"
 
-        veiculo_html = esc_html(
-            noticia["veiculo"]
-        )
+                if data_formatada:
+                    meta += f"  •  📅 {data_formatada}"
 
-        link = noticia["link"]
+                st.caption(meta)
 
-        news_card_html = f"""
-        <div class="news-card">
+                tags = []
 
-            <div class="news-content">
+                for pessoa in noticia.get("pessoas", [])[:4]:
+                    tags.append(f"👤 {pessoa}")
 
-                <div class="news-meta">
-                    📰 {veiculo_html}
-                </div>
+                for tema in noticia.get("temas", [])[:4]:
+                    tags.append(tema)
 
-                <div class="news-title">
-                    <span class="severity-dot">{noticia["bolinha"]}</span>
-                    <a href="{link}"
-                       target="_blank"
-                       rel="noopener noreferrer">
-                       {titulo_html}
-                    </a>
-                </div>
+                if tags:
+                    st.write("  •  ".join(tags))
 
-                <div class="news-meta">
-                    {pessoas_html}
-                    {temas_html}
-                </div>
+                resumo = noticia.get("resumo") or ""
 
-                <div class="news-summary">
-                    {resumo}
-                </div>
+                if len(resumo) > 350:
+                    resumo = resumo[:350] + "..."
 
-            </div>
+                if resumo:
+                    st.write(resumo)
 
-            <div class="news-time">
-                {data_formatada}
-            </div>
+                st.link_button(
+                    "Ler matéria ↗",
+                    noticia["link"],
+                    key=f"ler_materia_{i}_{hash(noticia['link'])}"
+                )
 
-        </div>
-        """
+            with col_time:
 
-        st.markdown(news_card_html, unsafe_allow_html=True)
+                if data_formatada:
+                    st.caption(data_formatada)
+
 
 # ============================================================
 # RODAPÉ
