@@ -959,7 +959,7 @@ st.markdown("""
     border-radius:14px;
     padding:16px 18px;
     box-shadow:0 2px 10px rgba(16,24,40,.035);
-    height:230px;
+    height:220px;
     box-sizing:border-box;
     overflow:hidden;
 }
