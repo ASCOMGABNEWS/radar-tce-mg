@@ -1247,23 +1247,17 @@ noticias = buscar_noticias()
 # PERÍODO
 # ============================================================
 
-with st.container():
-
-    st.markdown('<div class="period-box">', unsafe_allow_html=True)
-
-    periodo = st.radio(
-        "Período",
-        [
-            "Últimas 6 horas",
-            "Últimas 24 horas",
-            "Últimos 3 dias",
-            "Últimos 7 dias",
-        ],
-        horizontal=True,
-        label_visibility="collapsed"
-    )
-
-    st.markdown('</div>', unsafe_allow_html=True)
+periodo = st.radio(
+    "Período",
+    [
+        "Últimas 6 horas",
+        "Últimas 24 horas",
+        "Últimos 3 dias",
+        "Últimos 7 dias",
+    ],
+    horizontal=True,
+    label_visibility="collapsed"
+)
 
 
 if periodo == "Últimas 6 horas":
@@ -1307,31 +1301,10 @@ for noticia in noticias_periodo:
         contador_instituicoes[instituicao] += 1
 
 
+
 # ============================================================
 # PAINEL SUPERIOR
 # ============================================================
-
-def esc_html(value):
-    return (
-        str(value)
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
-    )
-
-
-def render_top_card(title, body_html):
-    st.markdown(
-        f"""
-        <div class="section-card">
-            <div class="section-title">{title}</div>
-            {body_html}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
 
 criticas = [
     n for n in noticias_periodo
@@ -1353,119 +1326,148 @@ mencoes = [
     if n["score"] < 45
 ]
 
+col1, col2, col3 = st.columns(
+    [1.05, 1.25, 1.25],
+    gap="small"
+)
 
 # ------------------------------------------------------------
-# RADAR / ASSUNTOS / PESSOAS
+# RADAR DE ATENÇÃO
 # ------------------------------------------------------------
-
-col1, col2, col3 = st.columns([1.05, 1.25, 1.25], gap="medium")
-
 
 with col1:
 
-    radar_body = f"""
-    <div class="mini-grid">
-        <div class="mini-card">
-            <div class="mini-label">🔴 Críticas</div>
-            <div class="mini-number red-number">{len(criticas)}</div>
-            <div class="mini-note">merecem atenção imediata</div>
-        </div>
-        <div class="mini-card">
-            <div class="mini-label">🟠 Alta relevância</div>
-            <div class="mini-number orange-number">{len(altas)}</div>
-            <div class="mini-note">potencialmente importantes</div>
-        </div>
-    </div>
-    """
+    with st.container(border=True):
 
-    with col1:
-        render_top_card(
-            "🚨 Radar de atenção",
-            radar_body
-        )
+        st.markdown("### 🚨 Radar de atenção")
 
+        r1, r2 = st.columns(2)
+
+        with r1:
+
+            st.markdown("🔴 **Críticas**")
+
+            st.markdown(
+                f"<h2 style='margin:2px 0 0 0'>{len(criticas)}</h2>",
+                unsafe_allow_html=True
+            )
+
+            st.caption(
+                "merecem atenção imediata"
+            )
+
+        with r2:
+
+            st.markdown("🟠 **Alta relevância**")
+
+            st.markdown(
+                f"<h2 style='margin:2px 0 0 0'>{len(altas)}</h2>",
+                unsafe_allow_html=True
+            )
+
+            st.caption(
+                "potencialmente importantes"
+            )
+
+# ------------------------------------------------------------
+# ASSUNTOS QUENTES
+# ------------------------------------------------------------
 
 with col2:
 
-    temas_quentes = contador_temas.most_common(7)
-    max_tema = max(
-        [q for _, q in temas_quentes],
-        default=1
-    )
+    with st.container(border=True):
 
-    linhas = ""
+        st.markdown("### 🔥 Assuntos quentes")
 
-    for tema, quantidade in temas_quentes:
+        temas_quentes = contador_temas.most_common(6)
 
-        pct = int(
-            (quantidade / max_tema) * 100
-        )
+        if temas_quentes:
 
-        linhas += f"""
-        <div class="hot-row">
-            <div>
-                <div class="hot-name">{esc_html(tema)}</div>
-                <div class="hot-bar">
-                    <div class="hot-fill"
-                         style="width:{pct}%"></div>
-                </div>
-            </div>
-            <div class="hot-count">{quantidade}</div>
-        </div>
-        """
+            max_tema = max(
+                quantidade
+                for _, quantidade
+                in temas_quentes
+            )
 
-    if not linhas:
-        linhas = '<div class="empty-note">Nenhum assunto identificado.</div>'
+            for tema, quantidade in temas_quentes:
 
-    render_top_card(
-        "🔥 Assuntos quentes",
-        linhas
-    )
+                c1, c2 = st.columns([5, 1])
 
+                with c1:
+
+                    st.markdown(
+                        f"**{tema}**"
+                    )
+
+                    st.progress(
+                        quantidade / max_tema
+                    )
+
+                with c2:
+
+                    st.markdown(
+                        f"**{quantidade}**"
+                    )
+
+        else:
+
+            st.caption(
+                "Nenhum assunto identificado."
+            )
+
+# ------------------------------------------------------------
+# PESSOAS MAIS CITADAS
+# ------------------------------------------------------------
 
 with col3:
 
-    pessoas_quentes = contador_pessoas.most_common(6)
-    max_pessoa = max(
-        [q for _, q in pessoas_quentes],
-        default=1
-    )
+    with st.container(border=True):
 
-    linhas = ""
+        st.markdown("### 👥 Pessoas mais citadas")
 
-    for pessoa, quantidade in pessoas_quentes:
-
-        pct = int(
-            (quantidade / max_pessoa) * 100
+        pessoas_quentes = (
+            contador_pessoas
+            .most_common(6)
         )
 
-        linhas += f"""
-        <div class="person-row">
-            <div>
-                <div class="person-name">{esc_html(pessoa)}</div>
-                <div class="person-bar">
-                    <div class="person-fill"
-                         style="width:{pct}%"></div>
-                </div>
-            </div>
-            <div class="person-count">{quantidade}</div>
-        </div>
-        """
+        if pessoas_quentes:
 
-    if not linhas:
-        linhas = '<div class="empty-note">Nenhuma pessoa identificada.</div>'
+            max_pessoa = max(
+                quantidade
+                for _, quantidade
+                in pessoas_quentes
+            )
 
-    render_top_card(
-        "👥 Pessoas mais citadas",
-        linhas
-    )
+            for pessoa, quantidade in pessoas_quentes:
+
+                c1, c2 = st.columns([5, 1])
+
+                with c1:
+
+                    st.markdown(
+                        f"**{pessoa}**"
+                    )
+
+                    st.progress(
+                        quantidade / max_pessoa
+                    )
+
+                with c2:
+
+                    st.markdown(
+                        f"**{quantidade}**"
+                    )
+
+        else:
+
+            st.caption(
+                "Nenhuma pessoa identificada."
+            )
 
 
 # ============================================================
 # MÉTRICAS
 # ============================================================
-
-st.markdown('<div class="metric-strip">', unsafe_allow_html=True)
 
 m1, m2, m3, m4, m5 = st.columns(5)
 
@@ -1480,7 +1482,7 @@ with m4:
 with m5:
     st.metric("⚪ Menções", len(mencoes))
 
-st.markdown("</div>", unsafe_allow_html=True)
+st.divider()
 
 
 # ============================================================
