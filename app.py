@@ -2,14 +2,16 @@ from zoneinfo import ZoneInfo
 
 FUSO_BRASIL = ZoneInfo("America/Sao_Paulo")
 
+def agora_brasilia():
+    return datetime.now(FUSO_BRASIL).replace(tzinfo=None)
+
+
 def formatar_horario_noticia(data):
-    """Feedparser normaliza published_parsed para UTC; exibe em Brasília."""
+    """Exibe o horário da notícia já normalizado para Brasília."""
     if not data:
         return ""
     try:
-        # O campo obtido de published_parsed é naive, mas representa UTC.
-        data_utc = data.replace(tzinfo=ZoneInfo("UTC"))
-        return data_utc.astimezone(FUSO_BRASIL).strftime("%d/%m/%Y %H:%M")
+        return data.strftime("%d/%m/%Y %H:%M")
     except Exception:
         return ""
 import streamlit as st
@@ -473,9 +475,10 @@ def obter_data(item):
             and item.published_parsed
         ):
 
-            return datetime(
-                *item.published_parsed[:6]
+            data_utc = datetime(*item.published_parsed[:6]).replace(
+                tzinfo=ZoneInfo("UTC")
             )
+            return data_utc.astimezone(FUSO_BRASIL).replace(tzinfo=None)
 
     except Exception:
         pass
@@ -949,7 +952,7 @@ def buscar_noticias():
     links = set()
 
     limite = (
-        datetime.now()
+        agora_brasilia()
         - timedelta(days=7)
     )
 
@@ -1464,7 +1467,7 @@ st.markdown("""
 # CABEÇALHO
 # ============================================================
 
-agora = datetime.now()
+agora = agora_brasilia()
 
 st.markdown(
     f"""
@@ -1808,7 +1811,7 @@ with col3:
 
 # O destaque considera sempre os últimos 7 dias, independentemente
 # do período selecionado no filtro principal.
-limite_destaque_7d = datetime.now() - timedelta(days=7)
+limite_destaque_7d = agora_brasilia() - timedelta(days=7)
 
 noticias_7d = [
     n for n in noticias
@@ -2160,7 +2163,7 @@ def gerar_pdf_clipping(noticias_clipping):
 
     story = []
 
-    data_geracao = datetime.now().strftime("%d/%m/%Y às %H:%M")
+    data_geracao = agora_brasilia().strftime("%d/%m/%Y às %H:%M")
 
     story.append(Paragraph("CLIPPING TCE-MG", titulo))
     story.append(
@@ -2312,7 +2315,7 @@ st.download_button(
     data=pdf_bytes,
     file_name=(
         f"clipping_tce_mg_"
-        f"{datetime.now().strftime('%Y-%m-%d')}.pdf"
+        f"{agora_brasilia().strftime('%Y-%m-%d')}.pdf"
     ),
     mime="application/pdf",
 )
@@ -2335,14 +2338,26 @@ st.markdown(
         height: 38px;
     }
 
-    div[data-testid="stButton"] button.estado-mg {
-        background: #d92d20;
-        color: white;
+    /* Botões de abrangência: a linha é identificada pelo título acima e
+       recebe as cores nos dois controles específicos. */
+    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stButton"] button) div[data-testid="column"]:nth-child(2) div[data-testid="stButton"] button,
+    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stButton"] button) div[data-testid="column"]:nth-child(3) div[data-testid="stButton"] button {
+        color: #ffffff !important;
+        border: none !important;
     }
 
-    div[data-testid="stButton"] button.nacional-br {
-        background: #039855;
-        color: white;
+    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stButton"] button) div[data-testid="column"]:nth-child(2) div[data-testid="stButton"] button {
+        background: #d92d20 !important;
+    }
+
+    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stButton"] button) div[data-testid="column"]:nth-child(3) div[data-testid="stButton"] button {
+        background: #039855 !important;
+    }
+
+    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stButton"] button) div[data-testid="column"]:nth-child(2) div[data-testid="stButton"] button:hover,
+    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stButton"] button) div[data-testid="column"]:nth-child(3) div[data-testid="stButton"] button:hover {
+        filter: brightness(.92);
+        color: #ffffff !important;
     }
     </style>
     """,
@@ -2488,5 +2503,5 @@ else:
 # ============================================================
 
 st.caption(
-    "As notícias são classificadas automaticamente com base em relevância para o TCE-MG. Uso exclusivo gabinete interno."
+    "As notícias são classificadas automaticamente com base em relevância para o TCE-MG."
 )
