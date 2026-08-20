@@ -22,9 +22,9 @@ st.set_page_config(
 
 FONTES = {
 
-    # ========================================================
+    # --------------------------------------------------------
     # IMPRENSA MINEIRA
-    # ========================================================
+    # --------------------------------------------------------
 
     "Estado de Minas":
         'https://news.google.com/rss/search?q=site%3Aem.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
@@ -60,9 +60,9 @@ FONTES = {
         'https://news.google.com/rss/search?q=site%3Amoonbh.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # IMPRENSA NACIONAL
-    # ========================================================
+    # --------------------------------------------------------
 
     "G1 Minas":
         'https://news.google.com/rss/search?q=site%3Ag1.globo.com%2Fmg+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
@@ -104,9 +104,9 @@ FONTES = {
         'https://news.google.com/rss/search?q=site%3Abemminas.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # BUSCAS GERAIS
-    # ========================================================
+    # --------------------------------------------------------
 
     "TCE-MG":
         'https://news.google.com/rss/search?q=%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
@@ -118,9 +118,9 @@ FONTES = {
         'https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%22+%22Minas%20Gerais%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # PESSOAS
-    # ========================================================
+    # --------------------------------------------------------
 
     "Durval Ângelo":
         'https://news.google.com/rss/search?q=%22Durval%20Ângelo%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
@@ -215,6 +215,44 @@ PESSOAS = {
             "Telmo Passareli"
         ],
     }
+}
+
+
+# ============================================================
+# RELAÇÃO ENTRE BUSCA ESPECÍFICA E PESSOA
+# ============================================================
+
+MAPA_FONTE_PESSOA = {
+
+    "Durval Ângelo":
+        "Durval Ângelo",
+
+    "Agostinho Patrus":
+        "Agostinho Patrus",
+
+    "Gilberto Diniz":
+        "Gilberto Diniz",
+
+    "Alencar da Silveira":
+        "Alencar da Silveira",
+
+    "Ione Pinheiro":
+        "Ione Pinheiro",
+
+    "Tadeu Martins Leite / Tadeuzinho":
+        "Tadeu Martins Leite (Tadeuzinho)",
+
+    "Licurgo Mourão":
+        "Licurgo Joseph Mourão de Oliveira",
+
+    "Hamilton Coelho":
+        "Hamilton Antônio Coelho",
+
+    "Adonias Fernandes":
+        "Adonias Fernandes Monteiro",
+
+    "Telmo Passareli":
+        "Telmo de Moura Passareli",
 }
 
 
@@ -320,7 +358,7 @@ TEMAS = {
 
 
 # ============================================================
-# FUNÇÕES
+# FUNÇÕES DE TEXTO
 # ============================================================
 
 def limpar_texto(texto):
@@ -379,6 +417,10 @@ def extrair_veiculo(item):
     return "Fonte não identificada"
 
 
+# ============================================================
+# IDENTIFICA TEMAS
+# ============================================================
+
 def identificar_temas(
     titulo,
     resumo
@@ -404,6 +446,10 @@ def identificar_temas(
 
     return encontrados
 
+
+# ============================================================
+# IDENTIFICA PESSOAS
+# ============================================================
 
 def identificar_pessoas(
     titulo,
@@ -518,25 +564,29 @@ def calcular_relevancia(
     )
 
 
+# ============================================================
+# CLASSIFICAÇÃO
+# ============================================================
+
 def classificar(score):
 
     if score >= 85:
 
-        return "🔴 Crítica"
+        return "🔴"
 
     if score >= 65:
 
-        return "🟠 Alta"
+        return "🟠"
 
     if score >= 45:
 
-        return "🟡 Média"
+        return "🟡"
 
-    return "⚪ Menção"
+    return "⚪"
 
 
 # ============================================================
-# COLETA
+# COLETA DAS NOTÍCIAS
 # ============================================================
 
 @st.cache_data(ttl=300)
@@ -625,6 +675,25 @@ def buscar_noticias():
             )
 
 
+            # ------------------------------------------------
+            # CORREÇÃO DAS PESSOAS
+            # ------------------------------------------------
+
+            if nome in MAPA_FONTE_PESSOA:
+
+                pessoa_fonte = (
+                    MAPA_FONTE_PESSOA[
+                        nome
+                    ]
+                )
+
+                if pessoa_fonte not in pessoas:
+
+                    pessoas.append(
+                        pessoa_fonte
+                    )
+
+
             score = calcular_relevancia(
 
                 titulo,
@@ -660,7 +729,7 @@ def buscar_noticias():
                 "score":
                     score,
 
-                "classificacao":
+                "bolinha":
                     classificar(
                         score
                     ),
@@ -672,6 +741,10 @@ def buscar_noticias():
                     pessoas,
             })
 
+
+    # --------------------------------------------------------
+    # ORDENAÇÃO
+    # --------------------------------------------------------
 
     noticias.sort(
 
@@ -858,7 +931,6 @@ if criticas:
     for noticia in criticas[:5]:
 
         st.markdown(
-
             f"**{noticia['titulo']}**"
         )
 
@@ -867,7 +939,7 @@ st.divider()
 
 
 # ============================================================
-# ASSUNTOS QUENTES + PESSOAS MAIS CITADAS
+# CONTADORES
 # ============================================================
 
 contador_temas = Counter()
@@ -890,6 +962,10 @@ for noticia in noticias_periodo:
             pessoa
         ] += 1
 
+
+# ============================================================
+# ASSUNTOS + PESSOAS
+# ============================================================
 
 col1, col2 = st.columns(
     2
@@ -919,8 +995,7 @@ with col1:
 
             st.markdown(
                 f"**{tema}** — "
-                f"{quantidade} "
-                f"notícia(s)"
+                f"{quantidade} notícia(s)"
             )
 
     else:
@@ -953,8 +1028,7 @@ with col2:
 
             st.markdown(
                 f"**{pessoa}** — "
-                f"{quantidade} "
-                f"notícia(s)"
+                f"{quantidade} notícia(s)"
             )
 
     else:
@@ -1195,12 +1269,26 @@ if filtro_fonte != "Todas":
 
 if filtro_relevancia != "Todas":
 
+    # O bolinha guarda somente o emoji,
+    # então fazemos a conversão aqui.
+
+    mapa_relevancia = {
+
+        "🔴 Crítica": "🔴",
+        "🟠 Alta": "🟠",
+        "🟡 Média": "🟡",
+        "⚪ Menção": "⚪",
+    }
+
+
     filtradas = [
 
         n for n in filtradas
 
-        if n["classificacao"]
-        == filtro_relevancia
+        if n["bolinha"]
+        == mapa_relevancia[
+            filtro_relevancia
+        ]
 
     ]
 
@@ -1261,14 +1349,14 @@ else:
 
 
         # ----------------------------------------------------
-        # CLASSIFICAÇÃO
+        # TÍTULO — SOMENTE A BOLINHA
         # ----------------------------------------------------
 
         st.markdown(
 
             f"### "
-            f"{noticia['classificacao']} "
-            f" **{noticia['titulo']}**"
+            f"{noticia['bolinha']} "
+            f"**{noticia['titulo']}**"
         )
 
 
