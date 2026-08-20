@@ -466,16 +466,21 @@ def limpar_texto(texto):
 
 
 def obter_data(item):
-
+    """Obtém a data mais recente disponível no feed, em horário de Brasília."""
     try:
+        # Google News/RSS pode informar uma atualização mais recente que
+        # a publicação original. Para o filtro de período, a atualização
+        # é o momento correto para considerar a notícia como nova.
+        partes_data = None
 
-        if (
-            hasattr(item, "published_parsed")
-            and item.published_parsed
-        ):
+        if getattr(item, "updated_parsed", None):
+            partes_data = item.updated_parsed
+        elif getattr(item, "published_parsed", None):
+            partes_data = item.published_parsed
 
+        if partes_data:
             data_utc = datetime(
-                *item.published_parsed[:6],
+                *partes_data[:6],
                 tzinfo=ZoneInfo("UTC")
             )
             return data_utc.astimezone(FUSO_BRASIL)
@@ -1158,6 +1163,13 @@ st.markdown("""
 .st-key-metricas-centralizadas [data-testid="stMetricLabel"] {
     justify-content: center;
     width: 100%;
+    text-align: center;
+    font-weight: 800 !important;
+}
+.st-key-metricas-centralizadas [data-testid="stMetricLabel"] p {
+    font-weight: 800 !important;
+    text-align: center !important;
+    width: 100%;
 }
 .st-key-metricas-centralizadas [data-testid="stMetricValue"] {
     justify-content: center;
@@ -1195,6 +1207,35 @@ st.markdown("""
     color: white !important;
     border-color: #256628 !important;
 }
+.st-key-abrangencia-total button {
+    background: #667085 !important;
+    color: white !important;
+    border: 1px solid #667085 !important;
+}
+.st-key-abrangencia-total button:hover {
+    background: #475467 !important;
+    color: white !important;
+    border-color: #475467 !important;
+}
+
+.st-key-filtros-centralizados [data-testid="stWidgetLabel"] {
+    justify-content: center;
+    width: 100%;
+    text-align: center;
+}
+.st-key-filtros-centralizados [data-testid="stWidgetLabel"] p {
+    text-align: center !important;
+    width: 100%;
+}
+.st-key-filtros-centralizados [data-testid="stCheckbox"] {
+    justify-content: center;
+    width: 100%;
+}
+.st-key-apenas-relevantes-box {
+    min-height: 56px;
+    box-sizing: border-box;
+}
+
 #MainMenu, footer {visibility: hidden;}
 
 .block-container {
@@ -2038,25 +2079,26 @@ with f4:
         ["Todas"] + list(INSTITUICOES_FILTRO.keys())
     )
 
-f5, f6, f7 = st.columns([1.05, 1.05, 0.85])
+with st.container(key="filtros-centralizados"):
+    f5, f6, f7 = st.columns(3, gap="medium")
 
-with f5:
-    filtro_relevancia = st.selectbox(
-        "🎯 Relevância",
-        ["Todas", "🔴 Crítica", "🟠 Alta", "🟡 Média", "⚪ Menção"]
-    )
-
-with f6:
-    busca = st.text_input(
-        "🔍 Buscar palavra",
-        placeholder="Ex.: Copasa, mineração, transporte..."
-    )
-
-with f7:
-    with st.container(key="apenas-relevantes-box"):
-        apenas_relevantes = st.checkbox(
-            "🎯 Apenas relevantes (🔴 + 🟠)"
+    with f5:
+        filtro_relevancia = st.selectbox(
+            "🎯 Relevância",
+            ["Todas", "🔴 Crítica", "🟠 Alta", "🟡 Média", "⚪ Menção"]
         )
+
+    with f6:
+        busca = st.text_input(
+            "🔍 Buscar palavra",
+            placeholder="Ex.: Copasa, mineração, transporte..."
+        )
+
+    with f7:
+        with st.container(key="apenas-relevantes-box"):
+            apenas_relevantes = st.checkbox(
+                "🎯 Apenas relevantes (🔴 + 🟠)"
+            )
 
 # A abrangência agora é controlada pelos botões ao lado de
 # 'Notícias monitoradas', sem abrir outra página.
@@ -2370,10 +2412,20 @@ st.download_button(
 # ============================================================
 # RESULTADOS
 # ============================================================
-col_titulo, col_estadual, col_nacional = st.columns([4.6, 1.8, 1.8])
+col_titulo, col_total, col_estadual, col_nacional = st.columns([3.4, 1.4, 1.4, 1.4], gap="medium")
 
 with col_titulo:
     st.subheader("📰 Notícias monitoradas")
+
+with col_total:
+    with st.container(key="abrangencia-total"):
+        if st.button(
+            "Abrangência Total",
+            key="btn_abrangencia_total",
+            use_container_width=True
+        ):
+            st.session_state["abrangencia_botao"] = "Todas"
+            st.rerun()
 
 with col_estadual:
     with st.container(key="abrangencia-estadual"):
