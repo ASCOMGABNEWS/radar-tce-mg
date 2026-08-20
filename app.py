@@ -153,30 +153,32 @@ FONTES = {
     "Tribunal de Contas MG":
         'https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%22+%22Minas%20Gerais%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
-    # Buscas institucionais complementares do TCE-MG
-    "TCE-MG / Conselheiros":
-        'https://news.google.com/rss/search?q=%22TCE-MG%22+conselheiro&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+    # --------------------------------------------------------
+    # MONITORAMENTO INSTITUCIONAL — CONTROLE EXTERNO
+    # --------------------------------------------------------
 
-    "TCE-MG / Conselheiros e Tribunal de Contas":
-        'https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%20de%20Minas%20Gerais%22+conselheiro&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
+    # Atricon é monitorada de forma independente: a notícia não precisa
+    # citar TCE-MG para ser relevante ao ambiente dos Tribunais de Contas.
     "Atricon":
         'https://news.google.com/rss/search?q=%22Atricon%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
-    "IRB / Instituto Rui Barbosa":
-        'https://news.google.com/rss/search?q=%22Instituto%20Rui%20Barbosa%22+OR+%22IRB%22+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+    "IRB":
+        'https://news.google.com/rss/search?q=%22Instituto%20Rui%20Barbosa%22+OR+%22IRB%22+%22Tribunais%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
-    "TCE-MG / Atricon":
-        'https://news.google.com/rss/search?q=%22TCE-MG%22+Atricon&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+    "Tribunais de Contas":
+        'https://news.google.com/rss/search?q=%22Tribunais%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
-    "TCE-MG / IRB":
-        'https://news.google.com/rss/search?q=%22TCE-MG%22+%22Instituto%20Rui%20Barbosa%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+    "Tribunal de Contas":
+        'https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
-    "Folha / Atricon":
-        'https://news.google.com/rss/search?q=site%3Afolha.uol.com.br+Atricon&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+    "Presidentes de Tribunais de Contas":
+        'https://news.google.com/rss/search?q=%22presidente%20do%20Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
-    "Folha / IRB":
-        'https://news.google.com/rss/search?q=site%3Afolha.uol.com.br+(%22Instituto%20Rui%20Barbosa%22+OR+IRB)+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+    "Conselheiros de Tribunais de Contas":
+        'https://news.google.com/rss/search?q=%22conselheiro%22+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+
+    "TCEs":
+        'https://news.google.com/rss/search?q=%22TCE%22+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
 
     # --------------------------------------------------------
