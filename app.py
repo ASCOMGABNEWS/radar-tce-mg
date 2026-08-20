@@ -9,6 +9,11 @@ from collections import Counter
 # CONFIGURAÇÃO
 # ============================================================
 
+st.set_page_config(
+    page_title="Radar TCE-MG",
+    page_icon="🏛️",
+    layout="wide"
+)
 
 
 # ============================================================
@@ -1286,8 +1291,10 @@ if busca:
 # ============================================================
 
 st.subheader(
+
     f"📰 {len(filtradas)} notícias encontradas"
 )
+
 
 if not filtradas:
 
@@ -1296,98 +1303,125 @@ if not filtradas:
         "com os filtros selecionados."
     )
 
+
 else:
 
     for noticia in filtradas:
 
         data_formatada = ""
 
+
         if noticia["data"]:
 
-            data_formatada = noticia["data"].strftime(
-                "%d/%m/%Y %H:%M"
+            data_formatada = (
+
+                noticia["data"]
+                .strftime(
+                    "%d/%m/%Y %H:%M"
+                )
+
             )
 
-        titulo = noticia["titulo"]
-        resumo = noticia["resumo"]
 
-        if len(resumo) > 500:
-            resumo = resumo[:500] + "..."
-
-        # Favicon do domínio da notícia.
-        # Se não houver domínio, o card continua funcionando sem imagem.
-        dominio = ""
-
-        try:
-            from urllib.parse import urlparse
-            dominio = urlparse(noticia["link"]).netloc.replace("www.", "")
-        except Exception:
-            dominio = ""
-
-        if dominio:
-            favicon = (
-                "https://www.google.com/s2/favicons"
-                f"?domain={dominio}&sz=64"
-            )
-            imagem_fonte = (
-                f'<img src="{favicon}" '
-                f'alt="" '
-                f'onerror="this.style.display=\'none\'">'
-            )
-        else:
-            imagem_fonte = "📰"
-
-        pessoas_html = ""
-
-        for pessoa in noticia["pessoas"]:
-
-            pessoas_html += (
-                f'<span class="news-tag">👤 {pessoa}</span>'
-            )
-
-        temas_html = ""
-
-        for tema in noticia["temas"]:
-
-            temas_html += (
-                f'<span class="news-tag">{tema}</span>'
-            )
-
-        card = f"""
-        <div class="news-card">
-
-            <div class="news-title">
-                {noticia["bolinha"]} {titulo}
-            </div>
-
-            <div class="news-source">
-                {imagem_fonte}
-                <span>{noticia["veiculo"]}</span>
-                <span class="news-date">• {data_formatada}</span>
-            </div>
-
-            <div>
-                {pessoas_html}
-                {temas_html}
-            </div>
-
-            <div class="news-summary">
-                {resumo}
-            </div>
-
-            <a
-                class="news-link"
-                href="{noticia["link"]}"
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                Ler matéria ↗
-            </a>
-
-        </div>
-        """
+        # ----------------------------------------------------
+        # TÍTULO — SOMENTE A BOLINHA
+        # ----------------------------------------------------
 
         st.markdown(
-            card,
-            unsafe_allow_html=True
+
+            f"### "
+            f"{noticia['bolinha']} "
+            f"**{noticia['titulo']}**"
         )
+
+
+        # ----------------------------------------------------
+        # INFORMAÇÕES
+        # ----------------------------------------------------
+
+        st.caption(
+
+            f"🗞️ {noticia['veiculo']}  •  "
+            f"📅 {data_formatada}"
+        )
+
+
+        # ----------------------------------------------------
+        # PESSOAS
+        # ----------------------------------------------------
+
+        if noticia["pessoas"]:
+
+            st.markdown(
+
+                " ".join(
+
+                    [
+                        f"`👤 {p}`"
+                        for p
+                        in noticia["pessoas"]
+                    ]
+
+                )
+
+            )
+
+
+        # ----------------------------------------------------
+        # TEMAS
+        # ----------------------------------------------------
+
+        if noticia["temas"]:
+
+            st.markdown(
+
+                " ".join(
+
+                    [
+                        f"`{tema}`"
+                        for tema
+                        in noticia["temas"]
+                    ]
+
+                )
+
+            )
+
+
+        # ----------------------------------------------------
+        # RESUMO
+        # ----------------------------------------------------
+
+        if noticia["resumo"]:
+
+            resumo = noticia[
+                "resumo"
+            ]
+
+
+            if len(resumo) > 500:
+
+                resumo = (
+                    resumo[:500]
+                    + "..."
+                )
+
+
+            st.write(
+                resumo
+            )
+
+
+        # ----------------------------------------------------
+        # LINK
+        # ----------------------------------------------------
+
+        st.link_button(
+
+            "Ler matéria ↗",
+
+            noticia["link"]
+        )
+
+
+        st.divider()
