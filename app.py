@@ -1429,32 +1429,130 @@ with col2:
 
     with st.container(border=True, height=310):
 
-        box_title("🔥 Assuntos quentes")
+        st.markdown(
+            """
+            <div style="
+                background:rgba(100,116,139,.07);
+                border:1px solid rgba(100,116,139,.10);
+                border-radius:9px;
+                padding:8px 12px;
+                margin:-4px -4px 12px -4px;
+                font-size:17px;
+                font-weight:750;
+                color:#27324a;
+            ">
+                🔥 Assuntos quentes
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
         temas_quentes = contador_temas.most_common(20)
 
-        with st.container(height=245):
+        temas_html = ""
 
-            if temas_quentes:
+        for tema, quantidade in temas_quentes:
 
-                for tema, quantidade in temas_quentes:
+            temas_html += f"""
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                padding:7px 3px;
+                font-size:14px;
+                color:#27324a;
+            ">
+                <span><strong>{tema}</strong></span>
+                <strong>{quantidade}</strong>
+            </div>
+            """
 
-                    c1, c2 = st.columns(
-                        [6, 1],
-                        gap="small"
-                    )
+        if not temas_html:
 
-                    with c1:
-                        st.markdown(f"**{tema}**")
+            temas_html = """
+            <div style="color:#98a2b3;padding:8px 3px;">
+                Nenhum assunto identificado.
+            </div>
+            """
 
-                    with c2:
-                        st.markdown(f"**{quantidade}**")
+        st.markdown(
+            f"""
+            <div style="
+                height:225px;
+                overflow-y:auto;
+                overflow-x:hidden;
+                padding-right:6px;
+            ">
+                {temas_html}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-            else:
 
-                st.caption(
-                    "Nenhum assunto identificado."
-                )
+with col3:
+
+    with st.container(border=True, height=310):
+
+        st.markdown(
+            """
+            <div style="
+                background:rgba(100,116,139,.07);
+                border:1px solid rgba(100,116,139,.10);
+                border-radius:9px;
+                padding:8px 12px;
+                margin:-4px -4px 12px -4px;
+                font-size:17px;
+                font-weight:750;
+                color:#27324a;
+            ">
+                👥 Pessoas mais citadas
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        pessoas_quentes = contador_pessoas.most_common(20)
+
+        pessoas_html = ""
+
+        for pessoa, quantidade in pessoas_quentes:
+
+            pessoas_html += f"""
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                padding:7px 3px;
+                font-size:14px;
+                color:#27324a;
+            ">
+                <span><strong>{pessoa}</strong></span>
+                <strong>{quantidade}</strong>
+            </div>
+            """
+
+        if not pessoas_html:
+
+            pessoas_html = """
+            <div style="color:#98a2b3;padding:8px 3px;">
+                Nenhuma pessoa identificada.
+            </div>
+            """
+
+        st.markdown(
+            f"""
+            <div style="
+                height:225px;
+                overflow-y:auto;
+                overflow-x:hidden;
+                padding-right:6px;
+            ">
+                {pessoas_html}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 
 with col3:
