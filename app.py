@@ -1519,6 +1519,72 @@ status_area.markdown(
 
 noticias = buscar_noticias()
 
+# ============================================================
+# ANÁLISE INTELIGENTE - TESTE CONTROLADO
+# ============================================================
+
+if client and noticias:
+
+    palavras_prioritarias = [
+        "tce-mg",
+        "tce mg",
+        "tribunal de contas",
+        "atricon",
+        "irb",
+        "conselheiro",
+        "conselheira",
+        "tribunais de contas",
+        "controle externo",
+        "fiscalização",
+    ]
+
+    candidatas = []
+
+    for noticia in noticias:
+        texto_noticia = " ".join([
+            str(noticia.get("titulo", "")),
+            str(noticia.get("resumo", "")),
+            str(noticia.get("instituicoes", "")),
+            str(noticia.get("pessoas", "")),
+        ]).lower()
+
+        tem_palavra_prioritaria = any(
+            palavra in texto_noticia
+            for palavra in palavras_prioritarias
+        )
+
+        if noticia.get("score", 0) >= 40 or tem_palavra_prioritaria:
+            candidatas.append(noticia)
+
+    # Prioriza as notícias que já têm maior score,
+    # mas mantém as que têm termos institucionais importantes.
+    candidatas = sorted(
+        candidatas,
+        key=lambda x: x.get("score", 0),
+        reverse=True
+    )[:6]
+
+    for noticia in candidatas:
+
+        analise = analisar_relevancia_ia(
+            noticia.get("titulo", ""),
+            noticia.get("resumo", ""),
+            noticia.get("veiculo", ""),
+            noticia.get("abrangencia", ""),
+            noticia.get("instituicoes", "")
+        )
+
+        noticia["ia_nota"] = analise["nota"]
+        noticia["ia_nivel"] = analise["nivel"]
+        noticia["ia_motivo"] = analise["motivo"]
+
+        # Score experimental.
+        # NÃO substitui o score atual ainda.
+        noticia["score_final"] = round(
+            (noticia.get("score", 0) * 0.4)
+            + (analise["nota"] * 0.6)
+        )
+
 status_area.empty()
 
 st.markdown("### 📡 Monitoramento em tempo real")
