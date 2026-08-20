@@ -1,6 +1,15 @@
 import streamlit as st
 import feedparser
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+from urllib.parse import quote
+
+# Horário oficial do Radar: Brasília (UTC-3).
+FUSO_RADAR = ZoneInfo("America/Sao_Paulo")
+
+def agora_radar():
+    return datetime.now(FUSO_RADAR)
+
 import re
 import html
 from collections import Counter
@@ -720,7 +729,7 @@ def buscar_noticias():
     links = set()
 
     limite = (
-        datetime.now()
+        agora_radar()
         - timedelta(days=7)
     )
 
@@ -1218,7 +1227,7 @@ st.markdown("""
 # CABEÇALHO
 # ============================================================
 
-agora = datetime.now()
+agora = agora_radar()
 
 st.markdown(
     f"""
@@ -1805,7 +1814,7 @@ def gerar_pdf_clipping(noticias_clipping):
 
     story = []
 
-    data_geracao = datetime.now().strftime("%d/%m/%Y às %H:%M")
+    data_geracao = agora_radar().strftime("%d/%m/%Y às %H:%M")
 
     story.append(Paragraph("CLIPPING TCE-MG", titulo))
     story.append(
@@ -1958,7 +1967,7 @@ st.download_button(
     data=pdf_bytes,
     file_name=(
         f"clipping_tce_mg_"
-        f"{datetime.now().strftime('%Y-%m-%d')}.pdf"
+        f"{agora_radar().strftime('%Y-%m-%d')}.pdf"
     ),
     mime="application/pdf",
 )
@@ -2034,6 +2043,44 @@ else:
                     "Ler matéria ↗",
                     noticia["link"],
                     key=f"ler_materia_{i}_{hash(noticia['link'])}"
+                )
+
+                # Compartilhamento no WhatsApp no formato usado no clipping:
+                # *Título em negrito*
+                # _Bigode em itálico_
+                # link puro em uma nova linha.
+                titulo_whatsapp = (
+                    str(noticia.get("titulo") or "")
+                    .replace("*", "")
+                    .strip()
+                )
+
+                bigode_whatsapp = (
+                    str(noticia.get("resumo") or "")
+                    .replace("_", "")
+                    .strip()
+                )
+
+                if len(bigode_whatsapp) > 300:
+                    bigode_whatsapp = (
+                        bigode_whatsapp[:300].rstrip() + "..."
+                    )
+
+                texto_whatsapp = (
+                    f"*{titulo_whatsapp}*\n"
+                    f"_{bigode_whatsapp}_\n"
+                    f"{noticia['link']}"
+                )
+
+                whatsapp_url = (
+                    "https://wa.me/?text="
+                    + quote(texto_whatsapp)
+                )
+
+                st.link_button(
+                    "📲 Compartilhar no WhatsApp",
+                    whatsapp_url,
+                    key=f"whatsapp_materia_{i}_{hash(noticia['link'])}"
                 )
 
             with col_time:
