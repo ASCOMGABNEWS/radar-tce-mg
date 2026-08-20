@@ -729,6 +729,7 @@ def classificar(score):
 
 FONTES_NACIONAIS = {
     "Folha",
+    "UOL",
     "Globo",
     "G1",
     "Poder360",
@@ -741,16 +742,87 @@ FONTES_NACIONAIS = {
     "Correio Braziliense",
     "Estadão",
     "O Antagonista",
+    "CartaCapital",
+    "CNN Brasil",
+    "Agência Brasil",
+    "Valor Econômico",
+    "ConJur",
+    "Metrópoles",
 }
 
-def classificar_abrangencia(veiculo):
-    nome = str(veiculo or "").lower()
+FONTES_MINAS = {
+    "Estado de Minas",
+    "Itatiaia",
+    "O TEMPO",
+    "Hoje em Dia",
+    "Tribuna de Minas",
+    "Diário do Comércio",
+    "BHAZ",
+    "Agência Minas",
+    "O Fator",
+    "Edição do Brasil",
+    "Moon BH",
+}
 
-    for fonte in FONTES_NACIONAIS:
-        if fonte.lower() in nome:
-            return "Nacional"
+# Termos que identificam claramente outros estados. Uma notícia sobre
+# um TCE de outro estado é Nacional para este Radar, não Minas Gerais.
+OUTROS_ESTADOS = (
+    "tce-pi", "tce pi", "tce-piauí", "tce piauí",
+    "tce-ma", "tce ma", "tce-maranhão", "tce maranhão",
+    "tce-sp", "tce sp", "tce-são paulo",
+    "tce-rj", "tce rj", "tce-rio de janeiro",
+    "tce-pr", "tce pr", "tce-paraná",
+    "tce-sc", "tce sc", "tce-santa catarina",
+    "tce-rs", "tce rs", "tce-rio grande do sul",
+    "tce-go", "tce go", "tce-goiás",
+    "tce-ba", "tce ba", "tce-bahia",
+    "tce-pe", "tce pe", "tce-pernambuco",
+    "tce-ce", "tce ce", "tce-ceará",
+    "tce-es", "tce es", "tce-espírito santo",
+    "tce-df", "tce df",
+    "tce-ms", "tce ms", "tce-mato grosso do sul",
+    "tce-mt", "tce mt", "tce-mato grosso",
+    "tce-pa", "tce pa", "tce-pará",
+    "tce-am", "tce am", "tce-amazonas",
+    "tce-ro", "tce ro", "tce-rondônia",
+    "tce-to", "tce to", "tce-tocantins",
+    "tce-ac", "tce ac", "tce-acre",
+    "tce-al", "tce al", "tce-alagoas",
+    "tce-se", "tce se", "tce-sergipe",
+    "tce-pb", "tce pb", "tce-paraíba",
+    "tce-rn", "tce rn", "tce-rio grande do norte",
+)
 
-    return "Minas Gerais"
+def classificar_abrangencia(veiculo, titulo="", resumo=""):
+    texto = " ".join([
+        str(veiculo or ""),
+        str(titulo or ""),
+        str(resumo or "")
+    ]).lower()
+
+    # Primeiro: fontes claramente mineiras.
+    if any(f.lower() in str(veiculo or "").lower() for f in FONTES_MINAS):
+        return "Minas Gerais"
+
+    # Segundo: uma matéria explicitamente sobre outro TCE/estado
+    # nunca deve cair como Minas só porque a fonte é um portal nacional.
+    if any(termo in texto for termo in OUTROS_ESTADOS):
+        return "Nacional"
+
+    # Terceiro: conteúdo explicitamente ligado a Minas/TCE-MG.
+    termos_minas = (
+        "tce-mg", "tce mg", "tce de minas gerais",
+        "tribunal de contas de minas gerais",
+        "tribunal de contas de mg", "minas gerais",
+        "minas", "belo horizonte", "mg"
+    )
+
+    if any(termo in texto for termo in termos_minas):
+        return "Minas Gerais"
+
+    # Portais nacionais e notícias institucionais sem estado definido
+    # ficam como Nacional por padrão.
+    return "Nacional"
 
 
 # ============================================================
@@ -913,7 +985,9 @@ def buscar_noticias():
 
                 "abrangencia":
                     classificar_abrangencia(
-                        extrair_veiculo(item)
+                        extrair_veiculo(item),
+                        titulo,
+                        resumo
                     ),
 
                 "data":
@@ -1766,11 +1840,13 @@ with st.container(border=True):
 # ============================================================
 
 INSTITUICOES_FILTRO = {
+    "TCE-MG": "TCE-MG",
     "MPMG": "MPMG",
     "ALMG": "ALMG",
     "Procuradoria": "Procuradoria",
     "TJMG": "TJMG",
     "Atricon": "Atricon",
+    "IRB": "IRB",
 }
 
 st.subheader("🔎 Monitorar")
