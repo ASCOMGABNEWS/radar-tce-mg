@@ -675,11 +675,42 @@ def classificar(score):
     return "⚪"
 
 
+
+# ============================================================
+# ABRANGÊNCIA DAS FONTES
+# ============================================================
+
+FONTES_NACIONAIS = {
+    "Folha",
+    "Globo",
+    "G1",
+    "Poder360",
+    "JOTA",
+    "Migalhas",
+    "O Bastidor",
+    "Intercept Brasil",
+    "revista piauí",
+    "Brasil de Fato",
+    "Correio Braziliense",
+    "Estadão",
+    "O Antagonista",
+}
+
+def classificar_abrangencia(veiculo):
+    nome = str(veiculo or "").lower()
+
+    for fonte in FONTES_NACIONAIS:
+        if fonte.lower() in nome:
+            return "Nacional"
+
+    return "Minas Gerais"
+
+
 # ============================================================
 # COLETA
 # ============================================================
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=300, show_spinner=False)
 def buscar_noticias():
 
     noticias = []
@@ -816,6 +847,11 @@ def buscar_noticias():
                 "veiculo":
                     extrair_veiculo(
                         item
+                    ),
+
+                "abrangencia":
+                    classificar_abrangencia(
+                        extrair_veiculo(item)
                     ),
 
                 "data":
@@ -1218,12 +1254,16 @@ if atualizar_agora:
 # COLETA
 # ============================================================
 
-with status_area:
+status_area.markdown(
+    "⏳ **Atualizando notícias...**"
+)
 
-    with st.spinner("Atualizando notícias..."):
+noticias = buscar_noticias()
 
-        noticias = buscar_noticias()
+status_area.empty()
 
+
+st.markdown("**📡 Monitoramento em tempo real**")
 
 # ============================================================
 # PERÍODO
@@ -1321,7 +1361,7 @@ with col1:
 
     with st.container(border=True):
 
-        st.markdown("**🚨 Radar de atenção**")
+        st.markdown('<span style="font-size:16px;font-weight:700;">🚨 Radar de atenção</span>', unsafe_allow_html=True)
 
         r1, r2 = st.columns(2)
 
@@ -1359,7 +1399,7 @@ with col2:
 
     with st.container(border=True):
 
-        st.markdown("**🔥 Assuntos quentes**")
+        st.markdown('<span style="font-size:16px;font-weight:700;">🔥 Assuntos quentes</span>', unsafe_allow_html=True)
 
         temas_quentes = contador_temas.most_common(6)
 
@@ -1405,7 +1445,7 @@ with col3:
 
     with st.container(border=True):
 
-        st.markdown("**👥 Pessoas mais citadas**")
+        st.markdown('<span style="font-size:16px;font-weight:700;">👥 Pessoas mais citadas</span>', unsafe_allow_html=True)
 
         pessoas_quentes = (
             contador_pessoas
@@ -1475,7 +1515,7 @@ todas_pessoas = []
 for grupo in PESSOAS.values():
     todas_pessoas.extend(grupo.keys())
 
-f1, f2, f3 = st.columns(3)
+f1, f2, f3, f4 = st.columns(4)
 
 with f1:
     filtro_pessoa = st.selectbox(
@@ -1495,15 +1535,21 @@ with f3:
         ["Todas"] + list(FONTES.keys())
     )
 
-f4, f5 = st.columns(2)
-
 with f4:
+    filtro_abrangencia = st.selectbox(
+        "🌎 Abrangência",
+        ["Todas", "Minas Gerais", "Nacional"]
+    )
+
+f5, f6 = st.columns(2)
+
+with f5:
     filtro_relevancia = st.selectbox(
         "🎯 Relevância",
         ["Todas", "🔴 Crítica", "🟠 Alta", "🟡 Média", "⚪ Menção"]
     )
 
-with f5:
+with f6:
     busca = st.text_input(
         "🔍 Buscar palavra",
         placeholder="Ex.: Copasa, mineração, transporte..."
@@ -1536,6 +1582,12 @@ if filtro_fonte != "Todas":
     filtradas = [
         n for n in filtradas
         if n["monitoramento"] == filtro_fonte
+    ]
+
+if filtro_abrangencia != "Todas":
+    filtradas = [
+        n for n in filtradas
+        if n.get("abrangencia") == filtro_abrangencia
     ]
 
 if filtro_relevancia != "Todas":
@@ -1859,7 +1911,7 @@ else:
 
         link = noticia["link"]
 
-        html = f"""
+        news_card_html = f"""
         <div class="news-card">
 
             <div class="news-content">
