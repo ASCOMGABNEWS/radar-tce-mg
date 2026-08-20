@@ -1,2 +1,6 @@
 streamlit
 feedparser
+pandas
+openpyxl
+python-docx
+reportlab
