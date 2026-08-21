@@ -99,7 +99,6 @@ FONTES = {"Estado de Minas": "https://news.google.com/rss/search?q=site%3Aem.com
     "Valor Econômico": "https://news.google.com/rss/search?q=site%3Avalor.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "ConJur": "https://news.google.com/rss/search?q=site%3Aconjur.com.br+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "Metrópoles": "https://news.google.com/rss/search?q=site%3Ametropoles.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
-    "Atricon": "https://news.google.com/rss/search?q=%22Atricon%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "TCU": "https://news.google.com/rss/search?q=(%22TCU%22+OR+%22Tribunal%20de%20Contas%20da%20Uni%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419"}
 
 
@@ -1054,13 +1053,20 @@ INSTITUICOES_FILTRO = {
 # combinação de palavras; as demais refinam conciliação, comunicação, controle etc.
 # ALMG/MPMG/TJMG continuam como fontes complementares via Google News.
 BUSCAS_OFICIAIS = [
-    ("TCE-MG", 'site:tce.mg.gov.br -site:tce.mg.gov.br/Noticia/'),
-    ("TCE-MG", 'site:tce.mg.gov.br -site:tce.mg.gov.br/Noticia/ ("TCE-MG" OR "TCE MG" OR TCEMG OR "Tribunal de Contas de Minas Gerais")'),
-    ("TCE-MG", 'site:tce.mg.gov.br -site:tce.mg.gov.br/Noticia/ (comunicação OR comunicacao OR "comunicação pública" OR "comunicação institucional" OR "órgãos públicos" OR "órgão público" OR "linguagem simples" OR "e-mail" OR imprensa OR jornalismo OR "redes sociais" OR transparência)'),
-    ("TCE-MG", 'site:tce.mg.gov.br -site:tce.mg.gov.br/Noticia/ (conciliação OR "mesa de conciliação" OR "controle externo" OR fiscalização OR auditoria OR licitação OR concessão OR acórdão OR acordao OR decisão OR decisao OR contrato)'),
-    ("TCE-MG", 'site:tce.mg.gov.br -site:tce.mg.gov.br/Noticia/ ("Agostinho Patrus" OR "Durval Ângelo" OR "Durval Angelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR "Alencar da Silveira" OR conselheiro OR conselheira OR presidente)'),
-    ("Órgãos complementares", '(site:almg.gov.br OR site:mpmg.mp.br OR site:tjmg.jus.br) ("TCE-MG" OR "TCE MG" OR TCEMG OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo" OR "processo do TCE" OR "decisão do TCE")'),
+    (
+        "Órgãos complementares",
+        (
+            '(site:almg.gov.br OR site:mpmg.mp.br OR site:tjmg.jus.br) '
+            '("TCE-MG" OR "TCE MG" OR TCEMG OR '
+            '"Tribunal de Contas" OR TCU OR conselheiro OR '
+            '"controle externo" OR "processo do TCE" OR '
+            '"decisão do TCE" OR "mesa de conciliação" OR '
+            'conciliação OR comunicação OR "órgãos públicos" OR '
+            'contratação OR institucional)'
+        )
+    ),
 ]
+
 
 
 # REGRA-MÃE DO RADAR
@@ -1251,34 +1257,63 @@ class LinksNoticiasParser(HTMLParser):
             self.texto_atual = []
 
 
-def extrair_data_proxima(html_texto, posicao, limite=1200):
-    trecho = html_texto[max(0, posicao - limite):posicao + limite]
-    m = re.search(r"\b(\d{2}/\d{2}/\d{4})\b", trecho)
-    if not m:
-        return None
-    try:
-        return datetime.strptime(m.group(1), "%d/%m/%Y").replace(tzinfo=FUSO_BRASIL)
-    except Exception:
-        return None
+def extrair_data_proxima(html_texto, posicao, limite=5000, titulo=""):
+    """
+    Procura a data da notícia perto do link ou do título.
+    O portal do TCE pode deixar a data relativamente distante do href.
+    """
+    candidatos = []
+
+    if posicao is not None and posicao >= 0:
+        candidatos.append(
+            html_texto[max(0, posicao - limite):posicao + limite]
+        )
+
+    # Segunda tentativa: procura pelo título no HTML.
+    if titulo:
+        titulo_busca = limpar_texto(titulo).lower()
+        if titulo_busca:
+            pos_titulo = html_texto.lower().find(titulo_busca)
+            if pos_titulo >= 0:
+                candidatos.append(
+                    html_texto[max(0, pos_titulo - limite):pos_titulo + limite]
+                )
+
+    for trecho in candidatos:
+        datas = re.findall(r"\b(\d{2}/\d{2}/\d{4})\b", trecho)
+        for data_txt in datas:
+            try:
+                return datetime.strptime(
+                    data_txt, "%d/%m/%Y"
+                ).replace(tzinfo=FUSO_BRASIL)
+            except Exception:
+                continue
+
+    return None
 
 
 def _buscar_pagina_oficial(args):
     nome, url = args
     try:
         req = Request(url, headers={"User-Agent": "Mozilla/5.0 (Radar TCE-MG)"})
-        with urlopen(req, timeout=1.5) as resp:
+        with urlopen(req, timeout=2.5) as resp:
             return nome, resp.read().decode("utf-8", errors="ignore")
     except Exception:
         return nome, ""
 
 
 def buscar_noticias_oficiais_diretas():
-    """Busca apenas as duas fontes primárias em paralelo.
-    Não depende do Google News para TCE Notícias e Atricon."""
+    """Busca diretamente as duas fontes primárias, em paralelo.
+
+    TCE Notícias e Atricon não dependem do Google News.
+    As palavras-chave NÃO filtram a notícia do próprio TCE: a origem
+    oficial já é suficiente para ela entrar no Radar.
+    """
     fontes = [
-        ("TCE Notícias", "https://www.tce.mg.gov.br/Noticia/Index/"),
+        ("TCE Notícias", "https://www.tce.mg.gov.br/Noticia/"),
         ("Atricon", "https://atricon.org.br/categoria/noticias/"),
     ]
+
     saida = []
     limite = datetime.now(FUSO_BRASIL) - timedelta(days=7)
 
@@ -1290,47 +1325,89 @@ def buscar_noticias_oficiais_diretas():
             continue
 
         if nome == "TCE Notícias":
-            parser = LinksNoticiasParser(("/noticia/detalhe/", "/Noticia/Detalhe/"))
+            parser = LinksNoticiasParser((
+                "/noticia/detalhe/",
+                "/Noticia/Detalhe/",
+            ))
         else:
-            # Na categoria de notícias da Atricon, os artigos próprios ficam
-            # em links do domínio atricon.org.br; excluímos páginas de menu.
-            parser = LinksNoticiasParser(("https://atricon.org.br/", "/"))
+            parser = LinksNoticiasParser((
+                "https://atricon.org.br/",
+                "/",
+            ))
 
         parser.feed(texto_html)
         vistos = set()
+        html_lower = texto_html.lower()
 
-        for href, titulo in parser.links:
-            href_lower = href.lower()
+        for href_original, titulo in parser.links:
+            href_original = str(href_original or "").strip()
+            href_lower = href_original.lower()
+            href = href_original
 
+            # ====================================================
+            # TCE NOTÍCIAS
+            # ====================================================
             if nome == "TCE Notícias":
                 if "/noticia/detalhe/" not in href_lower:
                     continue
+
                 if not href_lower.startswith("http"):
-                    href = "https://www.tce.mg.gov.br" + href
+                    href = "https://www.tce.mg.gov.br" + (
+                        href if href.startswith("/") else "/" + href
+                    )
+
+            # ====================================================
+            # ATRICON
+            # ====================================================
             else:
                 if not href_lower.startswith("http"):
-                    href = "https://atricon.org.br" + (href if href.startswith("/") else "/" + href)
-                if not href_lower.startswith("https://atricon.org.br/"):
+                    href = "https://atricon.org.br" + (
+                        href if href.startswith("/") else "/" + href
+                    )
+
+                if not href.lower().startswith("https://atricon.org.br/"):
                     continue
-                if any(x in href_lower for x in (
+
+                if any(x in href.lower() for x in (
                     "/categoria/", "/tag/", "/author/", "/wp-content/",
                     "/institucional/", "/comunicacao/", "/artigos/",
                     "/documentos/", "/eventos/", "/associe-se/"
                 )):
                     continue
-                # Evita links de artigos/revista e mantém a seção de notícias.
-                if href.rstrip("/") in {"https://atricon.org.br", "https://atricon.org.br/categoria/noticias"}:
+
+                if href.rstrip("/") in {
+                    "https://atricon.org.br",
+                    "https://atricon.org.br/categoria/noticias"
+                }:
                     continue
 
+            # ====================================================
+            # DUPLICAÇÃO
+            # ====================================================
             if href in vistos:
                 continue
             vistos.add(href)
 
-            pos = texto_html.lower().find(href.lower())
-            data = extrair_data_proxima(texto_html, pos) if pos >= 0 else None
+            # ====================================================
+            # DATA
+            # ====================================================
+            # IMPORTANTE: procura o href ORIGINAL no HTML antes de
+            # transformar links relativos em URLs absolutas.
+            pos = html_lower.find(href_original.lower())
+
+            data = extrair_data_proxima(
+                texto_html,
+                pos,
+                limite=5000,
+                titulo=titulo,
+            )
+
             if data and data < limite:
                 continue
 
+            # Se não conseguimos achar a data, não descartamos a notícia
+            # aqui. Ela poderá ser exibida pela coleta oficial; o filtro de
+            # período da interface decide depois o que possui data válida.
             saida.append({
                 "titulo": titulo,
                 "resumo": "",
