@@ -1,4 +1,18 @@
 from zoneinfo import ZoneInfo
+
+FUSO_BRASIL = ZoneInfo("America/Sao_Paulo")
+
+def formatar_horario_noticia(data):
+    """Exibe a data da notícia no horário de Brasília."""
+    if not data:
+        return ""
+    try:
+        if data.tzinfo is None:
+            # Compatibilidade com registros antigos: o feed representa UTC.
+            data = data.replace(tzinfo=ZoneInfo("UTC"))
+        return data.astimezone(FUSO_BRASIL).strftime("%d/%m/%Y %H:%M")
+    except Exception:
+        return ""
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 import feedparser
@@ -6,6 +20,7 @@ from datetime import datetime, timedelta
 from urllib.parse import quote, unquote
 from urllib.request import Request, urlopen
 from openai import OpenAI
+
 import re
 import html
 from html.parser import HTMLParser
@@ -13,8 +28,22 @@ from difflib import SequenceMatcher
 from collections import Counter
 from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+from reportlab.lib.units import cm
 
-FUSO_BRASIL = ZoneInfo("America/Sao_Paulo")
+
+def esc_html(value):
+    if value is None:
+        return ""
+    return html.escape(
+        str(value),
+        quote=True
+    )
+
 
 # ============================================================
 # RADAR EM ABAS
