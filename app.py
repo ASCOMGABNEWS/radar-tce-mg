@@ -1981,7 +1981,7 @@ def destaque_tce_mg(n):
     instituicoes = n.get("instituicoes") or []
     pessoas = " ".join(n.get("pessoas") or []).lower()
     return (
-        "TCE-MG" in instituicoes
+        "TCE-MG"
         or noticia_tem_conexao_tc(n.get("titulo"), n.get("resumo"), n.get("veiculo"))
         or any(nome in pessoas for nome in (
             "agostinho patrus", "durval ângelo", "durval angelo", "gilberto diniz",
@@ -2006,7 +2006,7 @@ with st.container(border=True):
     st.markdown(
         """
         <div style="background:rgba(100,116,139,.07);border:1px solid rgba(100,116,139,.10);border-radius:9px;padding:8px 12px;margin:-4px -4px 12px -8px;font-size:17px;font-weight:750;color:#27324a;">
-            ⭐ Matéria mais importante dos últimos 7 dias em Minas Gerais — TCE-MG
+            ⭐ Matéria mais importante dos últimos 7 dias em Minas Gerais
         </div>
         """,
         unsafe_allow_html=True
