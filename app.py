@@ -1113,12 +1113,20 @@ INSTITUICOES_FILTRO = {
 
 # Buscas temáticas nos portais oficiais. O Radar NÃO varre os portais inteiros:
 # procura apenas assuntos que fazem parte do monitoramento.
-PORTAIS_OFICIAIS_BUSCA = {
-    "TCE-MG": 'site:tce.mg.gov.br ("conciliação" OR "mesa de conciliação" OR consensualidade OR "controle externo" OR fiscalização OR auditoria OR licitação OR contrato OR "contas públicas" OR comunicação OR "comunicação pública" OR "linguagem simples" OR concessão OR "Agostinho Patrus" OR "Durval Ângelo" OR conselheiro OR TCU)',
-    "ALMG": 'site:almg.gov.br ("Tribunal de Contas" OR TCE-MG OR "controle externo" OR fiscalização OR licitação OR "contas públicas" OR conciliação OR consensualidade OR comunicação OR "comunicação pública" OR "linguagem simples" OR concessão OR "Agostinho Patrus" OR "Durval Ângelo")',
-    "MPMG": 'site:mpmg.mp.br ("Tribunal de Contas" OR TCE-MG OR "controle externo" OR fiscalização OR auditoria OR licitação OR contrato OR "contas públicas" OR conciliação OR consensualidade OR comunicação OR "comunicação pública" OR "linguagem simples" OR concessão OR "Agostinho Patrus" OR "Durval Ângelo")',
-    "TJMG": 'site:tjmg.jus.br ("Tribunal de Contas" OR TCE-MG OR "controle externo" OR fiscalização OR auditoria OR licitação OR contrato OR "contas públicas" OR conciliação OR consensualidade OR comunicação OR "comunicação pública" OR "linguagem simples" OR concessão OR "Agostinho Patrus" OR "Durval Ângelo")',
-}
+# Consultas no Google News. O TCE-MG recebe várias buscas independentes:
+# uma busca ampla garante que uma matéria relevante não dependa de uma única
+# combinação de palavras; as demais refinam conciliação, comunicação, controle etc.
+# ALMG/MPMG/TJMG continuam como fontes complementares via Google News.
+BUSCAS_OFICIAIS = [
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia conciliação OR "mesa de conciliação" OR consensualidade'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia comunicação OR "comunicação pública" OR "linguagem simples" OR transparência'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia "controle externo" OR fiscalização OR auditoria OR licitação OR contrato OR "contas públicas"'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia concessão OR conselheiro OR "Agostinho Patrus" OR "Durval Ângelo" OR TCU OR Atricon OR IRB'),
+    ("ALMG", 'site:almg.gov.br "Tribunal de Contas" OR TCE-MG OR "controle externo" OR fiscalização OR conciliação OR comunicação'),
+    ("MPMG", 'site:mpmg.mp.br "Tribunal de Contas" OR TCE-MG OR "controle externo" OR fiscalização OR auditoria OR licitação OR conciliação OR comunicação'),
+    ("TJMG", 'site:tjmg.jus.br "Tribunal de Contas" OR TCE-MG OR "controle externo" OR fiscalização OR auditoria OR licitação OR conciliação OR comunicação'),
+]
 
 
 def rss_url_para_busca(q):
@@ -1189,28 +1197,33 @@ def buscar_noticias():
     # IMPORTANTE: não fazemos scraping direto dos quatro portais.
     # Cada portal entra como fonte de referência, mas somente para os assuntos
     # que interessam ao Radar. As quatro buscas rodam em paralelo.
-    buscas_oficiais = [
-        (nome, rss_url_para_busca(query))
-        for nome, query in PORTAIS_OFICIAIS_BUSCA.items()
+    # Cada consulta recebe uma chave própria. Isso é importante: se fizermos
+    # várias buscas do TCE-MG com o mesmo nome, um resultado não pode sobrescrever
+    # o outro no dicionário.
+    tarefas_oficiais = [
+        (f"{nome}__{i}", rss_url_para_busca(query))
+        for i, (nome, query) in enumerate(BUSCAS_OFICIAIS)
     ]
 
-    # Todas as fontes RSS também são baixadas em paralelo. Isso evita que uma
-    # fonte lenta trave o Radar por dezenas de segundos em sequência.
-    tarefas = buscas_oficiais + list(FONTES.items())
+    tarefas = tarefas_oficiais + list(FONTES.items())
     resultados = {}
-    with ThreadPoolExecutor(max_workers=12) as executor:
+    with ThreadPoolExecutor(max_workers=16) as executor:
         futures = [executor.submit(baixar_feed, tarefa) for tarefa in tarefas]
         for future in as_completed(futures):
-            nome, feed = future.result()
+            chave, feed = future.result()
             if feed is not None:
-                resultados[nome] = feed
+                resultados[chave] = feed
 
-    # Primeiro as fontes oficiais, para que a versão oficial tenha prioridade
-    # se a mesma matéria também aparecer em um jornal.
-    for nome, _ in buscas_oficiais:
-        feed = resultados.get(nome)
+    # Primeiro as buscas oficiais. A busca ampla do TCE-MG é intencional:
+    # ela permite encontrar matérias que não tenham uma palavra-chave óbvia
+    # no título. Depois as buscas temáticas ampliam a cobertura.
+    for chave, _ in tarefas_oficiais:
+        feed = resultados.get(chave)
         if not feed:
             continue
+
+        nome = chave.split("__", 1)[0]
+
         for item in feed.entries:
             data = obter_data(item)
             adicionar({
@@ -2685,4 +2698,3 @@ else:
 st.caption(
     "As notícias são classificadas automaticamente com base em relevância para o TCE-MG."
 )
-
