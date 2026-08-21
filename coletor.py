@@ -197,9 +197,6 @@ FONTES = {
     "Afastamentos em Tribunais de Contas":
         'https://news.google.com/rss/search?q=%22afastado%22+(%22TCE%22+OR+%22Tribunal+de+Contas%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
-    "TCE Maranhão":
-        'https://news.google.com/rss/search?q=(%22TCE-MA%22+OR+%22TCE+Maranh%C3%A3o%22+OR+%22Tribunal+de+Contas+do+Maranh%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
     "Conselheiros de Tribunais de Contas":
         'https://news.google.com/rss/search?q=%22conselheiro%22+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
@@ -1003,10 +1000,22 @@ def parse_data_portal(texto):
 
 
 def coletar_portal_oficial(nome, url, tipo):
-    """Lê a listagem atual do portal oficial e devolve registros padronizados."""
+    """
+    Coleta diretamente a listagem pública do portal oficial.
+    Não depende de o Google News indexar a matéria.
+    """
     try:
-        req = Request(url, headers={"User-Agent": "Mozilla/5.0 Radar-TCE-MG/2.0"})
-        with urlopen(req, timeout=12) as resposta:
+        req = Request(
+            url,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 Chrome/151 Safari/537.36"
+                ),
+                "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+            },
+        )
+        with urlopen(req, timeout=15) as resposta:
             html_portal = resposta.read()
         soup = BeautifulSoup(html_portal, "html.parser")
     except Exception:
@@ -1014,54 +1023,99 @@ def coletar_portal_oficial(nome, url, tipo):
 
     resultados = []
     vistos = set()
-    limite_links = 80
 
+    dominio = url.split("/")[2]
+
+    # Não limitar artificialmente a 80 links: os portais podem ter
+    # muitas notícias recentes e o filtro de data será aplicado depois.
     for a in soup.find_all("a", href=True):
         titulo = limpar_texto(a.get_text(" ", strip=True))
         href = a.get("href", "").strip()
+
         if not titulo or len(titulo) < 25:
             continue
 
-        if tipo == "tce":
-            if "/noticia" not in href.lower():
-                continue
-        elif tipo == "almg":
-            if "/comunicacao/noticias/" not in href.lower() or href.rstrip('/').endswith('noticias'):
-                continue
-        elif tipo == "mpmg":
-            if "/portal/menu/comunicacao/noticias/" not in href.lower() or href.rstrip('/').endswith('noticias'):
-                continue
-        elif tipo == "tjmg":
-            if "/portal-tjmg/noticias/" not in href.lower():
-                continue
-
-        if href.startswith('/'):
-            base = url.split('/', 3)
-            href = f"{base[0]}//{base[2]}{href}"
-        elif href.startswith('./'):
-            href = url.rstrip('/') + '/' + href[2:]
-
-        if href in vistos:
+        # Resolve links relativos de forma segura.
+        if href.startswith("//"):
+            href = "https:" + href
+        elif href.startswith("/"):
+            href = f"https://{dominio}{href}"
+        elif href.startswith("./"):
+            href = url.rstrip("/") + "/" + href[2:]
+        elif not href.startswith(("http://", "https://")):
             continue
-        vistos.add(href)
 
-        parent = a.parent
-        contexto = limpar_texto(parent.get_text(" ", strip=True)) if parent else titulo
-        if len(contexto) < len(titulo) + 10 and parent and parent.parent:
-            contexto = limpar_texto(parent.parent.get_text(" ", strip=True))
+        href_l = href.lower()
+
+        # O filtro precisa identificar página de notícia, mas aceita
+        # diferentes padrões usados pelos quatro portais.
+        if tipo == "tce":
+            valido = (
+                "/noticia/" in href_l
+                or "/noticia?" in href_l
+                or "/noticia/" in href_l.replace("//", "/")
+            )
+        elif tipo == "almg":
+            valido = "/comunicacao/noticias/" in href_l
+        elif tipo == "mpmg":
+            valido = "/portal/menu/comunicacao/noticias/" in href_l
+        elif tipo == "tjmg":
+            valido = "/portal-tjmg/noticias/" in href_l
+        else:
+            valido = False
+
+        if not valido:
+            continue
+
+        # Evita links de listagem, paginação e âncoras.
+        if href.rstrip("/").lower() in {
+            url.rstrip("/").lower(),
+            url.rstrip("/").lower() + "/noticias",
+        }:
+            continue
+        if href.split("#")[0] in vistos:
+            continue
+
+        vistos.add(href.split("#")[0])
+
+        # Tenta encontrar a data no card e em ancestrais próximos.
+        contexto = ""
+        no = a
+        for _ in range(4):
+            no = no.parent
+            if no is None:
+                break
+            texto_no = limpar_texto(no.get_text(" ", strip=True))
+            if texto_no and len(texto_no) <= 1200:
+                contexto = texto_no
+                if re.search(r"\b\d{2}/\d{2}/\d{4}\b", contexto):
+                    break
+
+        if not contexto:
+            contexto = titulo
 
         data = parse_data_portal(contexto)
+
         resultados.append({
             "titulo": titulo,
             "resumo": contexto.replace(titulo, "", 1).strip(),
-            "link": href,
+            "link": href.split("#")[0],
             "veiculo": nome,
             "data": data,
         })
-        if len(resultados) >= limite_links:
-            break
 
     return resultados
+
+
+# RSS de respaldo SOMENTE para os portais oficiais.
+# Serve para casos em que o portal usa JavaScript, paginação dinâmica
+# ou quando uma notícia recente ainda não aparece na primeira página HTML.
+PORTAIS_OFICIAIS_RSS = {
+    "TCE-MG": "https://news.google.com/rss/search?q=site%3Atce.mg.gov.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "ALMG": "https://news.google.com/rss/search?q=site%3Aalmg.gov.br+%22ALMG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "MPMG": "https://news.google.com/rss/search?q=site%3Ampmg.mp.br+%22MPMG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "TJMG": "https://news.google.com/rss/search?q=site%3Atjmg.jus.br+%22TJMG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+}
 
 # ============================================================
 # COLETA
@@ -1230,6 +1284,27 @@ def buscar_noticias():
     for nome, (url, tipo) in PORTAIS_OFICIAIS.items():
         for reg in coletar_portal_oficial(nome, url, tipo):
             adicionar(reg, nome)
+
+    # 1b) Backup dos próprios portais oficiais via Google News.
+    # Não é a fonte principal: só recupera matérias que o HTML dinâmico
+    # ou a paginação do portal não expôs na coleta direta.
+    for nome, url in PORTAIS_OFICIAIS_RSS.items():
+        try:
+            request = Request(url, headers={"User-Agent": "Radar-TCE-MG/2.0"})
+            with urlopen(request, timeout=8) as resposta:
+                feed = feedparser.parse(resposta.read())
+        except Exception:
+            continue
+
+        for item in feed.entries:
+            data = obter_data(item)
+            adicionar({
+                "titulo": limpar_texto(item.get("title", "")),
+                "resumo": limpar_texto(item.get("summary", "")),
+                "link": item.get("link", ""),
+                "veiculo": nome,
+                "data": data,
+            }, nome)
 
     # 2) Demais veículos continuam via Google News/RSS.
     for nome, url in FONTES.items():
