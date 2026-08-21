@@ -823,13 +823,15 @@ def classificar_abrangencia(veiculo, titulo="", resumo=""):
         str(veiculo or "")
     ]).lower()
 
-    # Fontes mineiras são sempre estaduais.
-    if any(f.lower() in str(veiculo or "").lower() for f in FONTES_MINAS):
-        return "Minas Gerais"
-
-    # TCEs de outros estados / referências estaduais explícitas nunca são MG.
+    # Primeiro verificamos o conteúdo da notícia. Uma fonte mineira (como
+    # O TEMPO) também publica matérias sobre outros estados; nesse caso,
+    # a matéria NÃO pode ser tratada como mineira só por causa do veículo.
     if any(termo in texto for termo in OUTROS_ESTADOS):
         return "Nacional"
+
+    # Só depois usamos a origem mineira do veículo como sinal de MG.
+    if any(f.lower() in str(veiculo or "").lower() for f in FONTES_MINAS):
+        return "Minas Gerais"
 
     # Só reconhecer MG com expressões explícitas. Não usar "mg" solto,
     # pois isso gera falsos positivos em palavras comuns.
@@ -1965,114 +1967,127 @@ with col3:
 
 
 # ============================================================
-# MATÉRIA MAIS IMPORTANTE DOS ÚLTIMOS 7 DIAS
+# DUAS MATÉRIAS MAIS IMPORTANTES DOS ÚLTIMOS 7 DIAS — MINAS GERAIS
 # ============================================================
 
-# O destaque considera sempre os últimos 7 dias, independentemente
-# do período selecionado no filtro principal.
 limite_destaque_7d = datetime.now(FUSO_BRASIL) - timedelta(days=7)
 
-# O destaque principal do Radar é exclusivo de Minas Gerais.
-noticias_7d = [
+# O destaque é EXCLUSIVO de Minas Gerais e somente para notícias críticas.
+# Isso evita, por exemplo, que uma matéria do O TEMPO sobre o Maranhão
+# apareça aqui apenas porque o veículo é mineiro.
+criticas_mg_7d = [
     n for n in noticias
     if (
         n.get("data")
         and n["data"] >= limite_destaque_7d
         and n.get("abrangencia") == "Minas Gerais"
+        and n.get("score", 0) >= 85
     )
 ]
 
-materias_relevantes_7d = [
-    n for n in noticias_7d
-    if n.get("score", 0) >= 65
-]
+criticas_mg_7d.sort(
+    key=lambda n: (
+        n.get("score", 0),
+        n.get("data") or datetime.min.replace(tzinfo=FUSO_BRASIL)
+    ),
+    reverse=True
+)
 
-if materias_relevantes_7d:
+criticas_mg_7d = criticas_mg_7d[:2]
 
-    materia_destaque = max(
-        materias_relevantes_7d,
-        key=lambda n: (
-            n.get("score", 0),
-            n.get("data") or datetime.min.replace(tzinfo=FUSO_BRASIL)
-        )
+with st.container(border=True):
+
+    st.markdown(
+        """
+        <div style="
+            background:rgba(100,116,139,.07);
+            border:1px solid rgba(100,116,139,.10);
+            border-radius:9px;
+            padding:8px 12px;
+            margin:-4px -4px 12px -4px;
+            font-size:17px;
+            font-weight:750;
+            color:#27324a;
+        ">
+            ⭐ Matérias mais importantes dos últimos 7 dias em Minas Gerais
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
-    with st.container(border=True):
+    if criticas_mg_7d:
+        cards = ""
+
+        for noticia in criticas_mg_7d:
+            titulo = esc_html(noticia.get("titulo", "Sem título"))
+            veiculo = esc_html(noticia.get("veiculo", "Fonte não identificada"))
+            data = esc_html(formatar_horario_noticia(noticia.get("data")))
+            resumo = esc_html((noticia.get("resumo") or "").strip())
+            if len(resumo) > 260:
+                resumo = resumo[:260].rstrip() + "..."
+            link = esc_html(noticia.get("link", ""))
+
+            cards += f"""
+            <article style="
+                flex:0 0 min(78vw, 760px);
+                scroll-snap-align:start;
+                box-sizing:border-box;
+                border:1px solid rgba(100,116,139,.16);
+                border-radius:12px;
+                padding:18px 20px;
+                background:#fff;
+            ">
+                <div style="
+                    font-size:14px;
+                    font-weight:700;
+                    color:#b42318;
+                    margin-bottom:10px;
+                ">🔴 Crítica • 📰 {veiculo} • 📅 {data}</div>
+
+                <div style="
+                    font-size:25px;
+                    line-height:1.18;
+                    font-weight:800;
+                    color:#27324a;
+                    margin-bottom:12px;
+                ">{titulo}</div>
+
+                {f'<div style="font-size:15px;line-height:1.45;color:#475467;margin-bottom:14px;">{resumo}</div>' if resumo else ''}
+
+                <a href="{link}" target="_blank" style="
+                    display:inline-block;
+                    padding:9px 14px;
+                    border:1px solid rgba(16,24,40,.18);
+                    border-radius:8px;
+                    text-decoration:none;
+                    color:#27324a;
+                    font-weight:700;
+                    background:#fff;
+                ">Ler matéria ↗</a>
+            </article>
+            """
 
         st.markdown(
-            """
+            f"""
             <div style="
-                background:rgba(100,116,139,.07);
-                border:1px solid rgba(100,116,139,.10);
-                border-radius:9px;
-                padding:8px 12px;
-                margin:-4px -4px 12px -4px;
-                font-size:17px;
-                font-weight:750;
-                color:#27324a;
+                display:flex;
+                gap:14px;
+                overflow-x:auto;
+                overflow-y:hidden;
+                padding:2px 2px 12px 2px;
+                scroll-snap-type:x mandatory;
+                -webkit-overflow-scrolling:touch;
             ">
-                ⭐ Matéria mais importante dos últimos 7 dias em Minas Gerais
+                {cards}
             </div>
             """,
             unsafe_allow_html=True
         )
-
-        nivel = (
-            "🔴 Crítica"
-            if materia_destaque.get("score", 0) >= 85
-            else "🟠 Alta relevância"
-        )
-
+    else:
         st.markdown(
-            f"{nivel}  •  📰 **{materia_destaque.get('veiculo', 'Fonte não identificada')}**  •  📅 {formatar_horario_noticia(materia_destaque.get('data'))}"
+            '<div style="color:#98a2b3;padding:10px 2px;">Nenhuma matéria crítica de Minas Gerais nos últimos 7 dias.</div>',
+            unsafe_allow_html=True
         )
-
-        st.markdown(
-            f"### {materia_destaque.get('titulo', 'Sem título')}"
-        )
-
-        resumo_destaque = (
-            materia_destaque.get("resumo") or ""
-        ).strip()
-
-        if len(resumo_destaque) > 350:
-            resumo_destaque = resumo_destaque[:350].rstrip() + "..."
-
-        if resumo_destaque:
-            st.write(resumo_destaque)
-
-        col_dest_1, col_dest_2 = st.columns([1, 1], gap="small")
-
-        with col_dest_1:
-            st.link_button(
-                "**Ler matéria ↗**",
-                materia_destaque["link"],
-                key="ler_materia_destaque_7d"
-            )
-
-        with col_dest_2:
-
-            titulo_whatsapp = (
-                str(materia_destaque.get("titulo") or "")
-                .replace("*", "")
-                .strip()
-            )
-
-            texto_whatsapp = (
-                f"*{titulo_whatsapp}*\n\n"
-                f"{materia_destaque['link']}"
-            )
-
-            whatsapp_url = (
-                "https://wa.me/?text="
-                + quote(texto_whatsapp)
-            )
-
-            st.link_button(
-                "📲 Compartilhar no WhatsApp",
-                whatsapp_url,
-                key="whatsapp_materia_destaque_7d"
-            )
 
 
 # ============================================================
