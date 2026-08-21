@@ -2042,13 +2042,13 @@ with col3:
 
 
 # ============================================================
-# DUAS MATÉRIAS MAIS IMPORTANTES — MINAS GERAIS + TCE-MG
+# MATÉRIA MAIS IMPORTANTE — MINAS GERAIS + TCE-MG
 # ============================================================
 
 limite_destaque_7d = datetime.now(FUSO_BRASIL) - timedelta(days=7)
 
 def destaque_tce_mg(n):
-    """Só considera matérias críticas, recentes, de MG e relacionadas ao TCE-MG."""
+    """Seleciona somente a matéria crítica mais importante do TCE-MG em MG nos últimos 7 dias."""
     if not n.get("data") or n["data"] < limite_destaque_7d:
         return False
     if n.get("abrangencia") != "Minas Gerais":
@@ -2068,13 +2068,9 @@ def destaque_tce_mg(n):
     )
 
     instituicoes = n.get("instituicoes") or []
-    return (
-        any(t in texto for t in termos_tce_mg)
-        or "TCE-MG" in instituicoes
-    )
+    return any(t in texto for t in termos_tce_mg) or "TCE-MG" in instituicoes
 
 criticas_tce_mg_7d = [n for n in noticias if destaque_tce_mg(n)]
-
 criticas_tce_mg_7d.sort(
     key=lambda n: (
         n.get("score", 0),
@@ -2082,7 +2078,6 @@ criticas_tce_mg_7d.sort(
     ),
     reverse=True
 )
-criticas_tce_mg_7d = criticas_tce_mg_7d[:2]
 
 with st.container(border=True):
     st.markdown(
@@ -2097,98 +2092,37 @@ with st.container(border=True):
             font-weight:750;
             color:#27324a;
         ">
-            ⭐ Matérias mais importantes dos últimos 7 dias em Minas Gerais — TCE-MG
+            ⭐ Matéria mais importante dos últimos 7 dias em Minas Gerais — TCE-MG
         </div>
         """,
         unsafe_allow_html=True
     )
 
     if criticas_tce_mg_7d:
-        cards = []
-        for n in criticas_tce_mg_7d:
-            resumo_n = (n.get("resumo") or "").strip()
-            if len(resumo_n) > 260:
-                resumo_n = resumo_n[:260] + "..."
-            cards.append(
-                f'<article class="card">'
-                f'<div class="meta">🔴 Crítica • 📰 {esc_html(n.get("veiculo", "Fonte não identificada"))} • 📅 {esc_html(formatar_horario_noticia(n.get("data")))}</div>'
-                f'<div class="title">{esc_html(n.get("titulo", "Sem título"))}</div>'
-                + (f'<div class="summary">{esc_html(resumo_n)}</div>' if resumo_n else '')
-                + f'<a class="read" href="{esc_html(n.get("link", ""))}" target="_blank">Ler matéria ↗</a>'
-                f'</article>'
-            )
+        n = criticas_tce_mg_7d[0]
+        resumo_n = (n.get("resumo") or "").strip()
+        if len(resumo_n) > 320:
+            resumo_n = resumo_n[:320] + "..."
 
-        components.html(
+        st.markdown(
             f"""
-            <style>
-                html, body {{ margin:0; padding:0; background:transparent; overflow:hidden; }}
-                .wrap {{ position:relative; width:100%; height:275px; overflow:hidden; }}
-                .rail {{
-                    display:flex;
-                    gap:14px;
-                    width:100%;
-                    height:100%;
-                    overflow-x:auto;
-                    overflow-y:hidden;
-                    padding:2px 44px 10px 44px;
-                    box-sizing:border-box;
-                    scroll-snap-type:x mandatory;
-                    scroll-behavior:smooth;
-                    -webkit-overflow-scrolling:touch;
-                    scrollbar-width:none;
-                }}
-                .rail::-webkit-scrollbar {{ display:none; }}
-                .card {{
-                    flex:0 0 100%;
-                    width:100%;
-                    box-sizing:border-box;
-                    border:1px solid rgba(100,116,139,.16);
-                    border-radius:12px;
-                    padding:18px 20px;
-                    background:#fff;
-                    scroll-snap-align:center;
-                }}
-                .meta {{ font-size:14px; font-weight:700; color:#b42318; margin-bottom:10px; }}
-                .title {{ font-size:23px; line-height:1.18; font-weight:800; color:#27324a; margin-bottom:12px; }}
-                .summary {{ font-size:15px; line-height:1.45; color:#475467; margin-bottom:14px; }}
-                .read {{ display:inline-block; padding:9px 14px; border:1px solid rgba(16,24,40,.18); border-radius:8px; text-decoration:none; color:#27324a; font-weight:700; background:#fff; }}
-                .arrow {{
-                    position:absolute;
-                    top:50%;
-                    transform:translateY(-50%);
-                    width:38px;
-                    height:38px;
-                    border:1px solid rgba(16,24,40,.16);
-                    border-radius:50%;
-                    background:rgba(255,255,255,.96);
-                    color:#27324a;
-                    font-size:27px;
-                    line-height:34px;
-                    text-align:center;
-                    cursor:pointer;
-                    z-index:10;
-                    box-shadow:0 2px 8px rgba(16,24,40,.10);
-                    padding:0;
-                }}
-                .left {{ left:4px; }}
-                .right {{ right:4px; }}
-            </style>
-            <div class="wrap">
-                <button class="arrow left" onclick="move(-1)" aria-label="Matéria anterior">‹</button>
-                <div class="rail" id="rail">{''.join(cards)}</div>
-                <button class="arrow right" onclick="move(1)" aria-label="Próxima matéria">›</button>
+            <div style="
+                border:1px solid rgba(100,116,139,.16);
+                border-radius:12px;
+                padding:18px 20px;
+                background:#fff;
+            ">
+                <div style="font-size:14px;font-weight:700;color:#b42318;margin-bottom:10px;">
+                    🔴 Crítica &nbsp;•&nbsp; 📰 {esc_html(n.get('veiculo', 'Fonte não identificada'))} &nbsp;•&nbsp; 📅 {esc_html(formatar_horario_noticia(n.get('data')))}
+                </div>
+                <div style="font-size:23px;line-height:1.18;font-weight:800;color:#27324a;margin-bottom:12px;">
+                    {esc_html(n.get('titulo', 'Sem título'))}
+                </div>
+                {f'<div style="font-size:15px;line-height:1.45;color:#475467;margin-bottom:14px;">{esc_html(resumo_n)}</div>' if resumo_n else ''}
+                <a href="{esc_html(n.get('link', ''))}" target="_blank" style="display:inline-block;padding:9px 14px;border:1px solid rgba(16,24,40,.18);border-radius:8px;text-decoration:none;color:#27324a;font-weight:700;background:#fff;">Ler matéria ↗</a>
             </div>
-            <script>
-                function move(dir) {{
-                    const rail = document.getElementById('rail');
-                    const card = rail.querySelector('.card');
-                    if (!card) return;
-                    rail.scrollBy({{ left: dir * (card.getBoundingClientRect().width + 14), behavior: 'smooth' }});
-                }}
-            </script>
             """,
-            height=275,
-            scrolling=False,
+            unsafe_allow_html=True
         )
     else:
         st.markdown(
