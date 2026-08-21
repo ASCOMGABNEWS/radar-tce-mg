@@ -1390,17 +1390,6 @@ def buscar_noticias():
         # ALMG, MPMG e TJMG são fontes complementares. Não queremos
         # notícias desses órgãos por si só: elas só entram quando há conexão
         # com Tribunal de Contas/TCE/TCU/processo/decisão/controle externo.
-        if monitoramento == "TCE-MG":
-    texto_reg = f"{titulo} {resumo}".lower()
-
-    if "tcnotas.tce.mg.gov.br" in texto_reg:
-        return False
-
-    if "natureza:" in texto_reg and "processo:" in texto_reg:
-        return False
-
-# Notícias do TCE-MG não precisam ter "TCE-MG"
-# no título para serem consideradas relevantes.
         if monitoramento in {"ALMG", "MPMG", "TJMG"} and not noticia_tem_conexao_tc(titulo, resumo, veiculo):
             return False
 
