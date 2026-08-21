@@ -6,3 +6,6 @@ python-docx
 reportlab
 openai
 streamlit-autorefresh
+beautifulsoup4
+lxml
+reportlab
