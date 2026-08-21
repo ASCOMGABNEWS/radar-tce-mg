@@ -83,7 +83,7 @@ FONTES_NACIONAIS = {
 # Para acelerar o carregamento, agrupamos os veículos em poucas consultas
 # por domínio, em vez de abrir um RSS separado para cada jornal.
 DOMINIOS_GRUPADOS = {
-    "MG_1": ["almg.gov.br", "mpmg.mp.br", "tjmg.jus.br", "em.com.br", "itatiaia.com.br", "otempo.com.br"],
+    "MG_1": ["tce.mg.gov.br", "almg.gov.br", "mpmg.mp.br", "tjmg.jus.br", "em.com.br", "itatiaia.com.br", "otempo.com.br"],
     "MG_2": ["hojeemdia.com.br", "tribunademinas.com.br", "diariodocomercio.com.br", "bhaz.com.br", "agenciaminas.mg.gov.br", "ofator.com.br"],
     "MG_3": ["edicaodobrasil.com.br", "moonbh.com.br"],
     "BR_1": ["folha.uol.com.br", "uol.com.br", "globo.com", "g1.globo.com", "oglobo.globo.com", "poder360.com.br"],
