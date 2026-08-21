@@ -2701,7 +2701,7 @@ if _ticker_final:
                 display: flex;
                 align-items: center;
                 width: max-content;
-                animation: radarTickerMove 75s linear infinite;
+                animation: radarTickerMove 125s linear infinite;
                 will-change: transform;
             }}
             .radar-ticker-item {{
@@ -2734,7 +2734,7 @@ if _ticker_final:
             }}
         </style>
         <div class="radar-ticker-wrap">
-            <div class="radar-ticker-label">📰 ÚLTIMAS DE MG</div>
+            <div class="radar-ticker-label">📰 ÚLTIMAS NOS PARTAIS DE MG</div>
             <div class="radar-ticker-window">
                 <div class="radar-ticker-track">
                     {itens_html}{itens_html}
