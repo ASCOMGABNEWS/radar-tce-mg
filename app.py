@@ -1459,7 +1459,7 @@ def buscar_noticias():
 
         if monitoramento == "TCE-MG":
             texto_reg = f"{titulo} {resumo}".lower()
-            if "tcnotas.tce.mg.gov.br" in texto_reg:
+            if "tce.mg.gov.br" in texto_reg:
                 return False
             if "natureza:" in texto_reg and "processo:" in texto_reg:
                 return False
