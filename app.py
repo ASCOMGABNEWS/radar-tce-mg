@@ -69,6 +69,7 @@ FONTES_MINAS = {
     "TCE-MG", "ALMG", "MPMG", "TJMG", "Estado de Minas", "Itatiaia",
     "O TEMPO", "Hoje em Dia", "Tribuna de Minas", "Diário do Comércio",
     "BHAZ", "Agência Minas", "O Fator", "Edição do Brasil", "Moon BH",
+    "Bem Minas", "Blog do Orion", "Além do Fato", "Blog do PCO"
 }
 
 FONTES_NACIONAIS = {
@@ -84,9 +85,9 @@ FONTES_NACIONAIS = {
 # Para acelerar o carregamento, agrupamos os veículos em poucas consultas
 # por domínio, em vez de abrir um RSS separado para cada jornal.
 DOMINIOS_GRUPADOS = {
-    "MG_1": ["almg.gov.br", "mpmg.mp.br", "tjmg.jus.br", "em.com.br", "itatiaia.com.br", "otempo.com.br"],
+    "MG_1": ["almg.gov.br", "tce.mg.gov.br", "mpmg.mp.br", "tjmg.jus.br", "em.com.br", "itatiaia.com.br", "otempo.com.br"],
     "MG_2": ["hojeemdia.com.br", "tribunademinas.com.br", "diariodocomercio.com.br", "bhaz.com.br", "agenciaminas.mg.gov.br", "ofator.com.br"],
-    "MG_3": ["edicaodobrasil.com.br", "moonbh.com.br"],
+    "MG_3": ["edicaodobrasil.com.br", "moonbh.com.br", "blogdoorion.com.br", "bemminas.com.br","alemdofato.uai.com.br", "diariodocomercio.com.br"],
     "BR_1": ["folha.uol.com.br", "uol.com.br", "globo.com", "g1.globo.com", "oglobo.globo.com", "poder360.com.br"],
     "BR_2": ["jota.info", "migalhas.com.br", "obastidor.com.br", "intercept.com.br", "piaui.folha.uol.com.br", "brasildefato.com.br"],
     "BR_3": ["correiobraziliense.com.br", "estadao.com.br", "oantagonista.com.br", "cartacapital.com.br", "cnnbrasil.com.br", "agenciabrasil.ebc.com.br"],
@@ -98,6 +99,7 @@ DOMINIOS_GRUPADOS = {
 FONTES_INSTITUCIONAIS = {
     "Atricon": '"Atricon"',
     "TCU": '("TCU" OR "Tribunal de Contas da União")',
+    "IRB": "Instituto Rui Barbosa",
 }
 
 # Mantemos o nome FONTES para o restante do app e filtros antigos.
@@ -333,6 +335,8 @@ TEMAS = {
         "redes sociais",
         "imprensa",
         "comunicação"
+        "lingugaem simples"
+        "simplifica"
     ],
 
     "🏢 Instituições": [
@@ -497,11 +501,11 @@ def identificar_instituicoes(
 
     mapa = {
         "TCE-MG": [
-            "tce-mg", "tce mg", "tribunal de contas de minas gerais",
+            "tce-mg", "tce mg", "tcemg", "tribunal de contas de minas gerais",
             "tribunal de contas do estado de minas gerais"
         ],
         "Governo de Minas": [
-            "governo de minas",
+            "governo de minas", "govmg",
             "governo de mg"
         ],
         "ALMG": [
@@ -542,7 +546,7 @@ def identificar_instituicoes(
             "mpmg"
         ],
         "Prefeitura de Belo Horizonte": [
-            "prefeitura de belo horizonte",
+            "prefeitura de belo horizonte", "pbh",
             "prefeitura de bh"
         ],
         "Cemig": [
@@ -627,6 +631,8 @@ def calcular_relevancia(
     # Relevância institucional básica.
     if "tce-mg" in texto:
         score += 35
+    elif "tcemg" in texto:
+        score += 35
     elif "tce mg" in texto:
         score += 30
     elif "tribunal de contas" in texto:
@@ -636,7 +642,7 @@ def calcular_relevancia(
         score += 10
 
     if "atricon" in texto or "instituto rui barbosa" in texto or " irb" in texto:
-        score += 8
+        score += 10
 
     # Conteúdo institucional é relevante mesmo quando a matéria não cita
     # diretamente TCE-MG. Isso captura notícias sobre órgãos públicos,
@@ -655,6 +661,7 @@ def calcular_relevancia(
     # Autoridades de Tribunais de Contas.
     termos_autoridade = [
         "presidente do tce",
+        "presidente do tcemg",
         "presidente do tribunal de contas",
         "conselheiro do tce",
         "conselheira do tce",
@@ -787,9 +794,8 @@ FONTES_NACIONAIS = {
     "UOL",
     "Globo",
     "G1",
-    "G1 - Tribunais de Contas",
-    "O Globo - Tribunais de Contas",
-    "STF - Tribunais de Contas",
+    "O Globo",
+    "STF",
     "Poder360",
     "JOTA",
     "Migalhas",
@@ -818,8 +824,13 @@ FONTES_MINAS = {
     "O TEMPO",
     "Hoje em Dia",
     "Tribuna de Minas",
+    "Brasil de Fato MG",
     "Diário do Comércio",
     "BHAZ",
+    "Bem Minas",
+    "Blog do Orion",
+    "Além do Fato",
+    "Blog do PCO",
     "Agência Minas",
     "O Fator",
     "Edição do Brasil",
@@ -863,7 +874,7 @@ def classificar_abrangencia(veiculo, titulo="", resumo=""):
         "tce-rs", "tce-ro", "tce-rr", "tce-sc", "tce-sp", "tce-se", "tce-to"
     )
     contexto_mg = any(t in texto for t in (
-        "tce-mg", "tce mg", "tribunal de contas de minas gerais",
+        "tce-mg", "tce mg", "tcemg", "tribunal de contas de minas gerais",
         "minas gerais", "governo de minas", "estado de minas gerais",
         "belo horizonte", "mineiro", "mineira", "mineiros", "mineiras",
         "prefeitura de belo horizonte", "governo de mg", "almg", "mpmg", "tjmg"
@@ -878,7 +889,7 @@ def classificar_abrangencia(veiculo, titulo="", resumo=""):
     # Só reconhecer MG com expressões explícitas. Não usar "mg" solto,
     # pois isso gera falsos positivos em palavras comuns.
     termos_mg = (
-        "tce-mg", "tce mg", "tce de minas gerais",
+        "tce-mg", "tce mg", "tcemg", "tce de minas gerais",
         "tribunal de contas de minas gerais",
         "tribunal de contas do estado de minas gerais",
         "tribunal de contas de mg",
@@ -954,11 +965,14 @@ INSTITUIÇÕES IDENTIFICADAS:
 
 Dê mais importância para:
 - TCE-MG;
+- TCEMG;
 - Conselheiros do TCE-MG;
 - Agostinho Patrus;
 - Atricon;
 - IRB;
 - outros Tribunais de Contas;
+- comunicação;
+- mesas de conciliação;
 - presidentes e conselheiros de outros Tribunais de Contas;
 - controle externo;
 - fiscalização;
@@ -1048,6 +1062,7 @@ INSTITUICOES_FILTRO = {
 # combinação de palavras; as demais refinam conciliação, comunicação, controle etc.
 # ALMG/MPMG/TJMG continuam como fontes complementares via Google News.
 BUSCAS_OFICIAIS = [
+    ("TCE-MG", 'site:tce.mg.gov.br')
     ("TCE-MG", 'site:tce.mg.gov.br/noticia/'),
     ("TCE-MG", 'site:tce.mg.gov.br/noticia/ (comunicação OR comunicacao OR "comunicação pública" OR "comunicacao publica" OR imprensa OR jornalismo OR "redes sociais" OR "linguagem simples")'),
     ("TCE-MG", 'site:tce.mg.gov.br/noticia/ ("Agostinho Patrus" OR "Durval Ângelo" OR "Durval Angelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR "Alencar da Silveira" OR conselheiro OR conciliação OR "controle externo" OR fiscalização OR auditoria)'),
@@ -1063,7 +1078,7 @@ BUSCAS_OFICIAIS = [
 # só entram quando a notícia tem conexão explícita com TCE/TCU/Tribunais de
 # Contas, conselheiros, processos, decisões ou atuação de controle externo.
 TERMOS_CONEXAO_TC = (
-    "tce-mg", "tce mg", "tribunal de contas de minas gerais",
+    "tce-mg", "tce mg", "tcemg", "tribunal de contas de minas gerais",
     "tribunal de contas", "tribunais de contas", "tcu",
     "conselheiro do tce", "conselheira do tce",
     "conselheiro do tribunal de contas", "conselheira do tribunal de contas",
@@ -2087,12 +2102,12 @@ with st.container(border=True):
             border:1px solid rgba(100,116,139,.10);
             border-radius:9px;
             padding:8px 12px;
-            margin:-4px -4px 12px -4px;
+            margin:-4px -4px 12px -8px;
             font-size:17px;
             font-weight:750;
             color:#27324a;
         ">
-            ⭐ Matéria mais importante dos últimos 7 dias em Minas Gerais — TCE-MG
+            ⭐ Matéria mais importante dos últimos 7 dias em Minas Gerais
         </div>
         """,
         unsafe_allow_html=True
