@@ -1229,6 +1229,20 @@ MOTIVO: explicação curta em até 2 frases
             "motivo": "Não foi possível realizar a análise da IA."
         }
         
+# Instituições disponíveis para classificação e filtro.
+# Deve ser definido antes de buscar_noticias(), pois a coleta o utiliza.
+INSTITUICOES_FILTRO = {
+    "TCE-MG": "TCE-MG",
+    "MPMG": "MPMG",
+    "ALMG": "ALMG",
+    "Procuradoria": "Procuradoria",
+    "TJMG": "TJMG",
+    "Atricon": "Atricon",
+    "IRB": "IRB",
+    "TCU": "TCU",
+    "Outros Tribunais de Contas": "Outros Tribunais de Contas",
+}
+
 @st.cache_data(ttl=300, show_spinner=False)
 def buscar_noticias():
     noticias = []
@@ -2372,18 +2386,6 @@ with st.container(border=True, key="metricas-centralizadas"):
 # ============================================================
 # FILTROS
 # ============================================================
-
-INSTITUICOES_FILTRO = {
-    "TCE-MG": "TCE-MG",
-    "MPMG": "MPMG",
-    "ALMG": "ALMG",
-    "Procuradoria": "Procuradoria",
-    "TJMG": "TJMG",
-    "Atricon": "Atricon",
-    "IRB": "IRB",
-    "TCU": "TCU",
-    "Outros Tribunais de Contas": "Outros Tribunais de Contas",
-}
 
 st.subheader("🔎 Monitorar")
 
