@@ -2617,6 +2617,136 @@ with st.container(border=True):
 
 
 # ============================================================
+# BARRA DE NOTÍCIAS — MINAS GERAIS
+# ============================================================
+
+noticias_ticker = [
+    n for n in noticias_periodo
+    if n.get("abrangencia") == "Minas Gerais"
+    and n.get("link")
+    and n.get("titulo")
+]
+
+noticias_ticker.sort(
+    key=lambda n: n.get("data") or datetime.min.replace(tzinfo=FUSO_BRASIL),
+    reverse=True
+)
+
+_titulos_ticker = set()
+_ticker_final = []
+for n in noticias_ticker:
+    chave = normalizar_titulo_dedupe(n.get("titulo", ""))
+    if not chave or chave in _titulos_ticker:
+        continue
+    _titulos_ticker.add(chave)
+    _ticker_final.append(n)
+    if len(_ticker_final) >= 18:
+        break
+
+if _ticker_final:
+    itens_ticker = []
+
+    for n in _ticker_final:
+        titulo_ticker = esc_html(str(n.get("titulo") or "Sem título").strip())
+        fonte_ticker = esc_html(nome_fonte_exibicao(n.get("veiculo")))
+        link_ticker = esc_html(str(n.get("link") or ""))
+        bolinha_ticker = esc_html(n.get("bolinha", "🔵"))
+
+        itens_ticker.append(
+            f"<a href=\"{link_ticker}\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"radar-ticker-item\">"
+            f"<span class=\"radar-ticker-dot\">{bolinha_ticker}</span>"
+            f"<span class=\"radar-ticker-title\">{titulo_ticker}</span>"
+            f"<span class=\"radar-ticker-source\">{fonte_ticker}</span>"
+            f"</a>"
+        )
+
+    itens_html = "".join(itens_ticker)
+
+    st.markdown(
+        f"""
+        <style>
+            .radar-ticker-wrap {{
+                width: 100%;
+                overflow: hidden;
+                border: 1px solid rgba(100,116,139,.16);
+                border-radius: 10px;
+                background: #27324a;
+                display: flex;
+                align-items: center;
+                margin: 12px 0 16px 0;
+                height: 46px;
+                box-sizing: border-box;
+            }}
+            .radar-ticker-label {{
+                flex: 0 0 auto;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                padding: 0 16px;
+                background: #1d2638;
+                color: #fff;
+                font-size: 13px;
+                font-weight: 800;
+                z-index: 3;
+                box-shadow: 5px 0 12px rgba(0,0,0,.12);
+            }}
+            .radar-ticker-window {{
+                overflow: hidden;
+                flex: 1;
+                height: 100%;
+                display: flex;
+                align-items: center;
+            }}
+            .radar-ticker-track {{
+                display: flex;
+                align-items: center;
+                width: max-content;
+                animation: radarTickerMove 75s linear infinite;
+                will-change: transform;
+            }}
+            .radar-ticker-item {{
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                color: #fff !important;
+                text-decoration: none !important;
+                white-space: nowrap;
+                padding: 0 24px;
+                font-size: 14px;
+                line-height: 1;
+            }}
+            .radar-ticker-item:hover .radar-ticker-title {{
+                text-decoration: underline !important;
+            }}
+            .radar-ticker-dot {{ font-size: 11px; }}
+            .radar-ticker-title {{ font-weight: 700; }}
+            .radar-ticker-source {{
+                opacity: .68;
+                font-size: 12px;
+                font-weight: 600;
+            }}
+            @keyframes radarTickerMove {{
+                from {{ transform: translateX(0); }}
+                to {{ transform: translateX(-50%); }}
+            }}
+            .radar-ticker-wrap:hover .radar-ticker-track {{
+                animation-play-state: paused;
+            }}
+        </style>
+        <div class="radar-ticker-wrap">
+            <div class="radar-ticker-label">📰 ÚLTIMAS DE MG</div>
+            <div class="radar-ticker-window">
+                <div class="radar-ticker-track">
+                    {itens_html}{itens_html}
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+# ============================================================
 # MÉTRICAS
 # ============================================================
 
