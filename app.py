@@ -101,7 +101,8 @@ FONTES = {"Estado de Minas": "https://news.google.com/rss/search?q=site%3Aem.com
     "Valor Econômico": "https://news.google.com/rss/search?q=site%3Avalor.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "ConJur": "https://news.google.com/rss/search?q=site%3Aconjur.com.br+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "Metrópoles": "https://news.google.com/rss/search?q=site%3Ametropoles.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
-    "TCU": "https://news.google.com/rss/search?q=(%22TCU%22+OR+%22Tribunal%20de%20Contas%20da%20Uni%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419"}
+    "TCU": "https://news.google.com/rss/search?q=(%22TCU%22+OR+%22Tribunal%20de%20Contas%20da%20Uni%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "TMC": "https://news.google.com/rss/search?q=site%3Atmc.com.br+(%22TCE-MG%22+OR+%22TCEMG%22+OR+%22Tribunal+de+Contas+de+Minas+Gerais%22+OR+%22Tribunal+de+Contas+do+Estado+de+Minas+Gerais%22+OR+%22Mesa+de+Concilia%C3%A7%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",}
 
 
 # ============================================================
@@ -899,6 +900,7 @@ FONTES_MINAS = {
     "Agência Minas",
     "O Fator",
     "Edição do Brasil",
+    "TMC",
     "Moon BH",
 }
 
