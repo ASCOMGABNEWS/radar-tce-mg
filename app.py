@@ -101,7 +101,8 @@ FONTES = {"Estado de Minas": "https://news.google.com/rss/search?q=site%3Aem.com
     "Valor Econômico": "https://news.google.com/rss/search?q=site%3Avalor.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "ConJur": "https://news.google.com/rss/search?q=site%3Aconjur.com.br+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "Metrópoles": "https://news.google.com/rss/search?q=site%3Ametropoles.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
-    "TCU": "https://news.google.com/rss/search?q=(%22TCU%22+OR+%22Tribunal%20de%20Contas%20da%20Uni%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419"}
+    "TCU": "https://news.google.com/rss/search?q=(%22TCU%22+OR+%22Tribunal%20de%20Contas%20da%20Uni%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "TMC": "https://news.google.com/rss/search?q=site%3Atmc.com.br+(%22TCE-MG%22+OR+%22TCEMG%22+OR+%22Tribunal+de+Contas+de+Minas+Gerais%22+OR+%22Tribunal+de+Contas+do+Estado+de+Minas+Gerais%22+OR+%22Mesa+de+Concilia%C3%A7%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",}
 
 
 # ============================================================
@@ -899,6 +900,7 @@ FONTES_MINAS = {
     "Agência Minas",
     "O Fator",
     "Edição do Brasil",
+    "TMC",
     "Moon BH",
 }
 
@@ -1031,7 +1033,7 @@ mesmo que não mencione o TCE-MG.
 
 Classifique:
 
-CRÍTICA: 90 a 100
+ATENÇÃO: 90 a 100
 ALTA: 75 a 89
 MÉDIA: 50 a 74
 MENÇÃO: 0 a 49
@@ -1039,7 +1041,7 @@ MENÇÃO: 0 a 49
 Responda EXATAMENTE neste formato:
 
 NOTA: número de 0 a 100
-NÍVEL: Crítica, Alta, Média ou Menção
+NÍVEL: Atenção, Alta, Média ou Menção
 MOTIVO: explicação curta em até 2 frases
 """
         )
@@ -2271,7 +2273,7 @@ noticias_periodo = [
 # CONTADORES DO PAINEL
 # ============================================================
 
-criticas = [n for n in noticias_periodo if n["score"] >= 85]
+atencao = [n for n in noticias_periodo if n["score"] >= 85]
 altas = [n for n in noticias_periodo if 65 <= n["score"] < 85]
 medias = [n for n in noticias_periodo if 45 <= n["score"] < 65]
 mencoes = [n for n in noticias_periodo if n["score"] < 45]
@@ -2299,7 +2301,7 @@ for noticia in noticias_periodo:
 # PAINEL SUPERIOR
 # ============================================================
 
-criticas = [
+atencao = [
     n for n in noticias_periodo
     if n["score"] >= 85
 ]
@@ -2346,7 +2348,7 @@ with col1:
 
         with r1:
 
-            st.markdown("🔴 **Críticas**")
+            st.markdown("🔴 **Atenção**")
 
             st.markdown(
                 f"""
@@ -2356,7 +2358,7 @@ with col1:
                     line-height:1;
                     margin:0;
                     color:#2f3340;
-                ">{len(criticas)}</div>
+                ">{len(atencao)}</div>
                 """,
                 unsafe_allow_html=True
             )
@@ -2529,7 +2531,7 @@ def destaque_tce_mg(n):
     if n.get("abrangencia") != "Minas Gerais":
         return False
 
-    # Só entram Crítica ou Alta.
+    # Só entram Atenção ou Alta.
     score = n.get("score", 0)
     if score < 65:
         return False
@@ -2564,8 +2566,8 @@ def destaque_tce_mg(n):
     return tem_tce_mg
 
 # Primeiro a maior nota. Em empate, a notícia mais recente.
-criticas_tce_mg_7d = [n for n in noticias if destaque_tce_mg(n)]
-criticas_tce_mg_7d.sort(
+atencao_tce_mg_7d = [n for n in noticias if destaque_tce_mg(n)]
+atencao_tce_mg_7d.sort(
     key=lambda n: (
         n.get("score", 0),
         n.get("data") or datetime.min.replace(tzinfo=FUSO_BRASIL)
@@ -2583,13 +2585,13 @@ with st.container(border=True):
         unsafe_allow_html=True
     )
 
-    if criticas_tce_mg_7d:
-        n = criticas_tce_mg_7d[0]
+    if atencao_tce_mg_7d:
+        n = atencao_tce_mg_7d[0]
         resumo_n = (n.get("resumo") or "").strip()
         if len(resumo_n) > 320:
             resumo_n = resumo_n[:320] + "..."
         bolinha = n.get("bolinha", "🔴")
-        nivel = {"🔴": "Crítica", "🟠": "Alta", "🟡": "Média", "⚪": "Menção"}.get(bolinha, "Relevante")
+        nivel = {"🔴": "Atenção", "🟠": "Alta", "🟡": "Média", "⚪": "Menção"}.get(bolinha, "Relevante")
         st.markdown(
             f"""
             <div style="border:1px solid rgba(100,116,139,.16);border-radius:12px;padding:18px 20px 16px;background:#fff;margin-top:4px;margin-bottom:12px;">
@@ -2701,7 +2703,7 @@ if _ticker_final:
                 display: flex;
                 align-items: center;
                 width: max-content;
-                animation: radarTickerMove 75s linear infinite;
+                animation: radarTickerMove 145s linear infinite;
                 will-change: transform;
             }}
             .radar-ticker-item {{
@@ -2734,7 +2736,7 @@ if _ticker_final:
             }}
         </style>
         <div class="radar-ticker-wrap">
-            <div class="radar-ticker-label">📰 ÚLTIMAS DE MG</div>
+            <div class="radar-ticker-label">📰 ÚLTIMAS NOS PARTAIS DE MG</div>
             <div class="radar-ticker-window">
                 <div class="radar-ticker-track">
                     {itens_html}{itens_html}
@@ -2761,8 +2763,8 @@ with st.container(border=True, key="metricas-centralizadas"):
 
     with m2:
         st.metric(
-            "🔴 Críticas",
-            len(criticas)
+            "🔴 Atenção",
+            len(atencao)
         )
 
     with m3:
@@ -2820,7 +2822,7 @@ with st.container(key="filtros-centralizados"):
     with f5:
         filtro_relevancia = st.selectbox(
             "🎯 Relevância",
-            ["Todas", "🔴 Crítica", "🟠 Alta", "🟡 Média", "⚪ Menção"]
+            ["Todas", "🔴 Atenção", "🟠 Alta", "🟡 Média", "⚪ Menção"]
         )
 
     with f6:
@@ -2867,7 +2869,7 @@ if filtro_abrangencia != "Todas":
 if filtro_relevancia != "Todas":
 
     mapa_relevancia = {
-        "🔴 Crítica": "🔴",
+        "🔴 Atenção": "🔴",
         "🟠 Alta": "🟠",
         "🟡 Média": "🟡",
         "⚪ Menção": "⚪",
@@ -2976,7 +2978,7 @@ def gerar_pdf_clipping(noticias_clipping):
     )
 
     # Destaques
-    criticas_pdf = [
+    atencao_pdf = [
         n for n in noticias_clipping
         if n["score"] >= 85
     ]
@@ -2985,10 +2987,10 @@ def gerar_pdf_clipping(noticias_clipping):
         if 65 <= n["score"] < 85
     ]
 
-    if criticas_pdf or altas_pdf:
+    if atencao_pdf or altas_pdf:
         story.append(Paragraph("DESTAQUES", secao))
 
-        for noticia in (criticas_pdf[:5] + altas_pdf[:5]):
+        for noticia in (atencao_pdf[:5] + altas_pdf[:5]):
             story.append(
                 Paragraph(
                     f"{noticia['bolinha']} {noticia['titulo']}",
@@ -3132,7 +3134,7 @@ st.download_button(
 col_titulo, col_total, col_estadual, col_nacional = st.columns([3.4, 1.4, 1.4, 1.4], gap="medium")
 
 # Contagem dinâmica da lista atualmente filtrada.
-qtd_criticas_filtradas = sum(
+qtd_atencao_filtradas = sum(
     1 for n in filtradas if n.get("score", 0) >= 85
 )
 qtd_altas_filtradas = sum(
@@ -3181,7 +3183,7 @@ with col_nacional:
             st.rerun()
 
 st.markdown(
-    f'<div class="news-count-caption">{len(filtradas)} notícias encontradas ({qtd_criticas_filtradas} críticas, {qtd_altas_filtradas} altas)</div>',
+    f'<div class="news-count-caption">{len(filtradas)} notícias encontradas ({qtd_atencao_filtradas} atenção, {qtd_altas_filtradas} altas)</div>',
     unsafe_allow_html=True
 )
 
