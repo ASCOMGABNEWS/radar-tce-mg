@@ -1063,7 +1063,7 @@ INSTITUICOES_FILTRO = {
 # ALMG/MPMG/TJMG continuam como fontes complementares via Google News.
 BUSCAS_OFICIAIS = [
     ("TCE-MG", 'site:tce.mg.gov.br/noticia/'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ (comunicação OR comunicacao OR "comunicação pública" OR "comunicacao publica" OR imprensa OR jornalismo OR "redes sociais" OR "linguagem simples")'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia/     ("TCE-MG",     ("TCE-MG",     ("TCE-MG",     ("TCE-MG",     ("TCE-MG",     ("TCE-MG",     ("TCE-MG",     ("TCE-MG", (comunicação OR comunicacao OR "comunicação pública" OR "comunicacao publica" OR imprensa OR jornalismo OR "redes sociais" OR "linguagem simples" OR "institucional" OR "orgãos públicos")'),
     ("TCE-MG", 'site:tce.mg.gov.br/noticia/ ("Agostinho Patrus" OR "Durval Ângelo" OR "Durval Angelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR "Alencar da Silveira" OR conselheiro OR conciliação OR "controle externo" OR fiscalização OR auditoria)'),
     ("TCE-MG", 'site:tce.mg.gov.br/noticia/ (acórdão OR acordao OR processo OR decisão OR decisao OR licitação OR concessão OR auditoria OR fiscalização OR "mesa de conciliação" OR contrato OR contas)'),
     ("TCE-MG", 'site:tce.mg.gov.br/noticia/ ("comunicação institucional" OR "comunicação pública" OR comunicação OR transparência OR "redes sociais" OR evento OR seminário OR prêmio)'),
@@ -2067,7 +2067,7 @@ def destaque_tce_mg(n):
         return False
     if n.get("abrangencia") != "Minas Gerais":
         return False
-    if n.get("score", 0) < 85:
+    if n.get("score", 0) < 65:
         return False
 
     texto = " ".join([
