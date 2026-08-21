@@ -17,7 +17,7 @@ import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 import feedparser
 from datetime import datetime, timedelta
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 from urllib.request import Request, urlopen
 from openai import OpenAI
 
@@ -1328,38 +1328,58 @@ class LinksNoticiasParser(HTMLParser):
 
 
 def extrair_data_proxima(html_texto, posicao, limite=5000, titulo=""):
-    """
-    Procura a data da notícia perto do link ou do título.
-    O portal do TCE pode deixar a data relativamente distante do href.
-    """
+    """Encontra a data mais próxima do link/título, evitando pegar a data
+    de outra notícia ou a data atual exibida em outra parte do portal."""
     candidatos = []
 
     if posicao is not None and posicao >= 0:
-        candidatos.append(
-            html_texto[max(0, posicao - limite):posicao + limite]
-        )
+        inicio = max(0, posicao - limite)
+        fim = min(len(html_texto), posicao + limite)
+        trecho = html_texto[inicio:fim]
+        for m in re.finditer(r"\b(\d{2}/\d{2}/\d{4})\b", trecho):
+            distancia = abs((inicio + m.start()) - posicao)
+            candidatos.append((distancia, m.group(1)))
 
-    # Segunda tentativa: procura pelo título no HTML.
     if titulo:
         titulo_busca = limpar_texto(titulo).lower()
         if titulo_busca:
             pos_titulo = html_texto.lower().find(titulo_busca)
             if pos_titulo >= 0:
-                candidatos.append(
-                    html_texto[max(0, pos_titulo - limite):pos_titulo + limite]
-                )
+                for m in re.finditer(r"\b(\d{2}/\d{2}/\d{4})\b", html_texto[max(0, pos_titulo - 1000):pos_titulo + 1000]):
+                    candidatos.append((abs(m.start() - 1000), m.group(1)))
 
-    for trecho in candidatos:
-        datas = re.findall(r"\b(\d{2}/\d{2}/\d{4})\b", trecho)
-        for data_txt in datas:
-            try:
-                return datetime.strptime(
-                    data_txt, "%d/%m/%Y"
-                ).replace(tzinfo=FUSO_BRASIL)
-            except Exception:
-                continue
+    candidatos.sort(key=lambda x: x[0])
+    for _, data_txt in candidatos:
+        try:
+            return datetime.strptime(data_txt, "%d/%m/%Y").replace(tzinfo=FUSO_BRASIL)
+        except Exception:
+            pass
 
     return None
+
+
+def extrair_titulo_tce(href, texto_link):
+    """No portal do TCEMG, o link de 'Clique aqui' pode carregar o resumo
+    inteiro. O título verdadeiro fica no slug da própria URL.
+    Retorna (titulo, resumo)."""
+    href = str(href or "").strip()
+    texto = limpar_texto(texto_link or "")
+    texto = re.sub(r"\s*Clique aqui\s*$", "", texto, flags=re.I).strip()
+
+    m = re.search(r"/([^/]+?)\.html/Noticia/\d+(?:[/?#]|$)", href, flags=re.I)
+    if not m:
+        m = re.search(r"/([^/]+?)\.html/noticia/\d+(?:[/?#]|$)", href, flags=re.I)
+
+    if m:
+        slug = unquote(m.group(1))
+        slug = re.sub(r"[-_]+", " ", slug).strip()
+        # Capitalização conservadora: mantém siglas que já vieram em caixa alta.
+        if slug:
+            titulo = slug[0].upper() + slug[1:]
+            return titulo, texto
+
+    # Formato legado: se não houver slug útil, mantém o texto original.
+    return texto or "Sem título", ""
 
 
 def _buscar_pagina_oficial(args):
@@ -1411,7 +1431,31 @@ def buscar_noticias_oficiais_diretas():
         vistos = set()
         html_lower = texto_html.lower()
 
-        for href_original, titulo in parser.links:
+        # No portal do TCE, o mesmo href pode aparecer em mais de um <a>:
+        # um para o título e outro para o resumo. Agrupamos por URL para não
+        # perder o título correto.
+        if nome == "TCE Notícias":
+            grupos = {}
+            ordem = []
+            for href_candidato, texto_candidato in parser.links:
+                chave = str(href_candidato or "").strip()
+                if chave not in grupos:
+                    grupos[chave] = []
+                    ordem.append(chave)
+                grupos[chave].append(limpar_texto(texto_candidato))
+
+            links_processar = []
+            for href_candidato in ordem:
+                textos = [x for x in grupos[href_candidato] if x]
+                # Primeiro tentamos o texto mais curto, que normalmente é o
+                # título. Se houver slug na URL, ele será usado como fallback.
+                texto_titulo = min(textos, key=len) if textos else ""
+                texto_resumo = max(textos, key=len) if len(textos) > 1 else ""
+                links_processar.append((href_candidato, texto_titulo, texto_resumo))
+        else:
+            links_processar = [(h, t, "") for h, t in parser.links]
+
+        for href_original, titulo, resumo_candidato in links_processar:
             href_original = str(href_original or "").strip()
             href_lower = href_original.lower()
             href = href_original
@@ -1480,12 +1524,50 @@ def buscar_noticias_oficiais_diretas():
             if data and data < limite:
                 continue
 
-            # Se não conseguimos achar a data, não descartamos a notícia
-            # aqui. Ela poderá ser exibida pela coleta oficial; o filtro de
-            # período da interface decide depois o que possui data válida.
+            # O portal do TCE usa o link de detalhe para o bloco inteiro em
+            # algumas páginas: o texto capturado pode ser o resumo + "Clique aqui".
+            if nome == "TCE Notícias":
+                # REGRA DO TCE: o título verdadeiro está no slug da URL.
+                # O texto do <a> pode ser o resumo inteiro da notícia, então
+                # nunca usamos esse texto gigante como título quando o slug
+                # estiver disponível.
+                m_slug = re.search(
+                    r"/([^/]+?)\.html/(?:noticia)(?:/detalhe)?/\d+(?:[/?#]|$)",
+                    href,
+                    flags=re.I
+                )
+
+                if m_slug:
+                    titulo_real = unquote(m_slug.group(1))
+                    titulo_real = re.sub(r"[-_]+", " ", titulo_real).strip()
+                    titulo_real = limpar_texto(titulo_real)
+                    titulo_real = titulo_real[:1].upper() + titulo_real[1:] if titulo_real else "Sem título"
+
+                    # O texto capturado do card é o resumo.
+                    resumo_real = re.sub(
+                        r"\s*Clique aqui\s*$",
+                        "",
+                        limpar_texto(titulo),
+                        flags=re.I
+                    ).strip()
+
+                    # Se por acaso capturamos só o título e existe outro texto
+                    # maior no mesmo href, usamos esse texto como resumo.
+                    if resumo_candidato and len(resumo_candidato) > len(resumo_real):
+                        resumo_real = re.sub(
+                            r"\s*Clique aqui\s*$",
+                            "",
+                            limpar_texto(resumo_candidato),
+                            flags=re.I
+                        ).strip()
+                else:
+                    titulo_real, resumo_real = extrair_titulo_tce(href, titulo)
+            else:
+                titulo_real, resumo_real = titulo, ""
+
             saida.append({
-                "titulo": titulo,
-                "resumo": "",
+                "titulo": titulo_real,
+                "resumo": resumo_real,
                 "link": href,
                 "veiculo": nome,
                 "data": data,
