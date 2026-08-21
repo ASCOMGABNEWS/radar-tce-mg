@@ -853,6 +853,24 @@ def classificar_abrangencia(veiculo, titulo="", resumo=""):
     if any(termo in texto for termo in OUTROS_ESTADOS):
         return "Nacional"
 
+    # Um jornal mineiro não torna automaticamente estadual uma notícia sobre TCU
+    # ou outro Tribunal de Contas. Exigimos contexto mineiro explícito nesses casos.
+    termos_nacionais_tc = (
+        "tcu", "tribunal de contas da união", "tribunal de contas da uniao",
+        "tce-ac", "tce-al", "tce-am", "tce-ba", "tce-ce", "tce-df",
+        "tce-es", "tce-go", "tce-ma", "tce-mt", "tce-ms", "tce-pa",
+        "tce-pb", "tce-pr", "tce-pe", "tce-pi", "tce-rj", "tce-rn",
+        "tce-rs", "tce-ro", "tce-rr", "tce-sc", "tce-sp", "tce-se", "tce-to"
+    )
+    contexto_mg = any(t in texto for t in (
+        "tce-mg", "tce mg", "tribunal de contas de minas gerais",
+        "minas gerais", "governo de minas", "estado de minas gerais",
+        "belo horizonte", "mineiro", "mineira", "mineiros", "mineiras",
+        "prefeitura de belo horizonte", "governo de mg", "almg", "mpmg", "tjmg"
+    ))
+    if any(t in texto for t in termos_nacionais_tc) and not contexto_mg:
+        return "Nacional"
+
     # Só depois usamos a origem mineira do veículo como sinal de MG.
     if any(f.lower() in str(veiculo or "").lower() for f in FONTES_MINAS):
         return "Minas Gerais"
@@ -1030,10 +1048,11 @@ INSTITUICOES_FILTRO = {
 # combinação de palavras; as demais refinam conciliação, comunicação, controle etc.
 # ALMG/MPMG/TJMG continuam como fontes complementares via Google News.
 BUSCAS_OFICIAIS = [
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia (comunicação OR comunicacao OR "comunicação pública" OR "comunicacao publica" OR imprensa OR jornalismo OR redes sociais)'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia ("Agostinho Patrus" OR "Durval Ângelo" OR "Durval Angelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR conselheiro OR conciliação OR "controle externo" OR fiscalização OR auditoria)'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia (acórdão OR acordao OR processo OR decisão OR decisao OR licitação OR concessão OR auditoria OR fiscalização OR "mesa de conciliação")'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia/'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ (comunicação OR comunicacao OR "comunicação pública" OR "comunicacao publica" OR imprensa OR jornalismo OR "redes sociais" OR "linguagem simples")'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ ("Agostinho Patrus" OR "Durval Ângelo" OR "Durval Angelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR "Alencar da Silveira" OR conselheiro OR conciliação OR "controle externo" OR fiscalização OR auditoria)'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ (acórdão OR acordao OR processo OR decisão OR decisao OR licitação OR concessão OR auditoria OR fiscalização OR "mesa de conciliação" OR contrato OR contas)'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ ("comunicação institucional" OR "comunicação pública" OR comunicação OR transparência OR "redes sociais" OR evento OR seminário OR prêmio)'),
     ("Órgãos complementares", '(site:almg.gov.br OR site:mpmg.mp.br OR site:tjmg.jus.br) ("TCE-MG" OR "Tribunal de Contas" OR TCU OR "conselheiro do TCE" OR "controle externo" OR "processo do TCE" OR "decisão do TCE")'),
 ]
 
@@ -2072,28 +2091,50 @@ with st.container(border=True):
     )
 
     if criticas_mg_7d:
+        # Carrossel controlável: as setas movem exatamente um card por vez.
+        cards = []
+        for n in criticas_mg_7d:
+            resumo_n = (n.get("resumo") or "").strip()
+            if len(resumo_n) > 260:
+                resumo_n = resumo_n[:260] + "..."
+            cards.append(
+                f'<article class="card"><div class="meta">🔴 Crítica • 📰 {esc_html(n.get("veiculo", "Fonte não identificada"))} • 📅 {esc_html(formatar_horario_noticia(n.get("data")))}</div>'
+                f'<div class="title">{esc_html(n.get("titulo", "Sem título"))}</div>'
+                + (f'<div class="summary">{esc_html(resumo_n)}</div>' if resumo_n else '')
+                + f'<a class="read" href="{esc_html(n.get("link", ""))}" target="_blank">Ler matéria ↗</a></article>'
+            )
+
         components.html(
             f"""
             <style>
-                html,body {{ margin:0; padding:0; background:transparent; }}
-                .rail {{ display:flex; gap:14px; width:100%; overflow-x:scroll; overflow-y:hidden; padding:2px 4px 14px 2px; box-sizing:border-box; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }}
-                .card {{ flex:0 0 calc(100% - 28px); max-width:760px; box-sizing:border-box; border:1px solid rgba(100,116,139,.16); border-radius:12px; padding:18px 20px; background:#fff; scroll-snap-align:start; }}
+                html,body {{ margin:0; padding:0; background:transparent; overflow:hidden; }}
+                .wrap {{ position:relative; width:100%; }}
+                .rail {{ display:flex; gap:14px; width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 4px 16px 2px; box-sizing:border-box; scroll-snap-type:x mandatory; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; scrollbar-width:auto; }}
+                .card {{ flex:0 0 calc(100% - 18px); width:calc(100% - 18px); box-sizing:border-box; border:1px solid rgba(100,116,139,.16); border-radius:12px; padding:18px 20px; background:#fff; scroll-snap-align:start; }}
                 .meta {{ font-size:14px; font-weight:700; color:#b42318; margin-bottom:10px; }}
-                .title {{ font-size:25px; line-height:1.18; font-weight:800; color:#27324a; margin-bottom:12px; }}
+                .title {{ font-size:23px; line-height:1.18; font-weight:800; color:#27324a; margin-bottom:12px; }}
                 .summary {{ font-size:15px; line-height:1.45; color:#475467; margin-bottom:14px; }}
                 .read {{ display:inline-block; padding:9px 14px; border:1px solid rgba(16,24,40,.18); border-radius:8px; text-decoration:none; color:#27324a; font-weight:700; background:#fff; }}
+                .nav {{ position:absolute; right:10px; bottom:3px; display:flex; gap:6px; z-index:5; }}
+                .nav button {{ width:34px; height:30px; border:1px solid rgba(16,24,40,.18); border-radius:7px; background:#fff; color:#27324a; font-size:18px; cursor:pointer; }}
             </style>
-            <div class="rail">
-                {''.join([
-                    f'<article class="card"><div class="meta">🔴 Crítica • 📰 {esc_html(n.get("veiculo", "Fonte não identificada"))} • 📅 {esc_html(formatar_horario_noticia(n.get("data")))}</div>'
-                    f'<div class="title">{esc_html(n.get("titulo", "Sem título"))}</div>'
-                    + (f'<div class="summary">{esc_html((n.get("resumo") or "").strip()[:260])}...</div>' if len((n.get("resumo") or "").strip()) > 260 else (f'<div class="summary">{esc_html((n.get("resumo") or "").strip())}</div>' if (n.get("resumo") or "").strip() else ''))
-                    + f'<a class="read" href="{esc_html(n.get("link", ""))}" target="_blank">Ler matéria ↗</a></article>'
-                    for n in criticas_mg_7d
-                ])}
+            <div class="wrap">
+                <div class="rail" id="rail">{''.join(cards)}</div>
+                <div class="nav">
+                    <button onclick="move(-1)" aria-label="Anterior">‹</button>
+                    <button onclick="move(1)" aria-label="Próxima">›</button>
+                </div>
             </div>
+            <script>
+                function move(dir) {{
+                    const rail = document.getElementById('rail');
+                    const card = rail.querySelector('.card');
+                    if (!card) return;
+                    rail.scrollBy({{left: dir * (card.getBoundingClientRect().width + 14), behavior: 'smooth'}});
+                }}
+            </script>
             """,
-            height=250,
+            height=275,
             scrolling=False,
         )
     else:
