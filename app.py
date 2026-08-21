@@ -13,9 +13,6 @@ from difflib import SequenceMatcher
 from collections import Counter
 from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from zoneinfo import ZoneInfo
-import streamlit as st
-from datetime import datetime, timedelta
 
 FUSO_BRASIL = ZoneInfo("America/Sao_Paulo")
 agora = datetime.now(FUSO_BRASIL)
