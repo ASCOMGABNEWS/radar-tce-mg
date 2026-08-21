@@ -64,21 +64,61 @@ st.set_page_config(
 # FONTES
 # ============================================================
 
-FONTES = {'Estado de Minas': 'https://news.google.com/rss/search?q=site%3Aem.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'Itatiaia': 'https://news.google.com/rss/search?q=site%3Aitatiaia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'O TEMPO': 'https://news.google.com/rss/search?q=site%3Aotempo.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'Hoje em Dia': 'https://news.google.com/rss/search?q=site%3Ahojeemdia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'G1': 'https://news.google.com/rss/search?q=site%3Ag1.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22Atricon%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'G1 - Tribunais de Contas': 'https://news.google.com/rss/search?q=site%3Ag1.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'O Globo': 'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22Atricon%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'O Globo - Tribunais de Contas': 'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'STF - Tribunais de Contas': 'https://news.google.com/rss/search?q=(%22STF%22+OR+%22Supremo+Tribunal+Federal%22)+(%22Tribunal+de+Contas%22+OR+%22TCE%22+OR+%22TCU%22+OR+%22controle+externo%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'Folha de S.Paulo': 'https://news.google.com/rss/search?q=site%3Afolha.uol.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'Poder360': 'https://news.google.com/rss/search?q=site%3Apoder360.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'JOTA': 'https://news.google.com/rss/search?q=site%3Ajota.info+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'Migalhas': 'https://news.google.com/rss/search?q=site%3Amigalhas.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'Atricon': 'https://news.google.com/rss/search?q=%22Atricon%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'TCU': 'https://news.google.com/rss/search?q=(%22TCU%22+OR+%22Tribunal%20de%20Contas%20da%20Uni%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419'}
+def google_news_url(query):
+    return "https://news.google.com/rss/search?q=" + quote(query) + "&hl=pt-BR&gl=BR&ceid=BR:pt-419"
+
+# Todas as fontes do Radar são consultadas pelo Google News/RSS.
+# O nome da fonte serve para identificar o veículo; a busca é sempre feita
+# no Google News, nunca por scraping direto do portal.
+FONTES = {
+    # Minas Gerais / fontes locais
+    "TCE-MG": google_news_url('site:tce.mg.gov.br/noticia'),
+    "ALMG": google_news_url('site:almg.gov.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "MPMG": google_news_url('site:mpmg.mp.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "TJMG": google_news_url('site:tjmg.jus.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Estado de Minas": google_news_url('site:em.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Itatiaia": google_news_url('site:itatiaia.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "O TEMPO": google_news_url('site:otempo.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Hoje em Dia": google_news_url('site:hojeemdia.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Tribuna de Minas": google_news_url('site:tribunademinas.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Diário do Comércio": google_news_url('site:diariodocomercio.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "BHAZ": google_news_url('site:bhaz.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Agência Minas": google_news_url('site:agenciaminas.mg.gov.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "O Fator": google_news_url('("O Fator" OR site:ofator.com.br) ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Edição do Brasil": google_news_url('site:edicaodobrasil.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Moon BH": google_news_url('site:moonbh.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+
+    # Imprensa nacional
+    "Folha": google_news_url('site:folha.uol.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "UOL": google_news_url('site:uol.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Globo": google_news_url('site:globo.com ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "G1": google_news_url('site:g1.globo.com ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "G1 - Tribunais de Contas": google_news_url('site:g1.globo.com ("presidente do TCE" OR "conselheiro do TCE" OR "Tribunal de Contas" OR TCU)'),
+    "O Globo": google_news_url('site:oglobo.globo.com ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "O Globo - Tribunais de Contas": google_news_url('site:oglobo.globo.com ("presidente do TCE" OR "conselheiro do TCE" OR "Tribunal de Contas" OR TCU)'),
+    "STF - Tribunais de Contas": google_news_url('("STF" OR "Supremo Tribunal Federal") ("Tribunal de Contas" OR TCE OR TCU OR "controle externo")'),
+    "Poder360": google_news_url('site:poder360.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "JOTA": google_news_url('site:jota.info ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Migalhas": google_news_url('site:migalhas.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "O Bastidor": google_news_url('site:obastidor.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Intercept Brasil": google_news_url('site:intercept.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "revista piauí": google_news_url('site:piaui.folha.uol.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Brasil de Fato": google_news_url('site:brasildefato.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Correio Braziliense": google_news_url('site:correiobraziliense.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Estadão": google_news_url('site:estadao.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "O Antagonista": google_news_url('site:oantagonista.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "CartaCapital": google_news_url('site:cartacapital.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "CNN Brasil": google_news_url('site:cnnbrasil.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Agência Brasil": google_news_url('site:agenciabrasil.ebc.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Valor Econômico": google_news_url('site:valor.globo.com ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "ConJur": google_news_url('site:conjur.com.br ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+    "Metrópoles": google_news_url('site:metropoles.com ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
+
+    # Organizações do controle externo
+    "Atricon": google_news_url('"Atricon"'),
+    "TCU": google_news_url('("TCU" OR "Tribunal de Contas da União")'),
+}
+
 
 
 # ============================================================
@@ -1052,7 +1092,7 @@ def baixar_feed(args):
     nome, url = args
     try:
         request = Request(url, headers={"User-Agent": "Radar-TCE-MG/2.0"})
-        with urlopen(request, timeout=2.5) as resposta:
+        with urlopen(request, timeout=3.0) as resposta:
             return nome, feedparser.parse(resposta.read())
     except Exception:
         return nome, None
@@ -1129,7 +1169,7 @@ def buscar_noticias():
 
     tarefas = tarefas_oficiais + list(FONTES.items())
     resultados = {}
-    with ThreadPoolExecutor(max_workers=16) as executor:
+    with ThreadPoolExecutor(max_workers=24) as executor:
         futures = [executor.submit(baixar_feed, tarefa) for tarefa in tarefas]
         for future in as_completed(futures):
             chave, feed = future.result()
@@ -1972,9 +2012,6 @@ with col3:
 
 limite_destaque_7d = datetime.now(FUSO_BRASIL) - timedelta(days=7)
 
-# O destaque é EXCLUSIVO de Minas Gerais e somente para notícias críticas.
-# Isso evita, por exemplo, que uma matéria do O TEMPO sobre o Maranhão
-# apareça aqui apenas porque o veículo é mineiro.
 criticas_mg_7d = [
     n for n in noticias
     if (
@@ -1992,11 +2029,9 @@ criticas_mg_7d.sort(
     ),
     reverse=True
 )
-
 criticas_mg_7d = criticas_mg_7d[:2]
 
 with st.container(border=True):
-
     st.markdown(
         """
         <div style="
@@ -2016,8 +2051,7 @@ with st.container(border=True):
     )
 
     if criticas_mg_7d:
-        cards = ""
-
+        cards = []
         for noticia in criticas_mg_7d:
             titulo = esc_html(noticia.get("titulo", "Sem título"))
             veiculo = esc_html(noticia.get("veiculo", "Fonte não identificada"))
@@ -2027,58 +2061,65 @@ with st.container(border=True):
                 resumo = resumo[:260].rstrip() + "..."
             link = esc_html(noticia.get("link", ""))
 
-            cards += f"""
-            <article style="
-                flex:0 0 min(78vw, 760px);
-                scroll-snap-align:start;
-                box-sizing:border-box;
-                border:1px solid rgba(100,116,139,.16);
-                border-radius:12px;
-                padding:18px 20px;
-                background:#fff;
-            ">
-                <div style="
-                    font-size:14px;
-                    font-weight:700;
-                    color:#b42318;
-                    margin-bottom:10px;
-                ">🔴 Crítica • 📰 {veiculo} • 📅 {data}</div>
-
-                <div style="
-                    font-size:25px;
-                    line-height:1.18;
-                    font-weight:800;
-                    color:#27324a;
-                    margin-bottom:12px;
-                ">{titulo}</div>
-
-                {f'<div style="font-size:15px;line-height:1.45;color:#475467;margin-bottom:14px;">{resumo}</div>' if resumo else ''}
-
-                <a href="{link}" target="_blank" style="
-                    display:inline-block;
-                    padding:9px 14px;
-                    border:1px solid rgba(16,24,40,.18);
-                    border-radius:8px;
-                    text-decoration:none;
-                    color:#27324a;
-                    font-weight:700;
+            cards.append(f"""
+                <article style="
+                    flex:0 0 calc(100% - 24px);
+                    width:calc(100% - 24px);
+                    min-width:calc(100% - 24px);
+                    box-sizing:border-box;
+                    scroll-snap-align:start;
+                    border:1px solid rgba(100,116,139,.16);
+                    border-radius:12px;
+                    padding:18px 20px;
                     background:#fff;
-                ">Ler matéria ↗</a>
-            </article>
-            """
+                ">
+                    <div style="
+                        font-size:14px;
+                        font-weight:700;
+                        color:#b42318;
+                        margin-bottom:10px;
+                    ">🔴 Crítica • 📰 {veiculo} • 📅 {data}</div>
+
+                    <div style="
+                        font-size:25px;
+                        line-height:1.18;
+                        font-weight:800;
+                        color:#27324a;
+                        margin-bottom:12px;
+                    ">{titulo}</div>
+
+                    {f'<div style="font-size:15px;line-height:1.45;color:#475467;margin-bottom:14px;">{resumo}</div>' if resumo else ''}
+
+                    <a href="{link}" target="_blank" rel="noopener noreferrer" style="
+                        display:inline-block;
+                        padding:9px 14px;
+                        border:1px solid rgba(16,24,40,.18);
+                        border-radius:8px;
+                        text-decoration:none;
+                        color:#27324a;
+                        font-weight:700;
+                        background:#fff;
+                    ">Ler matéria ↗</a>
+                </article>
+            """)
 
         st.markdown(
             f"""
             <div style="
                 display:flex;
+                flex-direction:row;
+                flex-wrap:nowrap;
                 gap:14px;
-                overflow-x:auto;
+                width:100%;
+                overflow-x:scroll;
                 overflow-y:hidden;
-                padding:2px 2px 12px 2px;
+                padding:2px 2px 14px 2px;
+                box-sizing:border-box;
                 scroll-snap-type:x mandatory;
+                scrollbar-width:auto;
                 -webkit-overflow-scrolling:touch;
             ">
-                {cards}
+                {''.join(cards)}
             </div>
             """,
             unsafe_allow_html=True
