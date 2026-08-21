@@ -66,7 +66,7 @@ st.set_page_config(
 # ============================================================
 
 FONTES_MINAS = {
-    "TCE-MG", "ALMG", "MPMG", "TJMG", "Estado de Minas", "Itatiaia",
+    "TCE-MG", "TCEMG", "ALMG", "MPMG", "TJMG", "Estado de Minas", "Itatiaia",
     "O TEMPO", "Hoje em Dia", "Tribuna de Minas", "Diário do Comércio",
     "BHAZ", "Agência Minas", "O Fator", "Edição do Brasil", "Moon BH",
 }
@@ -84,7 +84,7 @@ FONTES_NACIONAIS = {
 # Para acelerar o carregamento, agrupamos os veículos em poucas consultas
 # por domínio, em vez de abrir um RSS separado para cada jornal.
 DOMINIOS_GRUPADOS = {
-    "MG_1": ["almg.gov.br", "mpmg.mp.br", "tjmg.jus.br", "em.com.br", "itatiaia.com.br", "otempo.com.br"],
+    "MG_1": ["tce.mg.gov.br", "almg.gov.br", "mpmg.mp.br", "tjmg.jus.br", "em.com.br", "itatiaia.com.br", "otempo.com.br"],
     "MG_2": ["hojeemdia.com.br", "tribunademinas.com.br", "diariodocomercio.com.br", "bhaz.com.br", "agenciaminas.mg.gov.br", "ofator.com.br"],
     "MG_3": ["edicaodobrasil.com.br", "moonbh.com.br"],
     "BR_1": ["folha.uol.com.br", "uol.com.br", "globo.com", "g1.globo.com", "oglobo.globo.com", "poder360.com.br"],
@@ -497,7 +497,7 @@ def identificar_instituicoes(
 
     mapa = {
         "TCE-MG": [
-            "tce-mg", "tce mg", "tribunal de contas de minas gerais",
+            "tce-mg", "tce mg", "tcemg", "tribunal de contas de minas gerais",
             "tribunal de contas do estado de minas gerais"
         ],
         "Governo de Minas": [
@@ -628,6 +628,8 @@ def calcular_relevancia(
     if "tce-mg" in texto:
         score += 35
     elif "tce mg" in texto:
+        score += 30
+    elif "tcemg" in texto:
         score += 30
     elif "tribunal de contas" in texto:
         score += 25
