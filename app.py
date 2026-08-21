@@ -1031,7 +1031,7 @@ mesmo que não mencione o TCE-MG.
 
 Classifique:
 
-CRÍTICA: 90 a 100
+ATENÇÃO: 90 a 100
 ALTA: 75 a 89
 MÉDIA: 50 a 74
 MENÇÃO: 0 a 49
@@ -1039,7 +1039,7 @@ MENÇÃO: 0 a 49
 Responda EXATAMENTE neste formato:
 
 NOTA: número de 0 a 100
-NÍVEL: Crítica, Alta, Média ou Menção
+NÍVEL: Atenção, Alta, Média ou Menção
 MOTIVO: explicação curta em até 2 frases
 """
         )
@@ -2529,7 +2529,7 @@ def destaque_tce_mg(n):
     if n.get("abrangencia") != "Minas Gerais":
         return False
 
-    # Só entram Crítica ou Alta.
+    # Só entram Atenção ou Alta.
     score = n.get("score", 0)
     if score < 65:
         return False
@@ -2820,7 +2820,7 @@ with st.container(key="filtros-centralizados"):
     with f5:
         filtro_relevancia = st.selectbox(
             "🎯 Relevância",
-            ["Todas", "🔴 Crítica", "🟠 Alta", "🟡 Média", "⚪ Menção"]
+            ["Todas", "🔴 Atenção", "🟠 Alta", "🟡 Média", "⚪ Menção"]
         )
 
     with f6:
@@ -2867,7 +2867,7 @@ if filtro_abrangencia != "Todas":
 if filtro_relevancia != "Todas":
 
     mapa_relevancia = {
-        "🔴 Crítica": "🔴",
+        "🔴 Atenção": "🔴",
         "🟠 Alta": "🟠",
         "🟡 Média": "🟡",
         "⚪ Menção": "⚪",
@@ -3181,7 +3181,7 @@ with col_nacional:
             st.rerun()
 
 st.markdown(
-    f'<div class="news-count-caption">{len(filtradas)} notícias encontradas ({qtd_atencao_filtradas} críticas, {qtd_altas_filtradas} altas)</div>',
+    f'<div class="news-count-caption">{len(filtradas)} notícias encontradas ({qtd_atencao_filtradas} atenção, {qtd_altas_filtradas} altas)</div>',
     unsafe_allow_html=True
 )
 
