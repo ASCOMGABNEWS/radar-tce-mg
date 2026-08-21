@@ -64,192 +64,21 @@ st.set_page_config(
 # FONTES
 # ============================================================
 
-FONTES = {
-
-    # --------------------------------------------------------
-    # IMPRENSA MINEIRA
-    # --------------------------------------------------------
-
-    "Estado de Minas":
-        'https://news.google.com/rss/search?q=site%3Aem.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Itatiaia":
-        'https://news.google.com/rss/search?q=site%3Aitatiaia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "O TEMPO":
-        'https://news.google.com/rss/search?q=site%3Aotempo.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Hoje em Dia":
-        'https://news.google.com/rss/search?q=site%3Ahojeemdia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Tribuna de Minas":
-        'https://news.google.com/rss/search?q=site%3Atribunademinas.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Diário do Comércio":
-        'https://news.google.com/rss/search?q=site%3Adiariodocomercio.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "BHAZ":
-        'https://news.google.com/rss/search?q=site%3Abhaz.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Agência Minas":
-        'https://news.google.com/rss/search?q=site%3Aagenciaminas.mg.gov.br+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "O Fator":
-        'https://news.google.com/rss/search?q=site%3Aofator.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Edição do Brasil":
-        'https://news.google.com/rss/search?q=site%3Aedicaodobrasil.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Moon BH":
-        'https://news.google.com/rss/search?q=site%3Amoonbh.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-
-    # --------------------------------------------------------
-    # IMPRENSA NACIONAL
-    # --------------------------------------------------------
-
-    "G1":
-        'https://news.google.com/rss/search?q=site%3Ag1.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22Atricon%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "G1 - Tribunais de Contas":
-        'https://news.google.com/rss/search?q=site%3Ag1.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Folha de S.Paulo":
-        'https://news.google.com/rss/search?q=site%3Afolha.uol.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "O Globo":
-        'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22Atricon%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "O Globo - Tribunais de Contas":
-        'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "STF - Tribunais de Contas":
-        'https://news.google.com/rss/search?q=(%22STF%22+OR+%22Supremo+Tribunal+Federal%22)+(%22Tribunal+de+Contas%22+OR+%22TCE%22+OR+%22TCU%22+OR+%22controle+externo%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Correio Braziliense":
-        'https://news.google.com/rss/search?q=site%3Acorreiobraziliense.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Poder360":
-        'https://news.google.com/rss/search?q=site%3Apoder360.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "O Antagonista":
-        'https://news.google.com/rss/search?q=site%3Aoantagonista.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Brasil de Fato":
-        'https://news.google.com/rss/search?q=site%3Abrasildefato.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "revista piauí":
-        'https://news.google.com/rss/search?q=site%3Apiaui.folha.uol.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "JOTA":
-        'https://news.google.com/rss/search?q=site%3Ajota.info+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Migalhas":
-        'https://news.google.com/rss/search?q=site%3Amigalhas.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "O Bastidor":
-        'https://news.google.com/rss/search?q=site%3Aobastidor.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Intercept Brasil":
-        'https://news.google.com/rss/search?q=site%3Aintercept.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Bem Minas":
-        'https://news.google.com/rss/search?q=site%3Abemminas.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-
-    # --------------------------------------------------------
-    # BUSCAS GERAIS
-    # --------------------------------------------------------
-
-    # --------------------------------------------------------
-    # MONITORAMENTO INSTITUCIONAL — CONTROLE EXTERNO
-    # --------------------------------------------------------
-
-    # Atricon é monitorada de forma independente: a notícia não precisa
-    # citar TCE-MG para ser relevante ao ambiente dos Tribunais de Contas.
-    "Atricon":
-        'https://news.google.com/rss/search?q=%22Atricon%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "IRB":
-        'https://news.google.com/rss/search?q=%22Instituto%20Rui%20Barbosa%22+OR+%22IRB%22+%22Tribunais%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Tribunais de Contas":
-        'https://news.google.com/rss/search?q=%22Tribunais%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Tribunal de Contas":
-        'https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "TCU":
-        'https://news.google.com/rss/search?q=(%22TCU%22+OR+%22Tribunal+de+Contas+da+Uni%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Presidentes e Conselheiros de TCs":
-        'https://news.google.com/rss/search?q=(%22presidente+do+TCE%22+OR+%22presidente+do+Tribunal+de+Contas%22+OR+%22conselheiro+do+TCE%22+OR+%22conselheira+do+TCE%22+OR+%22ministro+do+TCU%22+OR+%22ministra+do+TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Fatos graves em Tribunais de Contas":
-        'https://news.google.com/rss/search?q=(%22afastado%22+OR+%22afastamento%22+OR+%22pris%C3%A3o%22+OR+%22preso%22+OR+%22den%C3%BAncia%22+OR+%22denunciado%22+OR+%22investiga%C3%A7%C3%A3o%22+OR+%22investigado%22+OR+%22opera%C3%A7%C3%A3o%22+OR+%22busca+e+apreens%C3%A3o%22)+(TCE+OR+TCU+OR+%22Tribunal+de+Contas%22+OR+%22conselheiro%22+OR+%22presidente+do+TCE%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Presidentes de Tribunais de Contas":
-        'https://news.google.com/rss/search?q=%22presidente%20do%20Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Conselheiros de Tribunais de Contas":
-        'https://news.google.com/rss/search?q=%22conselheiro%20do%20TCE%22+OR+%22conselheira%20do%20TCE%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Afastamentos em Tribunais de Contas":
-        'https://news.google.com/rss/search?q=%22afastado%22+(%22TCE%22+OR+%22Tribunal+de+Contas%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Conselheiros de Tribunais de Contas":
-        'https://news.google.com/rss/search?q=%22conselheiro%22+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "TCU":
-        'https://news.google.com/rss/search?q=(%22TCU%22+OR+%22Tribunal%20de%20Contas%20da%20Uni%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Ministros do TCU":
-        'https://news.google.com/rss/search?q=(%22ministro%20do%20TCU%22+OR+%22ministra%20do%20TCU%22+OR+%22presidente%20do%20TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Presidentes de TCE":
-        'https://news.google.com/rss/search?q=%22presidente%20do%20TCE%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Conselheiros de TCE":
-        'https://news.google.com/rss/search?q=%22conselheiro%22+%22TCE%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "TCEs":
-        'https://news.google.com/rss/search?q=%22TCE%22+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-
-    # --------------------------------------------------------
-    # PESSOAS
-    # --------------------------------------------------------
-
-    "Durval Ângelo":
-        'https://news.google.com/rss/search?q=%22Durval%20Ângelo%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Agostinho Patrus":
-        'https://news.google.com/rss/search?q=%22Agostinho%20Patrus%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Gilberto Diniz":
-        'https://news.google.com/rss/search?q=%22Gilberto%20Diniz%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Alencar da Silveira":
-        'https://news.google.com/rss/search?q=%22Alencar%20da%20Silveira%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Ione Pinheiro":
-        'https://news.google.com/rss/search?q=%22Ione%20Pinheiro%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Tadeu Martins Leite / Tadeuzinho":
-        'https://news.google.com/rss/search?q=%22Tadeu%20Martins%20Leite%22+OR+%22Tadeuzinho%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Licurgo Mourão":
-        'https://news.google.com/rss/search?q=%22Licurgo%20Mourão%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Hamilton Coelho":
-        'https://news.google.com/rss/search?q=%22Hamilton%20Coelho%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Adonias Fernandes":
-        'https://news.google.com/rss/search?q=%22Adonias%20Fernandes%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Telmo Passareli":
-        'https://news.google.com/rss/search?q=%22Telmo%20Passareli%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-}
+FONTES = {'Estado de Minas': 'https://news.google.com/rss/search?q=site%3Aem.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+ 'Itatiaia': 'https://news.google.com/rss/search?q=site%3Aitatiaia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+ 'O TEMPO': 'https://news.google.com/rss/search?q=site%3Aotempo.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+ 'Hoje em Dia': 'https://news.google.com/rss/search?q=site%3Ahojeemdia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+ 'G1': 'https://news.google.com/rss/search?q=site%3Ag1.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22Atricon%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+ 'G1 - Tribunais de Contas': 'https://news.google.com/rss/search?q=site%3Ag1.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+ 'O Globo': 'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22Atricon%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+ 'O Globo - Tribunais de Contas': 'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+ 'STF - Tribunais de Contas': 'https://news.google.com/rss/search?q=(%22STF%22+OR+%22Supremo+Tribunal+Federal%22)+(%22Tribunal+de+Contas%22+OR+%22TCE%22+OR+%22TCU%22+OR+%22controle+externo%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+ 'Folha de S.Paulo': 'https://news.google.com/rss/search?q=site%3Afolha.uol.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+ 'Poder360': 'https://news.google.com/rss/search?q=site%3Apoder360.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+ 'JOTA': 'https://news.google.com/rss/search?q=site%3Ajota.info+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+ 'Migalhas': 'https://news.google.com/rss/search?q=site%3Amigalhas.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+ 'Atricon': 'https://news.google.com/rss/search?q=%22Atricon%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+ 'TCU': 'https://news.google.com/rss/search?q=(%22TCU%22+OR+%22Tribunal%20de%20Contas%20da%20Uni%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419'}
 
 
 # ============================================================
@@ -453,11 +282,10 @@ TEMAS = {
     ],
 
     "📚 Obras literárias": [
-        "obra literária",
-        "obras literárias",
-        "literatura",
-        "literário",
-        "literária"
+        "obra literária", "obras literárias", "literatura",
+        "literário", "literária", "livro", "livros",
+        "romance", "poesia", "poema", "poemas",
+        "escritor", "escritora"
     ],
 
     "🤝 Conciliação": [
@@ -595,26 +423,39 @@ def identificar_temas(
     titulo,
     resumo
 ):
-
-    texto = (
-        titulo
-        + " "
-        + resumo
-    ).lower()
-
+    texto = (str(titulo or "") + " " + str(resumo or "")).lower()
     encontrados = []
 
+    # Literatura tem prioridade semântica: "obra literária" nunca deve ser
+    # confundida com obra pública. Evitamos também o uso de "obra" isolado.
+    termos_literarios = (
+        "obra literária", "obras literárias", "literatura",
+        "literário", "literária", "livro", "livros",
+        "romance", "poesia", "poema", "poemas", "escritor", "escritora"
+    )
+    eh_literatura = any(t in texto for t in termos_literarios)
+
     for tema, palavras in TEMAS.items():
-
+        if tema == "🏗️ Obras públicas" and eh_literatura:
+            continue
         for palavra in palavras:
-
-            if palavra.lower() in texto:
-
-                encontrados.append(
-                    tema
-                )
-
+            p = palavra.lower().strip()
+            if not p:
+                continue
+            # Para termos curtos, exige fronteira de palavra; para frases,
+            # a ocorrência literal é suficiente.
+            if " " not in p:
+                if re.search(r"(?<![\wáàâãéêíóôõúçü])" + re.escape(p) + r"(?![\wáàâãéêíóôõúçü])", texto):
+                    encontrados.append(tema)
+                    break
+            elif p in texto:
+                encontrados.append(tema)
                 break
+
+    # Garante a nova tag mesmo se uma variação de literatura não estiver
+    # cadastrada em TEMAS por alguma versão antiga do arquivo.
+    if eh_literatura and "📚 Obras literárias" not in encontrados:
+        encontrados.append("📚 Obras literárias")
 
     return encontrados
 
@@ -1149,6 +990,7 @@ INSTITUICOES_FILTRO = {
     "ALMG": "ALMG",
     "Procuradoria": "Procuradoria",
     "TJMG": "TJMG",
+    "Órgãos complementares": "Órgãos complementares",
     "Atricon": "Atricon",
     "IRB": "IRB",
     "TCU": "TCU",
@@ -1163,16 +1005,11 @@ INSTITUICOES_FILTRO = {
 # ALMG/MPMG/TJMG continuam como fontes complementares via Google News.
 BUSCAS_OFICIAIS = [
     ("TCE-MG", 'site:tce.mg.gov.br/noticia'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia (conciliação OR "mesa de conciliação" OR consensualidade OR consenso OR mediação)'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia (comunicação OR "comunicação pública" OR "linguagem simples" OR transparência OR imprensa)'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia ("controle externo" OR fiscalização OR auditoria OR licitação OR contrato OR "contas públicas" OR "prestação de contas")'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia ("órgãos públicos" OR "órgão público" OR "administração pública" OR "poder público" OR "gestão pública" OR institucional OR governança)'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia ("políticas públicas" OR "política pública" OR municípios OR prefeitura OR "responsabilidade fiscal" OR "controle interno")'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia (concessão OR conselheiro OR "Agostinho Patrus" OR "Durval Ângelo" OR TCU OR Atricon OR IRB OR processo OR decisão OR acórdão OR auditoria)'),
-    ("ALMG", 'site:almg.gov.br "Tribunal de Contas" OR TCE-MG OR "controle externo" OR fiscalização OR conciliação OR comunicação'),
-    ("MPMG", 'site:mpmg.mp.br "Tribunal de Contas" OR TCE-MG OR "controle externo" OR fiscalização OR auditoria OR licitação OR conciliação OR comunicação'),
-    ("TJMG", 'site:tjmg.jus.br "Tribunal de Contas" OR TCE-MG OR "controle externo" OR fiscalização OR auditoria OR licitação OR conciliação OR comunicação'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia ("Agostinho Patrus" OR "Durval Ângelo" OR conciliação OR "controle externo" OR fiscalização OR auditoria)'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia (conselheiro OR acórdão OR processo OR decisão OR licitação OR concessão OR comunicação)'),
+    ("Órgãos complementares", '(site:almg.gov.br OR site:mpmg.mp.br OR site:tjmg.jus.br) ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo" OR "processo do TCE" OR "decisão do TCE")'),
 ]
+
 
 
 # ============================================================
@@ -1213,13 +1050,13 @@ def baixar_feed(args):
     nome, url = args
     try:
         request = Request(url, headers={"User-Agent": "Radar-TCE-MG/2.0"})
-        with urlopen(request, timeout=3) as resposta:
+        with urlopen(request, timeout=2.5) as resposta:
             return nome, feedparser.parse(resposta.read())
     except Exception:
         return nome, None
 
 
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=900, show_spinner=False)
 def buscar_noticias():
     noticias = []
     links = set()
@@ -1290,7 +1127,7 @@ def buscar_noticias():
 
     tarefas = tarefas_oficiais + list(FONTES.items())
     resultados = {}
-    with ThreadPoolExecutor(max_workers=32) as executor:
+    with ThreadPoolExecutor(max_workers=16) as executor:
         futures = [executor.submit(baixar_feed, tarefa) for tarefa in tarefas]
         for future in as_completed(futures):
             chave, feed = future.result()
