@@ -1058,13 +1058,28 @@ TERMOS_CONEXAO_TC = (
     "denúncia ao tce", "denuncia ao tce", "representação no tce",
     "representacao no tce", "mesa de conciliação do tce",
     "mesa de conciliacao do tce", "conciliação no tce",
-    "conciliacao no tce", "controle externo"
+    "conciliacao no tce", "controle externo",
+    # Pessoas monitoradas: uma matéria pode citar apenas o nome do conselheiro.
+    "agostinho patrus", "durval ângelo", "durval angelo",
+    "gilberto diniz", "alencar da silveira", "ione pinheiro",
+    "licurgo mourão", "licurgo mourao", "hamilton coelho",
+    "adonias fernandes", "telmo passareli", "tadeu martins leite",
+    "tadeuzinho"
 )
 
 
 def noticia_tem_conexao_tc(titulo, resumo, veiculo=""):
     texto = " ".join([str(titulo or ""), str(resumo or ""), str(veiculo or "")]).lower()
-    return any(t in texto for t in TERMOS_CONEXAO_TC)
+    if any(t in texto for t in TERMOS_CONEXAO_TC):
+        return True
+
+    # Evita falso positivo de palavras genéricas. “processo”, “decisão”,
+    # “conselheiro” ou “auditoria” sozinhos não bastam.
+    tc = any(t in texto for t in (
+        "tce", "tcu", "tribunal de contas", "tribunais de contas",
+        "controle externo", "atricon", "irb"
+    ))
+    return tc
 
 
 def rss_url_para_busca(q):
@@ -1101,10 +1116,12 @@ def buscar_noticias():
         resumo = limpar_texto(reg.get("resumo", ""))
         veiculo = reg.get("veiculo") or monitoramento
 
-        # ALMG, MPMG e TJMG são fontes complementares. Não queremos
-        # notícias desses órgãos por si só: elas só entram quando há conexão
-        # com Tribunal de Contas/TCE/TCU/processo/decisão/controle externo.
-        if monitoramento in {"ALMG", "MPMG", "TJMG"} and not noticia_tem_conexao_tc(titulo, resumo, veiculo):
+        # Regra central do Radar: o veículo pode ser qualquer jornal da lista,
+        # mas a notícia só entra se houver conexão identificável com o universo
+        # dos Tribunais de Contas. TCE-MG/TCU/Atricon/IRB têm prioridade própria;
+        # para a imprensa, a conexão precisa estar no conteúdo da notícia.
+        fontes_institucionais = {"TCE-MG", "TCU", "Atricon", "IRB", "Outros Tribunais de Contas"}
+        if monitoramento not in fontes_institucionais and not noticia_tem_conexao_tc(titulo, resumo, veiculo):
             return False
 
         pessoas = identificar_pessoas(titulo, resumo)
@@ -1152,7 +1169,10 @@ def buscar_noticias():
 
     # Consultas agrupadas: todos os veículos continuam no Google News,
     # mas 40+ requisições individuais viram poucas consultas.
-    termos_tc = '("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo" OR fiscalização OR auditoria OR conciliação OR "mesa de conciliação" OR acórdão OR processo)'
+    # A busca deve ser ampla o suficiente para não perder matérias relevantes,
+    # mas não pode usar “conselheiro”, “processo” ou “auditoria” isoladamente,
+    # pois isso traz muita notícia sem relação com Tribunais de Contas.
+    termos_tc = '("TCE-MG" OR "Tribunal de Contas" OR TCU OR "conselheiro do TCE" OR "conselheiro do Tribunal de Contas" OR "presidente do TCE" OR "controle externo" OR "acórdão do TCE" OR "processo do TCE" OR "decisão do TCE" OR "auditoria do TCE" OR "fiscalização do TCE" OR "mesa de conciliação do TCE" OR "Agostinho Patrus" OR "Durval Ângelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR "Alencar da Silveira" OR "Licurgo Mourão" OR "Hamilton Coelho" OR "Adonias Fernandes" OR "Telmo Passareli")'
     tarefas_fontes = []
     for grupo, dominios in DOMINIOS_GRUPADOS.items():
         sites = " OR ".join(f"site:{d}" for d in dominios)
