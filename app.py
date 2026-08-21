@@ -334,8 +334,10 @@ TEMAS = {
         "transparência",
         "redes sociais",
         "imprensa",
-        "comunicação"
-        "lingugaem simples"
+        "jornalismo",
+        "comunicação",
+        "linguagem simples",
+        "lingugaem simples",
         "simplifica"
     ],
 
@@ -1062,8 +1064,8 @@ INSTITUICOES_FILTRO = {
 # combinação de palavras; as demais refinam conciliação, comunicação, controle etc.
 # ALMG/MPMG/TJMG continuam como fontes complementares via Google News.
 BUSCAS_OFICIAIS = [
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia/'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia/     ("TCE-MG",     ("TCE-MG",     ("TCE-MG",     ("TCE-MG",     ("TCE-MG",     ("TCE-MG",     ("TCE-MG",     ("TCE-MG", (comunicação OR comunicacao OR "comunicação pública" OR "comunicacao publica" OR imprensa OR jornalismo OR "redes sociais" OR "linguagem simples" OR "institucional" OR "orgãos públicos")'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ "TCE-MG"'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ (comunicação OR comunicacao OR "comunicação pública" OR "comunicacao publica" OR "comunicação institucional" OR imprensa OR jornalismo OR "redes sociais" OR "linguagem simples" OR transparência OR "órgãos públicos" OR "orgãos públicos")'),
     ("TCE-MG", 'site:tce.mg.gov.br/noticia/ ("Agostinho Patrus" OR "Durval Ângelo" OR "Durval Angelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR "Alencar da Silveira" OR conselheiro OR conciliação OR "controle externo" OR fiscalização OR auditoria)'),
     ("TCE-MG", 'site:tce.mg.gov.br/noticia/ (acórdão OR acordao OR processo OR decisão OR decisao OR licitação OR concessão OR auditoria OR fiscalização OR "mesa de conciliação" OR contrato OR contas)'),
     ("TCE-MG", 'site:tce.mg.gov.br/noticia/ ("comunicação institucional" OR "comunicação pública" OR comunicação OR transparência OR "redes sociais" OR evento OR seminário OR prêmio)'),
@@ -1148,6 +1150,13 @@ def buscar_noticias():
 
         resumo = limpar_texto(reg.get("resumo", ""))
         veiculo = reg.get("veiculo") or monitoramento
+
+        # O Radar quer notícias do portal do TCE-MG, não atos/processos do
+        # TCNotAS ou páginas de consulta processual.
+        if monitoramento == "TCE-MG":
+            link_lower = str(link).lower()
+            if "tcnotas.tce.mg.gov.br" in link_lower and "/noticia/" not in link_lower:
+                return False
 
         # Regra central do Radar: o veículo pode ser qualquer jornal da lista,
         # mas a notícia só entra se houver conexão identificável com o universo
@@ -2067,7 +2076,7 @@ def destaque_tce_mg(n):
         return False
     if n.get("abrangencia") != "Minas Gerais":
         return False
-    if n.get("score", 0) < 65:
+    if n.get("score", 0) < 85:
         return False
 
     texto = " ".join([
@@ -2077,12 +2086,21 @@ def destaque_tce_mg(n):
     ]).lower()
 
     termos_tce_mg = (
-        "tce-mg", "tce mg", "tribunal de contas de minas gerais",
-        "tribunal de contas do estado de minas gerais"
+        "tce-mg", "tce mg", "tcemg", "tribunal de contas de minas gerais",
+        "tribunal de contas do estado de minas gerais", "tribunal de contas do estado de mg"
     )
 
     instituicoes = n.get("instituicoes") or []
-    return any(t in texto for t in termos_tce_mg) or "TCE-MG" in instituicoes
+    pessoas = " ".join(n.get("pessoas") or []).lower()
+    return (
+        any(t in texto for t in termos_tce_mg)
+        or "TCE-MG" in instituicoes
+        or any(nome in pessoas for nome in (
+            "agostinho patrus", "durval ângelo", "durval angelo", "gilberto diniz",
+            "ione pinheiro", "alencar da silveira", "licurgo mourão", "licurgo mourao",
+            "hamilton coelho", "adonias fernandes", "telmo passareli", "tadeu martins leite"
+        ))
+    )
 
 criticas_tce_mg_7d = [n for n in noticias if destaque_tce_mg(n)]
 criticas_tce_mg_7d.sort(
@@ -2120,24 +2138,37 @@ with st.container(border=True):
 
         st.markdown(
             f"""
-            <div style="
-                border:1px solid rgba(100,116,139,.16);
-                border-radius:12px;
-                padding:18px 20px;
-                background:#fff;
-            ">
-                <div style="font-size:14px;font-weight:700;color:#b42318;margin-bottom:10px;">
+            <div style="border:1px solid rgba(100,116,139,.16);border-radius:12px;padding:18px 20px 16px;background:#fff;margin-top:4px;margin-bottom:12px;">
+                <div style="font-size:14px;font-weight:700;color:#b42318;margin-bottom:12px;">
                     🔴 Crítica &nbsp;•&nbsp; 📰 {esc_html(n.get('veiculo', 'Fonte não identificada'))} &nbsp;•&nbsp; 📅 {esc_html(formatar_horario_noticia(n.get('data')))}
                 </div>
-                <div style="font-size:23px;line-height:1.18;font-weight:800;color:#27324a;margin-bottom:12px;">
+                <div style="font-size:23px;line-height:1.22;font-weight:800;color:#27324a;margin-bottom:13px;">
                     {esc_html(n.get('titulo', 'Sem título'))}
                 </div>
-                {f'<div style="font-size:15px;line-height:1.45;color:#475467;margin-bottom:14px;">{esc_html(resumo_n)}</div>' if resumo_n else ''}
-                <a href="{esc_html(n.get('link', ''))}" target="_blank" style="display:inline-block;padding:9px 14px;border:1px solid rgba(16,24,40,.18);border-radius:8px;text-decoration:none;color:#27324a;font-weight:700;background:#fff;">Ler matéria ↗</a>
+                {f'<div style="font-size:15px;line-height:1.5;color:#475467;margin-bottom:4px;">{esc_html(resumo_n)}</div>' if resumo_n else ''}
             </div>
             """,
             unsafe_allow_html=True
         )
+
+        col_ler, col_whatsapp = st.columns([1, 1], gap="small")
+        with col_ler:
+            st.link_button(
+                "**Ler matéria ↗**",
+                n.get("link", ""),
+                key=f"ler_destaque_{hash(n.get('link', ''))}"
+            )
+
+        titulo_whatsapp = str(n.get("titulo") or "").replace("*", "").strip()
+        texto_whatsapp = f"*{titulo_whatsapp}*\n\n{n.get('link', '')}"
+        whatsapp_url = "https://wa.me/?text=" + quote(texto_whatsapp)
+        with col_whatsapp:
+            st.link_button(
+                "📲 Compartilhar no WhatsApp",
+                whatsapp_url,
+                key=f"whatsapp_destaque_{hash(n.get('link', ''))}"
+            )
+
     else:
         st.markdown(
             '<div style="color:#98a2b3;padding:10px 2px;">Nenhuma matéria crítica relacionada ao TCE-MG em Minas Gerais nos últimos 7 dias.</div>',
