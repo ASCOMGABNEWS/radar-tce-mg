@@ -23,6 +23,8 @@ from openai import OpenAI
 
 import re
 import html
+from difflib import SequenceMatcher
+from bs4 import BeautifulSoup
 from collections import Counter
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
@@ -112,9 +114,6 @@ FONTES = {
     "G1 - Tribunais de Contas":
         'https://news.google.com/rss/search?q=site%3Ag1.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
-    "G1 - Daniel Brandão / TCE-MA":
-        'https://news.google.com/rss/search?q=site%3Ag1.globo.com%2Fma%2Fmaranhao+(%22Daniel+Brand%C3%A3o%22+OR+%22Tribunal+de+Contas+do+Maranh%C3%A3o%22+OR+%22TCE-MA%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
     "Folha de S.Paulo":
         'https://news.google.com/rss/search?q=site%3Afolha.uol.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
@@ -123,9 +122,6 @@ FONTES = {
 
     "O Globo - Tribunais de Contas":
         'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "O Globo - TCE-MA":
-        'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22Daniel+Brand%C3%A3o%22+OR+%22Tribunal+de+Contas+do+Maranh%C3%A3o%22+OR+%22TCE-MA%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "STF - Tribunais de Contas":
         'https://news.google.com/rss/search?q=(%22STF%22+OR+%22Supremo+Tribunal+Federal%22)+(%22Tribunal+de+Contas%22+OR+%22TCE%22+OR+%22TCU%22+OR+%22controle+externo%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
@@ -165,15 +161,6 @@ FONTES = {
     # BUSCAS GERAIS
     # --------------------------------------------------------
 
-    "TCE-MG":
-        'https://news.google.com/rss/search?q=%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "TCE MG":
-        'https://news.google.com/rss/search?q=%22TCE%20MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Tribunal de Contas MG":
-        'https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%22+%22Minas%20Gerais%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
     # --------------------------------------------------------
     # MONITORAMENTO INSTITUCIONAL — CONTROLE EXTERNO
     # --------------------------------------------------------
@@ -209,12 +196,6 @@ FONTES = {
 
     "Afastamentos em Tribunais de Contas":
         'https://news.google.com/rss/search?q=%22afastado%22+(%22TCE%22+OR+%22Tribunal+de+Contas%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "TCE Maranhão":
-        'https://news.google.com/rss/search?q=(%22TCE-MA%22+OR+%22TCE+Maranh%C3%A3o%22+OR+%22Tribunal+de+Contas+do+Maranh%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
-
-    "Daniel Brandão":
-        'https://news.google.com/rss/search?q=%22Daniel+Brand%C3%A3o%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 
     "Conselheiros de Tribunais de Contas":
         'https://news.google.com/rss/search?q=%22conselheiro%22+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
@@ -875,9 +856,7 @@ FONTES_NACIONAIS = {
     "Globo",
     "G1",
     "G1 - Tribunais de Contas",
-    "G1 - Daniel Brandão / TCE-MA",
     "O Globo - Tribunais de Contas",
-    "O Globo - TCE-MA",
     "STF - Tribunais de Contas",
     "Poder360",
     "JOTA",
@@ -898,6 +877,10 @@ FONTES_NACIONAIS = {
 }
 
 FONTES_MINAS = {
+    "TCE-MG",
+    "ALMG",
+    "MPMG",
+    "TJMG",
     "Estado de Minas",
     "Itatiaia",
     "O TEMPO",
@@ -956,6 +939,183 @@ def classificar_abrangencia(veiculo, titulo="", resumo=""):
 
     return "Nacional"
 
+
+
+# ============================================================
+# PORTAIS OFICIAIS
+# ============================================================
+# Estes portais são coletados diretamente. Assim o Radar não depende
+# de o Google News indexar a notícia.
+PORTAIS_OFICIAIS = {
+    "TCE-MG": ("https://www.tce.mg.gov.br/noticia/", "tce"),
+    "ALMG": ("https://www.almg.gov.br/comunicacao/noticias/", "almg"),
+    "MPMG": ("https://www.mpmg.mp.br/portal/menu/comunicacao/noticias/", "mpmg"),
+    "TJMG": ("https://www.tjmg.jus.br/portal-tjmg/", "tjmg"),
+}
+
+
+def normalizar_titulo_dedupe(titulo):
+    texto = limpar_texto(titulo).lower()
+    texto = re.sub(r"[^a-z0-9áàâãéêíóôõúçü ]", " ", texto)
+    texto = re.sub(r"\s+", " ", texto).strip()
+    return texto
+
+
+def titulo_duplicado(titulo, titulos_existentes):
+    chave = normalizar_titulo_dedupe(titulo)
+    if not chave:
+        return False
+    for existente in titulos_existentes:
+        if chave == existente:
+            return True
+        if len(chave) >= 35 and len(existente) >= 35:
+            if SequenceMatcher(None, chave, existente).ratio() >= 0.91:
+                return True
+    return False
+
+
+def parse_data_portal(texto):
+    if not texto:
+        return None
+    padroes = [
+        r"(\d{2}/\d{2}/\d{4})\s*(?:[-–]\s*)?(\d{1,2}:\d{2})?",
+        r"(\d{2})\/(\d{2})\/(\d{4})",
+    ]
+    for padrao in padroes:
+        m = re.search(padrao, texto)
+        if not m:
+            continue
+        try:
+            if len(m.groups()) == 2:
+                data_s, hora_s = m.groups()
+                data = datetime.strptime(data_s, "%d/%m/%Y")
+                if hora_s:
+                    data = data.replace(hour=int(hora_s.split(':')[0]), minute=int(hora_s.split(':')[1]))
+            else:
+                data = datetime.strptime(f"{m.group(1)}/{m.group(2)}/{m.group(3)}", "%d/%m/%Y")
+            return data.replace(tzinfo=FUSO_BRASIL)
+        except Exception:
+            pass
+    return None
+
+
+def coletar_portal_oficial(nome, url, tipo):
+    """
+    Coleta diretamente a listagem pública do portal oficial.
+    Não depende de o Google News indexar a matéria.
+    """
+    try:
+        req = Request(
+            url,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 Chrome/151 Safari/537.36"
+                ),
+                "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+            },
+        )
+        with urlopen(req, timeout=15) as resposta:
+            html_portal = resposta.read()
+        soup = BeautifulSoup(html_portal, "html.parser")
+    except Exception:
+        return []
+
+    resultados = []
+    vistos = set()
+
+    dominio = url.split("/")[2]
+
+    # Não limitar artificialmente a 80 links: os portais podem ter
+    # muitas notícias recentes e o filtro de data será aplicado depois.
+    for a in soup.find_all("a", href=True):
+        titulo = limpar_texto(a.get_text(" ", strip=True))
+        href = a.get("href", "").strip()
+
+        if not titulo or len(titulo) < 25:
+            continue
+
+        # Resolve links relativos de forma segura.
+        if href.startswith("//"):
+            href = "https:" + href
+        elif href.startswith("/"):
+            href = f"https://{dominio}{href}"
+        elif href.startswith("./"):
+            href = url.rstrip("/") + "/" + href[2:]
+        elif not href.startswith(("http://", "https://")):
+            continue
+
+        href_l = href.lower()
+
+        # O filtro precisa identificar página de notícia, mas aceita
+        # diferentes padrões usados pelos quatro portais.
+        if tipo == "tce":
+            valido = (
+                "/noticia/" in href_l
+                or "/noticia?" in href_l
+                or "/noticia/" in href_l.replace("//", "/")
+            )
+        elif tipo == "almg":
+            valido = "/comunicacao/noticias/" in href_l
+        elif tipo == "mpmg":
+            valido = "/portal/menu/comunicacao/noticias/" in href_l
+        elif tipo == "tjmg":
+            valido = "/portal-tjmg/noticias/" in href_l
+        else:
+            valido = False
+
+        if not valido:
+            continue
+
+        # Evita links de listagem, paginação e âncoras.
+        if href.rstrip("/").lower() in {
+            url.rstrip("/").lower(),
+            url.rstrip("/").lower() + "/noticias",
+        }:
+            continue
+        if href.split("#")[0] in vistos:
+            continue
+
+        vistos.add(href.split("#")[0])
+
+        # Tenta encontrar a data no card e em ancestrais próximos.
+        contexto = ""
+        no = a
+        for _ in range(4):
+            no = no.parent
+            if no is None:
+                break
+            texto_no = limpar_texto(no.get_text(" ", strip=True))
+            if texto_no and len(texto_no) <= 1200:
+                contexto = texto_no
+                if re.search(r"\b\d{2}/\d{2}/\d{4}\b", contexto):
+                    break
+
+        if not contexto:
+            contexto = titulo
+
+        data = parse_data_portal(contexto)
+
+        resultados.append({
+            "titulo": titulo,
+            "resumo": contexto.replace(titulo, "", 1).strip(),
+            "link": href.split("#")[0],
+            "veiculo": nome,
+            "data": data,
+        })
+
+    return resultados
+
+
+# RSS de respaldo SOMENTE para os portais oficiais.
+# Serve para casos em que o portal usa JavaScript, paginação dinâmica
+# ou quando uma notícia recente ainda não aparece na primeira página HTML.
+PORTAIS_OFICIAIS_RSS = {
+    "TCE-MG": "https://news.google.com/rss/search?q=site%3Atce.mg.gov.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "ALMG": "https://news.google.com/rss/search?q=site%3Aalmg.gov.br+%22ALMG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "MPMG": "https://news.google.com/rss/search?q=site%3Ampmg.mp.br+%22MPMG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "TJMG": "https://news.google.com/rss/search?q=site%3Atjmg.jus.br+%22TJMG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+}
 
 # ============================================================
 # COLETA
@@ -1071,204 +1231,117 @@ MOTIVO: explicação curta em até 2 frases
         
 @st.cache_data(ttl=300, show_spinner=False)
 def buscar_noticias():
-
     noticias = []
-
     links = set()
+    titulos = []
+    limite = datetime.now(FUSO_BRASIL) - timedelta(days=7)
 
-    limite = (
-        datetime.now(FUSO_BRASIL)
-        - timedelta(days=7)
-    )
+    def adicionar(reg, monitoramento):
+        link = reg.get("link", "")
+        titulo = reg.get("titulo", "Sem título")
+        if not link or titulo_duplicado(titulo, titulos):
+            return False
+        data = reg.get("data")
+        if data and data < limite:
+            return False
 
+        resumo = limpar_texto(reg.get("resumo", ""))
+        pessoas = identificar_pessoas(titulo, resumo)
+        temas = identificar_temas(titulo, resumo)
+        instituicoes = identificar_instituicoes(titulo, resumo)
 
-    for nome, url in FONTES.items():
+        pessoa_fonte = MAPA_FONTE_PESSOA.get(monitoramento)
+        if pessoa_fonte and pessoa_fonte not in pessoas:
+            pessoas.append(pessoa_fonte)
 
+        # Fontes oficiais identificam a própria instituição mesmo quando a
+        # sigla não aparece no título/resumo.
+        if monitoramento in INSTITUICOES_FILTRO and monitoramento not in instituicoes:
+            instituicoes.append(monitoramento)
+
+        score = calcular_relevancia(titulo, resumo, monitoramento, temas, pessoas)
+        veiculo = reg.get("veiculo") or monitoramento
+        abr = classificar_abrangencia(veiculo, titulo, resumo)
+        noticias.append({
+            "titulo": titulo,
+            "resumo": resumo,
+            "link": link,
+            "monitoramento": monitoramento,
+            "veiculo": veiculo,
+            "abrangencia": abr,
+            "data": data,
+            "score": score,
+            "bolinha": classificar(score),
+            "temas": temas,
+            "pessoas": pessoas,
+            "instituicoes": instituicoes,
+        })
+        links.add(link)
+        titulos.append(normalizar_titulo_dedupe(titulo))
+        return True
+
+    # 1) Portais oficiais primeiro: eles têm prioridade sobre cópias em jornais.
+    for nome, (url, tipo) in PORTAIS_OFICIAIS.items():
+        for reg in coletar_portal_oficial(nome, url, tipo):
+            adicionar(reg, nome)
+
+    # 1b) Backup dos próprios portais oficiais via Google News.
+    # Não é a fonte principal: só recupera matérias que o HTML dinâmico
+    # ou a paginação do portal não expôs na coleta direta.
+    for nome, url in PORTAIS_OFICIAIS_RSS.items():
         try:
-
-            # Não deixe uma fonte RSS fora do ar travar o Radar inteiro.
-            request = Request(
-                url,
-                headers={
-                    "User-Agent": "Radar-TCE-MG/1.0"
-                }
-            )
-
-            with urlopen(
-                request,
-                timeout=6
-            ) as resposta:
-
-                conteudo = resposta.read()
-
-            feed = feedparser.parse(
-                conteudo
-            )
-
+            request = Request(url, headers={"User-Agent": "Radar-TCE-MG/2.0"})
+            with urlopen(request, timeout=8) as resposta:
+                feed = feedparser.parse(resposta.read())
         except Exception:
-
             continue
 
+        for item in feed.entries:
+            data = obter_data(item)
+            adicionar({
+                "titulo": limpar_texto(item.get("title", "")),
+                "resumo": limpar_texto(item.get("summary", "")),
+                "link": item.get("link", ""),
+                "veiculo": nome,
+                "data": data,
+            }, nome)
+
+    # 2) Demais veículos continuam via Google News/RSS.
+    for nome, url in FONTES.items():
+        try:
+            request = Request(url, headers={"User-Agent": "Radar-TCE-MG/2.0"})
+            with urlopen(request, timeout=8) as resposta:
+                conteudo = resposta.read()
+            feed = feedparser.parse(conteudo)
+        except Exception:
+            continue
 
         for item in feed.entries:
-
-            link = item.get(
-                "link",
-                ""
-            )
-
-
-            if (
-                not link
-                or link in links
-            ):
-
+            link = item.get("link", "")
+            if not link or link in links:
                 continue
-
-
-            data = obter_data(
-                item
-            )
-
-
-            if (
-                data
-                and data < limite
-            ):
-
+            data = obter_data(item)
+            if data and data < limite:
                 continue
-
-
-            links.add(
-                link
-            )
-
-
-            titulo = item.get(
-                "title",
-                "Sem título"
-            )
-
-
-            resumo = limpar_texto(
-                item.get(
-                    "summary",
-                    ""
-                )
-            )
-
-
-            temas = identificar_temas(
-                titulo,
-                resumo
-            )
-
-
-            pessoas = identificar_pessoas(
-                titulo,
-                resumo
-            )
-
-            instituicoes = identificar_instituicoes(
-                titulo,
-                resumo
-            )
-
-
-            # ------------------------------------------------
-            # CORREÇÃO DAS PESSOAS
-            # ------------------------------------------------
-
-            if nome in MAPA_FONTE_PESSOA:
-
-                pessoa_fonte = (
-                    MAPA_FONTE_PESSOA[
-                        nome
-                    ]
-                )
-
-                if pessoa_fonte not in pessoas:
-
-                    pessoas.append(
-                        pessoa_fonte
-                    )
-
-
-            score = calcular_relevancia(
-
-                titulo,
-                resumo,
-                nome,
-                temas,
-                pessoas
-            )
-
-
-            noticias.append({
-
-                "titulo":
-                    titulo,
-
-                "resumo":
-                    resumo,
-
-                "link":
-                    link,
-
-                "monitoramento":
-                    nome,
-
-                "veiculo":
-                    extrair_veiculo(
-                        item
-                    ),
-
-                "abrangencia":
-                    classificar_abrangencia(
-                        extrair_veiculo(item),
-                        titulo,
-                        resumo
-                    ),
-
-                "data":
-                    data,
-
-                "score":
-                    score,
-
-                "bolinha":
-                    classificar(
-                        score
-                    ),
-
-                "temas":
-                    temas,
-
-                "pessoas":
-                    pessoas,
-
-                "instituicoes":
-                    instituicoes,
-            })
-
+            titulo = item.get("title", "Sem título")
+            if titulo_duplicado(titulo, titulos):
+                continue
+            adicionar({
+                "titulo": titulo,
+                "resumo": item.get("summary", ""),
+                "link": link,
+                "veiculo": extrair_veiculo(item),
+                "data": data,
+            }, nome)
 
     noticias.sort(
-
         key=lambda x: (
-
             x["score"],
-
-            x["data"]
-            or datetime.min.replace(tzinfo=FUSO_BRASIL)
-
+            x["data"] or datetime.min.replace(tzinfo=FUSO_BRASIL)
         ),
-
         reverse=True
     )
-
-
     return noticias
-
 
 
 # ============================================================
@@ -1731,6 +1804,126 @@ if atualizar_agora:
     st.cache_data.clear()
     st.rerun()
 
+
+
+# ============================================================
+# PORTAIS OFICIAIS
+# ============================================================
+# Estes portais são coletados diretamente. Assim o Radar não depende
+# de o Google News indexar a notícia.
+PORTAIS_OFICIAIS = {
+    "TCE-MG": ("https://www.tce.mg.gov.br/noticia/", "tce"),
+    "ALMG": ("https://www.almg.gov.br/comunicacao/noticias/", "almg"),
+    "MPMG": ("https://www.mpmg.mp.br/portal/menu/comunicacao/noticias/", "mpmg"),
+    "TJMG": ("https://www.tjmg.jus.br/portal-tjmg/", "tjmg"),
+}
+
+
+def normalizar_titulo_dedupe(titulo):
+    texto = limpar_texto(titulo).lower()
+    texto = re.sub(r"[^a-z0-9áàâãéêíóôõúçü ]", " ", texto)
+    texto = re.sub(r"\s+", " ", texto).strip()
+    return texto
+
+
+def titulo_duplicado(titulo, titulos_existentes):
+    chave = normalizar_titulo_dedupe(titulo)
+    if not chave:
+        return False
+    for existente in titulos_existentes:
+        if chave == existente:
+            return True
+        if len(chave) >= 35 and len(existente) >= 35:
+            if SequenceMatcher(None, chave, existente).ratio() >= 0.91:
+                return True
+    return False
+
+
+def parse_data_portal(texto):
+    if not texto:
+        return None
+    padroes = [
+        r"(\d{2}/\d{2}/\d{4})\s*(?:[-–]\s*)?(\d{1,2}:\d{2})?",
+        r"(\d{2})\/(\d{2})\/(\d{4})",
+    ]
+    for padrao in padroes:
+        m = re.search(padrao, texto)
+        if not m:
+            continue
+        try:
+            if len(m.groups()) == 2:
+                data_s, hora_s = m.groups()
+                data = datetime.strptime(data_s, "%d/%m/%Y")
+                if hora_s:
+                    data = data.replace(hour=int(hora_s.split(':')[0]), minute=int(hora_s.split(':')[1]))
+            else:
+                data = datetime.strptime(f"{m.group(1)}/{m.group(2)}/{m.group(3)}", "%d/%m/%Y")
+            return data.replace(tzinfo=FUSO_BRASIL)
+        except Exception:
+            pass
+    return None
+
+
+def coletar_portal_oficial(nome, url, tipo):
+    """Lê a listagem atual do portal oficial e devolve registros padronizados."""
+    try:
+        req = Request(url, headers={"User-Agent": "Mozilla/5.0 Radar-TCE-MG/2.0"})
+        with urlopen(req, timeout=12) as resposta:
+            html_portal = resposta.read()
+        soup = BeautifulSoup(html_portal, "html.parser")
+    except Exception:
+        return []
+
+    resultados = []
+    vistos = set()
+    limite_links = 80
+
+    for a in soup.find_all("a", href=True):
+        titulo = limpar_texto(a.get_text(" ", strip=True))
+        href = a.get("href", "").strip()
+        if not titulo or len(titulo) < 25:
+            continue
+
+        if tipo == "tce":
+            if "/noticia" not in href.lower():
+                continue
+        elif tipo == "almg":
+            if "/comunicacao/noticias/" not in href.lower() or href.rstrip('/').endswith('noticias'):
+                continue
+        elif tipo == "mpmg":
+            if "/portal/menu/comunicacao/noticias/" not in href.lower() or href.rstrip('/').endswith('noticias'):
+                continue
+        elif tipo == "tjmg":
+            if "/portal-tjmg/noticias/" not in href.lower():
+                continue
+
+        if href.startswith('/'):
+            base = url.split('/', 3)
+            href = f"{base[0]}//{base[2]}{href}"
+        elif href.startswith('./'):
+            href = url.rstrip('/') + '/' + href[2:]
+
+        if href in vistos:
+            continue
+        vistos.add(href)
+
+        parent = a.parent
+        contexto = limpar_texto(parent.get_text(" ", strip=True)) if parent else titulo
+        if len(contexto) < len(titulo) + 10 and parent and parent.parent:
+            contexto = limpar_texto(parent.parent.get_text(" ", strip=True))
+
+        data = parse_data_portal(contexto)
+        resultados.append({
+            "titulo": titulo,
+            "resumo": contexto.replace(titulo, "", 1).strip(),
+            "link": href,
+            "veiculo": nome,
+            "data": data,
+        })
+        if len(resultados) >= limite_links:
+            break
+
+    return resultados
 
 # ============================================================
 # COLETA
@@ -2198,7 +2391,7 @@ todas_pessoas = []
 for grupo in PESSOAS.values():
     todas_pessoas.extend(grupo.keys())
 
-f1, f2, f3, f4 = st.columns(4)
+f1, f2, f3 = st.columns(3)
 
 with f1:
     filtro_pessoa = st.selectbox(
@@ -2213,12 +2406,6 @@ with f2:
     )
 
 with f3:
-    filtro_fonte = st.selectbox(
-        "🗞️ Fonte",
-        ["Todas"] + list(FONTES.keys())
-    )
-
-with f4:
     filtro_instituicao = st.selectbox(
         "🏛️ Instituição",
         ["Todas"] + list(INSTITUICOES_FILTRO.keys())
@@ -2260,12 +2447,6 @@ if filtro_tema != "Todos":
     filtradas = [
         n for n in filtradas
         if filtro_tema in n["temas"]
-    ]
-
-if filtro_fonte != "Todas":
-    filtradas = [
-        n for n in filtradas
-        if n["monitoramento"] == filtro_fonte
     ]
 
 if filtro_instituicao != "Todas":
