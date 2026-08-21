@@ -1054,11 +1054,11 @@ INSTITUICOES_FILTRO = {
 # combinação de palavras; as demais refinam conciliação, comunicação, controle etc.
 # ALMG/MPMG/TJMG continuam como fontes complementares via Google News.
 BUSCAS_OFICIAIS = [
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ -site:tcnotas.tce.mg.gov.br'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ -site:tcnotas.tce.mg.gov.br ("TCE-MG" OR "TCE MG" OR TCEMG OR "Tribunal de Contas de Minas Gerais")'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ -site:tcnotas.tce.mg.gov.br (comunicação OR comunicacao OR "comunicação pública" OR "comunicação institucional" OR "órgãos públicos" OR "órgão público" OR "linguagem simples" OR "e-mail" OR imprensa OR jornalismo OR "redes sociais" OR transparência)'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ -site:tcnotas.tce.mg.gov.br (conciliação OR "mesa de conciliação" OR "controle externo" OR fiscalização OR auditoria OR licitação OR concessão OR acórdão OR acordao OR decisão OR decisao OR contrato)'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ -site:tcnotas.tce.mg.gov.br ("Agostinho Patrus" OR "Durval Ângelo" OR "Durval Angelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR "Alencar da Silveira" OR conselheiro OR conselheira OR presidente)'),
+    ("TCE-MG", 'site:tce.mg.gov.br -site:tce.mg.gov.br/Noticia/'),
+    ("TCE-MG", 'site:tce.mg.gov.br -site:tce.mg.gov.br/Noticia/ ("TCE-MG" OR "TCE MG" OR TCEMG OR "Tribunal de Contas de Minas Gerais")'),
+    ("TCE-MG", 'site:tce.mg.gov.br -site:tce.mg.gov.br/Noticia/ (comunicação OR comunicacao OR "comunicação pública" OR "comunicação institucional" OR "órgãos públicos" OR "órgão público" OR "linguagem simples" OR "e-mail" OR imprensa OR jornalismo OR "redes sociais" OR transparência)'),
+    ("TCE-MG", 'site:tce.mg.gov.br -site:tce.mg.gov.br/Noticia/ (conciliação OR "mesa de conciliação" OR "controle externo" OR fiscalização OR auditoria OR licitação OR concessão OR acórdão OR acordao OR decisão OR decisao OR contrato)'),
+    ("TCE-MG", 'site:tce.mg.gov.br -site:tce.mg.gov.br/Noticia/ ("Agostinho Patrus" OR "Durval Ângelo" OR "Durval Angelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR "Alencar da Silveira" OR conselheiro OR conselheira OR presidente)'),
     ("Órgãos complementares", '(site:almg.gov.br OR site:mpmg.mp.br OR site:tjmg.jus.br) ("TCE-MG" OR "TCE MG" OR TCEMG OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo" OR "processo do TCE" OR "decisão do TCE")'),
 ]
 
