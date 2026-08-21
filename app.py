@@ -2736,7 +2736,7 @@ if _ticker_final:
             }}
         </style>
         <div class="radar-ticker-wrap">
-            <div class="radar-ticker-label">📰 ÚLTIMAS NOS PARTAIS DE MG</div>
+            <div class="radar-ticker-label">📰 ÚLTIMAS NOS PORTAIS DE MG</div>
             <div class="radar-ticker-window">
                 <div class="radar-ticker-track">
                     {itens_html}{itens_html}
