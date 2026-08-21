@@ -1027,9 +1027,14 @@ INSTITUICOES_FILTRO = {
 # combinação de palavras; as demais refinam conciliação, comunicação, controle etc.
 # ALMG/MPMG/TJMG continuam como fontes complementares via Google News.
 BUSCAS_OFICIAIS = [
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia ("Agostinho Patrus" OR "Durval Ângelo" OR conciliação OR "controle externo" OR fiscalização OR auditoria)'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia (conselheiro OR acórdão OR processo OR decisão OR licitação OR concessão OR comunicação)'),
+    # TCE-MG: buscas próprias no Google News. Não fazemos scraping direto
+    # do portal; usamos o índice do Google para manter a coleta rápida.
+    # O domínio tcnotas é excluído para evitar processos/notas em vez de notícias.
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia -site:tcnotas.tce.mg.gov.br'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia -site:tcnotas.tce.mg.gov.br (comunicação OR "comunicação pública" OR "comunicação institucional" OR "órgãos públicos" OR "órgão público" OR "linguagem simples" OR "e-mail")'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia -site:tcnotas.tce.mg.gov.br (conciliação OR "mesa de conciliação" OR "controle externo" OR fiscalização OR auditoria OR licitação OR concessão OR acórdão OR decisão)'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia -site:tcnotas.tce.mg.gov.br ("Agostinho Patrus" OR "Durval Ângelo" OR "Gilberto Diniz" OR conselheiro OR presidente)'),
+    # Órgãos mineiros complementares só entram quando houver conexão com TC.
     ("Órgãos complementares", '(site:almg.gov.br OR site:mpmg.mp.br OR site:tjmg.jus.br) ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo" OR "processo do TCE" OR "decisão do TCE")'),
 ]
 
@@ -1994,29 +1999,49 @@ with col3:
 limite_destaque_7d = datetime.now(FUSO_BRASIL) - timedelta(days=7)
 
 def destaque_tce_mg(n):
-    """Candidata à matéria mais importante do Radar nos últimos 7 dias."""
+    """Seleciona somente destaque de MG com relação explícita ao TCE-MG."""
     if not n.get("data") or n["data"] < limite_destaque_7d:
         return False
+
+    # O destaque é exclusivamente mineiro.
     if n.get("abrangencia") != "Minas Gerais":
         return False
-    instituicoes = n.get("instituicoes") or []
-    pessoas = " ".join(n.get("pessoas") or []).lower()
-    return (
-        "TCE-MG"
-        or noticia_tem_conexao_tc(n.get("titulo"), n.get("resumo"), n.get("veiculo"))
-        or any(nome in pessoas for nome in (
-            "agostinho patrus", "durval ângelo", "durval angelo", "gilberto diniz",
-            "ione pinheiro", "alencar da silveira", "licurgo mourão", "licurgo mourao",
-            "hamilton coelho", "adonias fernandes", "telmo passareli", "tadeu martins leite"
-        ))
+
+    # Só entram Crítica ou Alta.
+    score = n.get("score", 0)
+    if score < 65:
+        return False
+
+    titulo = str(n.get("titulo") or "").lower()
+    resumo = str(n.get("resumo") or "").lower()
+    veiculo = str(n.get("veiculo") or "").lower()
+    monitoramento = str(n.get("monitoramento") or "").lower()
+    texto = " ".join([titulo, resumo, veiculo, monitoramento])
+
+    # O destaque NÃO pode ser uma notícia apenas sobre TCU, outro TCE ou
+    # controle externo genérico. Precisa haver vínculo com o TCE de Minas.
+    termos_tce_mg = (
+        "tce-mg",
+        "tce mg",
+        "tce de minas gerais",
+        "tribunal de contas de minas gerais",
+        "tribunal de contas do estado de minas gerais",
+        "tribunal de contas de mg",
     )
 
-# Sempre há uma escolha quando existe notícia relevante. Se houver uma crítica,
-# ela ganha prioridade; se não houver, mostramos a matéria de maior relevância.
+    tem_tce_mg = (
+        any(t in texto for t in termos_tce_mg)
+        or "tce-mg" in [str(x).lower() for x in (n.get("instituicoes") or [])]
+        or monitoramento == "tce-mg"
+        or veiculo == "tce-mg"
+    )
+
+    return tem_tce_mg
+
+# Primeiro a maior nota. Em empate, a notícia mais recente.
 criticas_tce_mg_7d = [n for n in noticias if destaque_tce_mg(n)]
 criticas_tce_mg_7d.sort(
     key=lambda n: (
-        1 if n.get("score", 0) >= 85 else 0,
         n.get("score", 0),
         n.get("data") or datetime.min.replace(tzinfo=FUSO_BRASIL)
     ),
