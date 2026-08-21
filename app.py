@@ -61,6 +61,9 @@ st.set_page_config(
 # ============================================================
 
 FONTES = {"Estado de Minas": "https://news.google.com/rss/search?q=site%3Aem.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "TCE Notícias": "https://news.google.com/rss/search?q=site%3Atce.mg.gov.br%2Fnoticia%2F&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "AMM Notícias": "https://news.google.com/rss/search?q=site%3Aamm-mg.org.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Jornal Panorama de Minas": "https://news.google.com/rss/search?q=%22Jornal+Panorama+de+Minas%22+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "Itatiaia": "https://news.google.com/rss/search?q=site%3Aitatiaia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "O TEMPO": "https://news.google.com/rss/search?q=site%3Aotempo.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "Hoje em Dia": "https://news.google.com/rss/search?q=site%3Ahojeemdia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
