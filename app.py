@@ -23,6 +23,7 @@ from openai import OpenAI
 
 import re
 import html
+from html.parser import HTMLParser
 from difflib import SequenceMatcher
 from collections import Counter
 from io import BytesIO
@@ -440,11 +441,18 @@ def extrair_veiculo(item):
     return "Fonte não identificada"
 
 
+def nome_fonte_exibicao(veiculo):
+    """Nome amigável exibido nos cards, sem alterar o valor interno da fonte."""
+    if str(veiculo or "").strip().lower() == "tce-mg":
+        return "TCE Notícias"
+    return str(veiculo or "Fonte não identificada")
+
+
 def normalizar_veiculo(veiculo, monitoramento=""):
     """Padroniza variações do TCE-MG devolvidas pelo Google News."""
-    if monitoramento == "TCE-MG":
-        return "TCE-MG"
     texto = limpar_texto(veiculo).strip()
+    if monitoramento == "TCE-MG":
+        return "TCE Notícias" if texto.lower() == "tce notícias" else "TCE-MG"
     chave = texto.lower()
     variacoes_tce_mg = {
         "tce", "tce-mg", "tce mg", "tcemg", "t.c.e.-mg",
@@ -759,7 +767,7 @@ def calcular_relevancia(
 
     # Ações institucionais relevantes.
     termos_acao = [
-        "determina", "decide", "suspende", "condena", "multa",
+        "determina", "decide", "suspende", "condena", "multa", "institucional;",
         "auditoria", "fiscalização", "julgamento", "acórdão",
         "irregularidade", "recomenda", "processo", "ressarcimento",
         "contas",
@@ -825,6 +833,7 @@ FONTES_NACIONAIS = {
 
 FONTES_MINAS = {
     "TCE-MG",
+    "TCE Notícias",
     "ALMG",
     "MPMG",
     "TJMG",
@@ -875,7 +884,7 @@ def classificar_abrangencia(veiculo, titulo="", resumo=""):
     # Só reconhecer MG com expressões explícitas. Não usar "mg" solto,
     # pois isso gera falsos positivos em palavras comuns.
     termos_mg = (
-        "tce-mg", "tce mg", "tce de minas gerais",
+        "tce-mg", "tce mg", "tcemg", "tce de minas gerais",
         "tribunal de contas de minas gerais",
         "tribunal de contas do estado de minas gerais",
         "tribunal de contas de mg",
@@ -1060,30 +1069,281 @@ BUSCAS_OFICIAIS = [
 # só entram quando a notícia tem conexão explícita com TCE/TCU/Tribunais de
 # Contas, conselheiros, processos, decisões ou atuação de controle externo.
 TERMOS_CONEXAO_TC = (
-    "tce-mg", "tce mg", "tcemg", "tce de minas gerais",
+    # ============================================================
+    # TCE-MG — VARIAÇÕES
+    # ============================================================
+    "tce-mg",
+    "tce mg",
+    "tcemg",
+    "tce de minas gerais",
+    "tce de mg",
     "tribunal de contas de minas gerais",
     "tribunal de contas do estado de minas gerais",
-    "tribunal de contas do estado de mg", "tribunal de contas de mg",
-    "tribunal de contas", "tribunais de contas", "tcu",
-    "conselheiro do tce", "conselheira do tce",
-    "conselheiro do tribunal de contas", "conselheira do tribunal de contas",
-    "ministro do tcu", "ministra do tcu", "presidente do tce",
-    "presidente do tribunal de contas", "presidente do tcu",
-    "acórdão do tce", "acordao do tce", "processo no tce",
-    "processo do tce", "processo no tribunal de contas",
-    "processo do tribunal de contas", "decisão do tce", "decisao do tce",
-    "decisão do tribunal de contas", "decisao do tribunal de contas",
-    "auditoria do tce", "fiscalização do tce", "fiscalizacao do tce",
-    "denúncia ao tce", "denuncia ao tce", "representação no tce",
-    "representacao no tce", "mesa de conciliação do tce",
-    "mesa de conciliacao do tce", "conciliação no tce",
-    "conciliacao no tce", "controle externo"
+    "tribunal de contas do estado de mg",
+    "tribunal de contas de mg",
+    "tribunal de contas mineiro",
+
+    # ============================================================
+    # TRIBUNAIS DE CONTAS
+    # ============================================================
+    "tribunal de contas",
+    "tribunais de contas",
+    "tcu",
+    "conselheiro do tce",
+    "conselheira do tce",
+    "conselheiro do tribunal de contas",
+    "conselheira do tribunal de contas",
+    "ministro do tcu",
+    "ministra do tcu",
+    "presidente do tce",
+    "presidente do tribunal de contas",
+    "presidente do tcu",
+
+    # ============================================================
+    # PROCESSOS / DECISÕES / CONTROLE
+    # ============================================================
+    "acórdão do tce",
+    "acordao do tce",
+    "acórdão do tribunal de contas",
+    "acordao do tribunal de contas",
+    "processo no tce",
+    "processo do tce",
+    "processo no tribunal de contas",
+    "processo do tribunal de contas",
+    "decisão do tce",
+    "decisao do tce",
+    "decisão do tribunal de contas",
+    "decisao do tribunal de contas",
+    "auditoria do tce",
+    "auditoria do tribunal de contas",
+    "fiscalização do tce",
+    "fiscalizacao do tce",
+    "fiscalização do tribunal de contas",
+    "fiscalizacao do tribunal de contas",
+    "denúncia ao tce",
+    "denuncia ao tce",
+    "representação no tce",
+    "representacao no tce",
+
+    # ============================================================
+    # CONCILIAÇÃO / CONSENSUALISMO
+    # ============================================================
+    "mesa de conciliação do tce",
+    "mesa de conciliacao do tce",
+    "mesa de conciliação no tce",
+    "mesa de conciliacao no tce",
+    "conciliação no tce",
+    "conciliacao no tce",
+    "conciliação do tce",
+    "conciliacao do tce",
+    "solução consensual no tce",
+    "solucao consensual no tce",
+    "consensualismo no tce",
+
+    # ============================================================
+    # CONTROLE EXTERNO
+    # ============================================================
+    "controle externo",
+    "controle externo do tce",
+    "controle externo pelo tce",
+    "controle externo dos tribunais de contas",
+    "fiscalização pelos tribunais de contas",
+
+    # ============================================================
+    # COMUNICAÇÃO / INSTITUCIONAL
+    # ============================================================
+    "comunicação do tce",
+    "comunicacao do tce",
+    "comunicação no tce",
+    "comunicacao no tce",
+    "comunicação institucional do tce",
+    "comunicacao institucional do tce",
+    "comunicação pública do tce",
+    "comunicacao publica do tce",
+    "assessoria de comunicação do tce",
+    "assessoria de comunicacao do tce",
+    "imprensa do tce",
+    "jornalismo do tce",
+    "redes sociais do tce",
+    "linguagem simples do tce",
+    "linguagem simples",
+    "simplifica",
+
+    # ============================================================
+    # ÓRGÃOS PÚBLICOS — QUANDO LIGADOS AO TCE
+    # ============================================================
+    "órgãos públicos e o tce",
+    "orgaos publicos e o tce",
+    "órgãos públicos no tce",
+    "orgaos publicos no tce",
+    "órgãos públicos pelo tce",
+    "orgaos publicos pelo tce",
+    "gestão pública e o tce",
+    "gestao publica e o tce",
+    "administração pública e o tce",
+    "administracao publica e o tce",
+
+    # ============================================================
+    # CONTRATAÇÕES / LICITAÇÕES — LIGADAS AO TCE
+    # ============================================================
+    "contratação no tce",
+    "contratacao no tce",
+    "contratação pelo tce",
+    "contratacao pelo tce",
+    "contratações no tce",
+    "contratacoes no tce",
+    "licitação no tce",
+    "licitacao no tce",
+    "licitações no tce",
+    "licitacoes no tce",
+    "contrato analisado pelo tce",
+    "contrato fiscalizado pelo tce",
+    "licitação fiscalizada pelo tce",
+
+    # ============================================================
+    # ATRICON / UNIVERSO DOS TRIBUNAIS
+    # ============================================================
+    "atricon",
+    "instituto rui barbosa",
+    "irb",
+    "rede dos tribunais de contas",
+    "tribunais de contas do brasil",
 )
 
 
 def noticia_tem_conexao_tc(titulo, resumo, veiculo=""):
     texto = " ".join([str(titulo or ""), str(resumo or ""), str(veiculo or "")]).lower()
     return any(t in texto for t in TERMOS_CONEXAO_TC)
+
+
+
+class LinksNoticiasParser(HTMLParser):
+    """Extrai links de notícias sem depender de BeautifulSoup."""
+    def __init__(self, padroes):
+        super().__init__(convert_charrefs=True)
+        self.padroes = tuple(padroes)
+        self.ancora = None
+        self.links = []
+        self.texto_atual = []
+        self.contexto = ""
+
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() != "a":
+            return
+        attrs = dict(attrs)
+        href = attrs.get("href", "")
+        if not href:
+            return
+        if any(p in href for p in self.padroes):
+            self.ancora = href
+            self.texto_atual = []
+
+    def handle_data(self, data):
+        if self.ancora is not None:
+            self.texto_atual.append(data)
+
+    def handle_endtag(self, tag):
+        if tag.lower() == "a" and self.ancora is not None:
+            titulo = limpar_texto(" ".join(self.texto_atual))
+            if titulo:
+                self.links.append((self.ancora, titulo))
+            self.ancora = None
+            self.texto_atual = []
+
+
+def extrair_data_proxima(html_texto, posicao, limite=1200):
+    trecho = html_texto[max(0, posicao - limite):posicao + limite]
+    m = re.search(r"\b(\d{2}/\d{2}/\d{4})\b", trecho)
+    if not m:
+        return None
+    try:
+        return datetime.strptime(m.group(1), "%d/%m/%Y").replace(tzinfo=FUSO_BRASIL)
+    except Exception:
+        return None
+
+
+def _buscar_pagina_oficial(args):
+    nome, url = args
+    try:
+        req = Request(url, headers={"User-Agent": "Mozilla/5.0 (Radar TCE-MG)"})
+        with urlopen(req, timeout=1.5) as resp:
+            return nome, resp.read().decode("utf-8", errors="ignore")
+    except Exception:
+        return nome, ""
+
+
+def buscar_noticias_oficiais_diretas():
+    """Busca apenas as duas fontes primárias em paralelo.
+    Não depende do Google News para TCE Notícias e Atricon."""
+    fontes = [
+        ("TCE Notícias", "https://www.tce.mg.gov.br/Noticia/Index/"),
+        ("Atricon", "https://atricon.org.br/categoria/noticias/"),
+    ]
+    saida = []
+    limite = datetime.now(FUSO_BRASIL) - timedelta(days=7)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        resultados = list(executor.map(_buscar_pagina_oficial, fontes))
+
+    for nome, texto_html in resultados:
+        if not texto_html:
+            continue
+
+        if nome == "TCE Notícias":
+            parser = LinksNoticiasParser(("/noticia/detalhe/", "/Noticia/Detalhe/"))
+        else:
+            # Na categoria de notícias da Atricon, os artigos próprios ficam
+            # em links do domínio atricon.org.br; excluímos páginas de menu.
+            parser = LinksNoticiasParser(("https://atricon.org.br/", "/"))
+
+        parser.feed(texto_html)
+        vistos = set()
+
+        for href, titulo in parser.links:
+            href_lower = href.lower()
+
+            if nome == "TCE Notícias":
+                if "/noticia/detalhe/" not in href_lower:
+                    continue
+                if not href_lower.startswith("http"):
+                    href = "https://www.tce.mg.gov.br" + href
+            else:
+                if not href_lower.startswith("http"):
+                    href = "https://atricon.org.br" + (href if href.startswith("/") else "/" + href)
+                if not href_lower.startswith("https://atricon.org.br/"):
+                    continue
+                if any(x in href_lower for x in (
+                    "/categoria/", "/tag/", "/author/", "/wp-content/",
+                    "/institucional/", "/comunicacao/", "/artigos/",
+                    "/documentos/", "/eventos/", "/associe-se/"
+                )):
+                    continue
+                # Evita links de artigos/revista e mantém a seção de notícias.
+                if href.rstrip("/") in {"https://atricon.org.br", "https://atricon.org.br/categoria/noticias"}:
+                    continue
+
+            if href in vistos:
+                continue
+            vistos.add(href)
+
+            pos = texto_html.lower().find(href.lower())
+            data = extrair_data_proxima(texto_html, pos) if pos >= 0 else None
+            if data and data < limite:
+                continue
+
+            saida.append({
+                "titulo": titulo,
+                "resumo": "",
+                "link": href,
+                "veiculo": nome,
+                "data": data,
+                "monitoramento": "TCE-MG" if nome == "TCE Notícias" else "Atricon",
+            })
+
+            if len([x for x in saida if x["veiculo"] == nome]) >= 20:
+                break
+
+    return saida
 
 
 def rss_url_para_busca(q):
@@ -1094,7 +1354,7 @@ def baixar_feed(args):
     nome, url = args
     try:
         request = Request(url, headers={"User-Agent": "Radar-TCE-MG/2.0"})
-        with urlopen(request, timeout=1.8) as resposta:
+        with urlopen(request, timeout=1.5) as resposta:
             return nome, feedparser.parse(resposta.read())
     except Exception:
         return nome, None
@@ -1130,6 +1390,17 @@ def buscar_noticias():
         # ALMG, MPMG e TJMG são fontes complementares. Não queremos
         # notícias desses órgãos por si só: elas só entram quando há conexão
         # com Tribunal de Contas/TCE/TCU/processo/decisão/controle externo.
+        if monitoramento == "TCE-MG":
+    texto_reg = f"{titulo} {resumo}".lower()
+
+    if "tcnotas.tce.mg.gov.br" in texto_reg:
+        return False
+
+    if "natureza:" in texto_reg and "processo:" in texto_reg:
+        return False
+
+# Notícias do TCE-MG não precisam ter "TCE-MG"
+# no título para serem consideradas relevantes.
         if monitoramento in {"ALMG", "MPMG", "TJMG"} and not noticia_tem_conexao_tc(titulo, resumo, veiculo):
             return False
 
@@ -1165,9 +1436,14 @@ def buscar_noticias():
         titulos.append(normalizar_titulo_dedupe(titulo))
         return True
 
-    # IMPORTANTE: não fazemos scraping direto dos quatro portais.
+    # TCE Notícias e Atricon têm coleta direta e leve, porque são fontes primárias.
+    # Isso evita depender do índice do Google News para notícias que ainda não foram indexadas.
+    for reg in buscar_noticias_oficiais_diretas():
+        adicionar(reg, reg.get("monitoramento", reg.get("veiculo", "")))
+
+    # IMPORTANTE: os demais portais continuam sendo consultados pelo Google News.
     # Cada portal entra como fonte de referência, mas somente para os assuntos
-    # que interessam ao Radar. As quatro buscas rodam em paralelo.
+    # que interessam ao Radar. As buscas rodam em paralelo.
     # Cada consulta recebe uma chave própria. Isso é importante: se fizermos
     # várias buscas do TCE-MG com o mesmo nome, um resultado não pode sobrescrever
     # o outro no dicionário.
@@ -1667,7 +1943,7 @@ st.markdown(
                 <div class="radar-title">Radar TCE-MG</div>
                 <div class="radar-subtitle">
                     Monitoramento inteligente do Gab. Agostinho Patrus sobre notícias<br>
-                    relacionadas ao Tribunal de Contas de Minas Gerais
+                    relacionadas aos Tribunal de Contas e outros Orgãos
                 </div>
             </div>
         </div>
@@ -2046,6 +2322,7 @@ def destaque_tce_mg(n):
     termos_tce_mg = (
         "tce-mg",
         "tce mg",
+        "tcemg",
         "tce de minas gerais",
         "tribunal de contas de minas gerais",
         "tribunal de contas do estado de minas gerais",
@@ -2092,7 +2369,7 @@ with st.container(border=True):
             f"""
             <div style="border:1px solid rgba(100,116,139,.16);border-radius:12px;padding:18px 20px 16px;background:#fff;margin-top:4px;margin-bottom:12px;">
                 <div style="font-size:14px;font-weight:700;color:#b42318;margin-bottom:12px;">
-                    {bolinha} {esc_html(nivel)} &nbsp;•&nbsp; 📰 {esc_html(n.get('veiculo', 'Fonte não identificada'))} &nbsp;•&nbsp; 📅 {esc_html(formatar_horario_noticia(n.get('data')))}
+                    {bolinha} {esc_html(nivel)} &nbsp;•&nbsp; 📰 {esc_html(nome_fonte_exibicao(n.get('veiculo')))} &nbsp;•&nbsp; 📅 {esc_html(formatar_horario_noticia(n.get('data')))}
                 </div>
                 <div style="font-size:23px;line-height:1.22;font-weight:800;color:#27324a;margin-bottom:13px;">
                     {esc_html(n.get('titulo', 'Sem título'))}
@@ -2365,7 +2642,7 @@ def gerar_pdf_clipping(noticias_clipping):
             )
             story.append(
                 Paragraph(
-                    f"<b>{noticia['veiculo']}</b>",
+                    f"<b>{nome_fonte_exibicao(noticia['veiculo'])}</b>",
                     meta,
                 )
             )
@@ -2395,7 +2672,7 @@ def gerar_pdf_clipping(noticias_clipping):
 
         story.append(
             Paragraph(
-                f"{noticia['veiculo']} • {data}",
+                f"{nome_fonte_exibicao(noticia['veiculo'])} • {data}",
                 meta,
             )
         )
@@ -2580,7 +2857,7 @@ else:
                     f"{noticia['bolinha']} **{noticia['titulo']}**"
                 )
 
-                meta = f"📰 {noticia['veiculo']}"
+                meta = f"📰 {nome_fonte_exibicao(noticia['veiculo'])}"
 
                 if data_formatada:
                     meta += f"  •  📅 {data_formatada}"
@@ -2655,5 +2932,5 @@ else:
 # ============================================================
 
 st.caption(
-    "As notícias são classificadas automaticamente com base em relevância para o TCE-MG."
+    "As notícias são classificadas automaticamente com base em relevância para o TCE-MG.Uso exclusivo do Gabinete."
 )
