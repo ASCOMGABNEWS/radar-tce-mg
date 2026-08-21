@@ -1,3 +1,21 @@
+from zoneinfo import ZoneInfo
+import streamlit as st
+from streamlit_autorefresh import st_autorefresh
+import feedparser
+from datetime import datetime, timedelta
+from urllib.parse import quote, unquote
+from urllib.request import Request, urlopen
+from openai import OpenAI
+import re
+import html
+from html.parser import HTMLParser
+from difflib import SequenceMatcher
+from collections import Counter
+from io import BytesIO
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+FUSO_BRASIL = ZoneInfo("America/Sao_Paulo")
+
 # ============================================================
 # RADAR EM ABAS
 # ============================================================
