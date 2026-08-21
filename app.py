@@ -66,7 +66,7 @@ st.set_page_config(
 # ============================================================
 
 FONTES_MINAS = {
-    "TCE-MG", "TCEMG", "ALMG", "MPMG", "TJMG", "Estado de Minas", "Itatiaia",
+    "TCE-MG", "ALMG", "MPMG", "TJMG", "Estado de Minas", "Itatiaia",
     "O TEMPO", "Hoje em Dia", "Tribuna de Minas", "Diário do Comércio",
     "BHAZ", "Agência Minas", "O Fator", "Edição do Brasil", "Moon BH",
 }
@@ -84,7 +84,7 @@ FONTES_NACIONAIS = {
 # Para acelerar o carregamento, agrupamos os veículos em poucas consultas
 # por domínio, em vez de abrir um RSS separado para cada jornal.
 DOMINIOS_GRUPADOS = {
-    "MG_1": ["tce.mg.gov.br", "almg.gov.br", "mpmg.mp.br", "tjmg.jus.br", "em.com.br", "itatiaia.com.br", "otempo.com.br"],
+    "MG_1": ["almg.gov.br", "mpmg.mp.br", "tjmg.jus.br", "em.com.br", "itatiaia.com.br", "otempo.com.br"],
     "MG_2": ["hojeemdia.com.br", "tribunademinas.com.br", "diariodocomercio.com.br", "bhaz.com.br", "agenciaminas.mg.gov.br", "ofator.com.br"],
     "MG_3": ["edicaodobrasil.com.br", "moonbh.com.br"],
     "BR_1": ["folha.uol.com.br", "uol.com.br", "globo.com", "g1.globo.com", "oglobo.globo.com", "poder360.com.br"],
@@ -497,7 +497,7 @@ def identificar_instituicoes(
 
     mapa = {
         "TCE-MG": [
-            "tce-mg", "tce mg", "tcemg", "tribunal de contas de minas gerais",
+            "tce-mg", "tce mg", "tribunal de contas de minas gerais",
             "tribunal de contas do estado de minas gerais"
         ],
         "Governo de Minas": [
@@ -628,8 +628,6 @@ def calcular_relevancia(
     if "tce-mg" in texto:
         score += 35
     elif "tce mg" in texto:
-        score += 30
-    elif "tcemg" in texto:
         score += 30
     elif "tribunal de contas" in texto:
         score += 25
@@ -2044,36 +2042,49 @@ with col3:
 
 
 # ============================================================
-# DUAS MATÉRIAS MAIS IMPORTANTES DOS ÚLTIMOS 7 DIAS — MINAS GERAIS
+# DUAS MATÉRIAS MAIS IMPORTANTES — MINAS GERAIS + TCE-MG
 # ============================================================
 
 limite_destaque_7d = datetime.now(FUSO_BRASIL) - timedelta(days=7)
 
-# O destaque é EXCLUSIVO de Minas Gerais e somente para notícias críticas.
-# Isso evita, por exemplo, que uma matéria do O TEMPO sobre o Maranhão
-# apareça aqui apenas porque o veículo é mineiro.
-criticas_mg_7d = [
-    n for n in noticias
-    if (
-        n.get("data")
-        and n["data"] >= limite_destaque_7d
-        and n.get("abrangencia") == "Minas Gerais"
-        and n.get("score", 0) >= 85
-    )
-]
+def destaque_tce_mg(n):
+    """Só considera matérias críticas, recentes, de MG e relacionadas ao TCE-MG."""
+    if not n.get("data") or n["data"] < limite_destaque_7d:
+        return False
+    if n.get("abrangencia") != "Minas Gerais":
+        return False
+    if n.get("score", 0) < 85:
+        return False
 
-criticas_mg_7d.sort(
+    texto = " ".join([
+        str(n.get("titulo") or ""),
+        str(n.get("resumo") or ""),
+        str(n.get("veiculo") or ""),
+    ]).lower()
+
+    termos_tce_mg = (
+        "tce-mg", "tce mg", "tribunal de contas de minas gerais",
+        "tribunal de contas do estado de minas gerais"
+    )
+
+    instituicoes = n.get("instituicoes") or []
+    return (
+        any(t in texto for t in termos_tce_mg)
+        or "TCE-MG" in instituicoes
+    )
+
+criticas_tce_mg_7d = [n for n in noticias if destaque_tce_mg(n)]
+
+criticas_tce_mg_7d.sort(
     key=lambda n: (
         n.get("score", 0),
         n.get("data") or datetime.min.replace(tzinfo=FUSO_BRASIL)
     ),
     reverse=True
 )
-
-criticas_mg_7d = criticas_mg_7d[:2]
+criticas_tce_mg_7d = criticas_tce_mg_7d[:2]
 
 with st.container(border=True):
-
     st.markdown(
         """
         <div style="
@@ -2086,53 +2097,93 @@ with st.container(border=True):
             font-weight:750;
             color:#27324a;
         ">
-            ⭐ Matérias mais importantes dos últimos 7 dias em Minas Gerais
+            ⭐ Matérias mais importantes dos últimos 7 dias em Minas Gerais — TCE-MG
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    if criticas_mg_7d:
-        # Carrossel controlável: as setas movem exatamente um card por vez.
+    if criticas_tce_mg_7d:
         cards = []
-        for n in criticas_mg_7d:
+        for n in criticas_tce_mg_7d:
             resumo_n = (n.get("resumo") or "").strip()
             if len(resumo_n) > 260:
                 resumo_n = resumo_n[:260] + "..."
             cards.append(
-                f'<article class="card"><div class="meta">🔴 Crítica • 📰 {esc_html(n.get("veiculo", "Fonte não identificada"))} • 📅 {esc_html(formatar_horario_noticia(n.get("data")))}</div>'
+                f'<article class="card">'
+                f'<div class="meta">🔴 Crítica • 📰 {esc_html(n.get("veiculo", "Fonte não identificada"))} • 📅 {esc_html(formatar_horario_noticia(n.get("data")))}</div>'
                 f'<div class="title">{esc_html(n.get("titulo", "Sem título"))}</div>'
                 + (f'<div class="summary">{esc_html(resumo_n)}</div>' if resumo_n else '')
-                + f'<a class="read" href="{esc_html(n.get("link", ""))}" target="_blank">Ler matéria ↗</a></article>'
+                + f'<a class="read" href="{esc_html(n.get("link", ""))}" target="_blank">Ler matéria ↗</a>'
+                f'</article>'
             )
 
         components.html(
             f"""
             <style>
-                html,body {{ margin:0; padding:0; background:transparent; overflow:hidden; }}
-                .wrap {{ position:relative; width:100%; }}
-                .rail {{ display:flex; gap:14px; width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 4px 16px 2px; box-sizing:border-box; scroll-snap-type:x mandatory; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; scrollbar-width:auto; }}
-                .card {{ flex:0 0 calc(100% - 18px); width:calc(100% - 18px); box-sizing:border-box; border:1px solid rgba(100,116,139,.16); border-radius:12px; padding:18px 20px; background:#fff; scroll-snap-align:start; }}
+                html, body {{ margin:0; padding:0; background:transparent; overflow:hidden; }}
+                .wrap {{ position:relative; width:100%; height:275px; overflow:hidden; }}
+                .rail {{
+                    display:flex;
+                    gap:14px;
+                    width:100%;
+                    height:100%;
+                    overflow-x:auto;
+                    overflow-y:hidden;
+                    padding:2px 44px 10px 44px;
+                    box-sizing:border-box;
+                    scroll-snap-type:x mandatory;
+                    scroll-behavior:smooth;
+                    -webkit-overflow-scrolling:touch;
+                    scrollbar-width:none;
+                }}
+                .rail::-webkit-scrollbar {{ display:none; }}
+                .card {{
+                    flex:0 0 100%;
+                    width:100%;
+                    box-sizing:border-box;
+                    border:1px solid rgba(100,116,139,.16);
+                    border-radius:12px;
+                    padding:18px 20px;
+                    background:#fff;
+                    scroll-snap-align:center;
+                }}
                 .meta {{ font-size:14px; font-weight:700; color:#b42318; margin-bottom:10px; }}
                 .title {{ font-size:23px; line-height:1.18; font-weight:800; color:#27324a; margin-bottom:12px; }}
                 .summary {{ font-size:15px; line-height:1.45; color:#475467; margin-bottom:14px; }}
                 .read {{ display:inline-block; padding:9px 14px; border:1px solid rgba(16,24,40,.18); border-radius:8px; text-decoration:none; color:#27324a; font-weight:700; background:#fff; }}
-                .nav {{ position:absolute; right:10px; bottom:3px; display:flex; gap:6px; z-index:5; }}
-                .nav button {{ width:34px; height:30px; border:1px solid rgba(16,24,40,.18); border-radius:7px; background:#fff; color:#27324a; font-size:18px; cursor:pointer; }}
+                .arrow {{
+                    position:absolute;
+                    top:50%;
+                    transform:translateY(-50%);
+                    width:38px;
+                    height:38px;
+                    border:1px solid rgba(16,24,40,.16);
+                    border-radius:50%;
+                    background:rgba(255,255,255,.96);
+                    color:#27324a;
+                    font-size:27px;
+                    line-height:34px;
+                    text-align:center;
+                    cursor:pointer;
+                    z-index:10;
+                    box-shadow:0 2px 8px rgba(16,24,40,.10);
+                    padding:0;
+                }}
+                .left {{ left:4px; }}
+                .right {{ right:4px; }}
             </style>
             <div class="wrap">
+                <button class="arrow left" onclick="move(-1)" aria-label="Matéria anterior">‹</button>
                 <div class="rail" id="rail">{''.join(cards)}</div>
-                <div class="nav">
-                    <button onclick="move(-1)" aria-label="Anterior">‹</button>
-                    <button onclick="move(1)" aria-label="Próxima">›</button>
-                </div>
+                <button class="arrow right" onclick="move(1)" aria-label="Próxima matéria">›</button>
             </div>
             <script>
                 function move(dir) {{
                     const rail = document.getElementById('rail');
                     const card = rail.querySelector('.card');
                     if (!card) return;
-                    rail.scrollBy({{left: dir * (card.getBoundingClientRect().width + 14), behavior: 'smooth'}});
+                    rail.scrollBy({{ left: dir * (card.getBoundingClientRect().width + 14), behavior: 'smooth' }});
                 }}
             </script>
             """,
@@ -2141,7 +2192,7 @@ with st.container(border=True):
         )
     else:
         st.markdown(
-            '<div style="color:#98a2b3;padding:10px 2px;">Nenhuma matéria crítica de Minas Gerais nos últimos 7 dias.</div>',
+            '<div style="color:#98a2b3;padding:10px 2px;">Nenhuma matéria crítica relacionada ao TCE-MG em Minas Gerais nos últimos 7 dias.</div>',
             unsafe_allow_html=True
         )
 
