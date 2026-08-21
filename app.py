@@ -2701,7 +2701,7 @@ if _ticker_final:
                 display: flex;
                 align-items: center;
                 width: max-content;
-                animation: radarTickerMove 125s linear infinite;
+                animation: radarTickerMove 145s linear infinite;
                 will-change: transform;
             }}
             .radar-ticker-item {{
