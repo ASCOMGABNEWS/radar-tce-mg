@@ -440,6 +440,24 @@ def extrair_veiculo(item):
     return "Fonte não identificada"
 
 
+def normalizar_veiculo(veiculo, monitoramento=""):
+    """Padroniza variações do TCE-MG devolvidas pelo Google News."""
+    if monitoramento == "TCE-MG":
+        return "TCE-MG"
+    texto = limpar_texto(veiculo).strip()
+    chave = texto.lower()
+    variacoes_tce_mg = {
+        "tce", "tce-mg", "tce mg", "tcemg", "t.c.e.-mg",
+        "tribunal de contas de minas gerais",
+        "tribunal de contas do estado de minas gerais",
+        "tribunal de contas do estado de mg",
+        "tribunal de contas de mg",
+    }
+    if chave in variacoes_tce_mg:
+        return "TCE-MG"
+    return texto or "Fonte não identificada"
+
+
 def identificar_temas(
     titulo,
     resumo
@@ -1027,27 +1045,25 @@ INSTITUICOES_FILTRO = {
 # combinação de palavras; as demais refinam conciliação, comunicação, controle etc.
 # ALMG/MPMG/TJMG continuam como fontes complementares via Google News.
 BUSCAS_OFICIAIS = [
-    # TCE-MG: buscas próprias no Google News. Não fazemos scraping direto
-    # do portal; usamos o índice do Google para manter a coleta rápida.
-    # O domínio tcnotas é excluído para evitar processos/notas em vez de notícias.
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia -site:tcnotas.tce.mg.gov.br'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia -site:tcnotas.tce.mg.gov.br (comunicação OR "comunicação pública" OR "comunicação institucional" OR "órgãos públicos" OR "órgão público" OR "linguagem simples" OR "e-mail")'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia -site:tcnotas.tce.mg.gov.br (conciliação OR "mesa de conciliação" OR "controle externo" OR fiscalização OR auditoria OR licitação OR concessão OR acórdão OR decisão)'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia -site:tcnotas.tce.mg.gov.br ("Agostinho Patrus" OR "Durval Ângelo" OR "Gilberto Diniz" OR conselheiro OR presidente)'),
-    # Órgãos mineiros complementares só entram quando houver conexão com TC.
-    ("Órgãos complementares", '(site:almg.gov.br OR site:mpmg.mp.br OR site:tjmg.jus.br) ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo" OR "processo do TCE" OR "decisão do TCE")'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ -site:tcnotas.tce.mg.gov.br'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ -site:tcnotas.tce.mg.gov.br ("TCE-MG" OR "TCE MG" OR TCEMG OR "Tribunal de Contas de Minas Gerais")'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ -site:tcnotas.tce.mg.gov.br (comunicação OR comunicacao OR "comunicação pública" OR "comunicação institucional" OR "órgãos públicos" OR "órgão público" OR "linguagem simples" OR "e-mail" OR imprensa OR jornalismo OR "redes sociais" OR transparência)'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ -site:tcnotas.tce.mg.gov.br (conciliação OR "mesa de conciliação" OR "controle externo" OR fiscalização OR auditoria OR licitação OR concessão OR acórdão OR acordao OR decisão OR decisao OR contrato)'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ -site:tcnotas.tce.mg.gov.br ("Agostinho Patrus" OR "Durval Ângelo" OR "Durval Angelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR "Alencar da Silveira" OR conselheiro OR conselheira OR presidente)'),
+    ("Órgãos complementares", '(site:almg.gov.br OR site:mpmg.mp.br OR site:tjmg.jus.br) ("TCE-MG" OR "TCE MG" OR TCEMG OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo" OR "processo do TCE" OR "decisão do TCE")'),
 ]
 
 
-
-# ============================================================
 # REGRA-MÃE DO RADAR
 # ============================================================
 # O Radar é focado em Tribunais de Contas. Órgãos como ALMG, MPMG e TJMG
 # só entram quando a notícia tem conexão explícita com TCE/TCU/Tribunais de
 # Contas, conselheiros, processos, decisões ou atuação de controle externo.
 TERMOS_CONEXAO_TC = (
-    "tce-mg", "tce mg", "tribunal de contas de minas gerais",
+    "tce-mg", "tce mg", "tcemg", "tce de minas gerais",
+    "tribunal de contas de minas gerais",
+    "tribunal de contas do estado de minas gerais",
+    "tribunal de contas do estado de mg", "tribunal de contas de mg",
     "tribunal de contas", "tribunais de contas", "tcu",
     "conselheiro do tce", "conselheira do tce",
     "conselheiro do tribunal de contas", "conselheira do tribunal de contas",
@@ -1078,13 +1094,13 @@ def baixar_feed(args):
     nome, url = args
     try:
         request = Request(url, headers={"User-Agent": "Radar-TCE-MG/2.0"})
-        with urlopen(request, timeout=2.5) as resposta:
+        with urlopen(request, timeout=1.8) as resposta:
             return nome, feedparser.parse(resposta.read())
     except Exception:
         return nome, None
 
 
-@st.cache_data(ttl=900, show_spinner=False)
+@st.cache_data(ttl=1800, show_spinner=False)
 def buscar_noticias():
     noticias = []
     links = set()
@@ -1102,7 +1118,14 @@ def buscar_noticias():
             return False
 
         resumo = limpar_texto(reg.get("resumo", ""))
-        veiculo = reg.get("veiculo") or monitoramento
+        veiculo = normalizar_veiculo(reg.get("veiculo") or monitoramento, monitoramento)
+
+        if monitoramento == "TCE-MG":
+            texto_reg = f"{titulo} {resumo}".lower()
+            if "tcnotas.tce.mg.gov.br" in texto_reg:
+                return False
+            if "natureza:" in texto_reg and "processo:" in texto_reg:
+                return False
 
         # ALMG, MPMG e TJMG são fontes complementares. Não queremos
         # notícias desses órgãos por si só: elas só entram quando há conexão
@@ -1155,7 +1178,7 @@ def buscar_noticias():
 
     tarefas = tarefas_oficiais + list(FONTES.items())
     resultados = {}
-    with ThreadPoolExecutor(max_workers=16) as executor:
+    with ThreadPoolExecutor(max_workers=24) as executor:
         futures = [executor.submit(baixar_feed, tarefa) for tarefa in tarefas]
         for future in as_completed(futures):
             chave, feed = future.result()
@@ -1201,7 +1224,7 @@ def buscar_noticias():
                 "titulo": titulo,
                 "resumo": item.get("summary", ""),
                 "link": link,
-                "veiculo": extrair_veiculo(item),
+                "veiculo": normalizar_veiculo(extrair_veiculo(item), nome),
                 "data": data,
             }, nome)
 
