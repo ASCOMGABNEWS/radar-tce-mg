@@ -14,6 +14,7 @@ def formatar_horario_noticia(data):
     except Exception:
         return ""
 import streamlit as st
+import streamlit.components.v1 as components
 from streamlit_autorefresh import st_autorefresh
 import feedparser
 from datetime import datetime, timedelta
@@ -83,7 +84,7 @@ FONTES_NACIONAIS = {
 # Para acelerar o carregamento, agrupamos os veículos em poucas consultas
 # por domínio, em vez de abrir um RSS separado para cada jornal.
 DOMINIOS_GRUPADOS = {
-    "MG_1": ["tce.mg.gov.br", "almg.gov.br", "mpmg.mp.br", "tjmg.jus.br", "em.com.br", "itatiaia.com.br", "otempo.com.br"],
+    "MG_1": ["almg.gov.br", "mpmg.mp.br", "tjmg.jus.br", "em.com.br", "itatiaia.com.br", "otempo.com.br"],
     "MG_2": ["hojeemdia.com.br", "tribunademinas.com.br", "diariodocomercio.com.br", "bhaz.com.br", "agenciaminas.mg.gov.br", "ofator.com.br"],
     "MG_3": ["edicaodobrasil.com.br", "moonbh.com.br"],
     "BR_1": ["folha.uol.com.br", "uol.com.br", "globo.com", "g1.globo.com", "oglobo.globo.com", "poder360.com.br"],
@@ -1030,12 +1031,11 @@ INSTITUICOES_FILTRO = {
 # ALMG/MPMG/TJMG continuam como fontes complementares via Google News.
 BUSCAS_OFICIAIS = [
     ("TCE-MG", 'site:tce.mg.gov.br/noticia'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia ("Agostinho Patrus" OR "Durval Ângelo" OR conciliação OR "controle externo" OR fiscalização OR auditoria)'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia (conselheiro OR acórdão OR processo OR decisão OR licitação OR concessão OR comunicação)'),
-    ("Órgãos complementares", '(site:almg.gov.br OR site:mpmg.mp.br OR site:tjmg.jus.br) ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo" OR "processo do TCE" OR "decisão do TCE")'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia (comunicação OR comunicacao OR "comunicação pública" OR "comunicacao publica" OR imprensa OR jornalismo OR redes sociais)'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia ("Agostinho Patrus" OR "Durval Ângelo" OR "Durval Angelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR conselheiro OR conciliação OR "controle externo" OR fiscalização OR auditoria)'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia (acórdão OR acordao OR processo OR decisão OR decisao OR licitação OR concessão OR auditoria OR fiscalização OR "mesa de conciliação")'),
+    ("Órgãos complementares", '(site:almg.gov.br OR site:mpmg.mp.br OR site:tjmg.jus.br) ("TCE-MG" OR "Tribunal de Contas" OR TCU OR "conselheiro do TCE" OR "controle externo" OR "processo do TCE" OR "decisão do TCE")'),
 ]
-
-
 
 # ============================================================
 # REGRA-MÃE DO RADAR
@@ -2072,72 +2072,29 @@ with st.container(border=True):
     )
 
     if criticas_mg_7d:
-        cards = ""
-
-        for noticia in criticas_mg_7d:
-            titulo = esc_html(noticia.get("titulo", "Sem título"))
-            veiculo = esc_html(noticia.get("veiculo", "Fonte não identificada"))
-            data = esc_html(formatar_horario_noticia(noticia.get("data")))
-            resumo = esc_html((noticia.get("resumo") or "").strip())
-            if len(resumo) > 260:
-                resumo = resumo[:260].rstrip() + "..."
-            link = esc_html(noticia.get("link", ""))
-
-            cards += f"""
-            <article style="
-                flex:0 0 min(78vw, 760px);
-                scroll-snap-align:start;
-                box-sizing:border-box;
-                border:1px solid rgba(100,116,139,.16);
-                border-radius:12px;
-                padding:18px 20px;
-                background:#fff;
-            ">
-                <div style="
-                    font-size:14px;
-                    font-weight:700;
-                    color:#b42318;
-                    margin-bottom:10px;
-                ">🔴 Crítica • 📰 {veiculo} • 📅 {data}</div>
-
-                <div style="
-                    font-size:25px;
-                    line-height:1.18;
-                    font-weight:800;
-                    color:#27324a;
-                    margin-bottom:12px;
-                ">{titulo}</div>
-
-                {f'<div style="font-size:15px;line-height:1.45;color:#475467;margin-bottom:14px;">{resumo}</div>' if resumo else ''}
-
-                <a href="{link}" target="_blank" style="
-                    display:inline-block;
-                    padding:9px 14px;
-                    border:1px solid rgba(16,24,40,.18);
-                    border-radius:8px;
-                    text-decoration:none;
-                    color:#27324a;
-                    font-weight:700;
-                    background:#fff;
-                ">Ler matéria ↗</a>
-            </article>
-            """
-
-        st.markdown(
+        components.html(
             f"""
-            <div style="
-                display:flex;
-                gap:14px;
-                overflow-x:auto;
-                overflow-y:hidden;
-                padding:2px 2px 12px 2px;
-                scroll-snap-type:x mandatory;
-                -webkit-overflow-scrolling:touch;
-            ">
-                {cards}
+            <style>
+                html,body {{ margin:0; padding:0; background:transparent; }}
+                .rail {{ display:flex; gap:14px; width:100%; overflow-x:scroll; overflow-y:hidden; padding:2px 4px 14px 2px; box-sizing:border-box; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }}
+                .card {{ flex:0 0 calc(100% - 28px); max-width:760px; box-sizing:border-box; border:1px solid rgba(100,116,139,.16); border-radius:12px; padding:18px 20px; background:#fff; scroll-snap-align:start; }}
+                .meta {{ font-size:14px; font-weight:700; color:#b42318; margin-bottom:10px; }}
+                .title {{ font-size:25px; line-height:1.18; font-weight:800; color:#27324a; margin-bottom:12px; }}
+                .summary {{ font-size:15px; line-height:1.45; color:#475467; margin-bottom:14px; }}
+                .read {{ display:inline-block; padding:9px 14px; border:1px solid rgba(16,24,40,.18); border-radius:8px; text-decoration:none; color:#27324a; font-weight:700; background:#fff; }}
+            </style>
+            <div class="rail">
+                {''.join([
+                    f'<article class="card"><div class="meta">🔴 Crítica • 📰 {esc_html(n.get("veiculo", "Fonte não identificada"))} • 📅 {esc_html(formatar_horario_noticia(n.get("data")))}</div>'
+                    f'<div class="title">{esc_html(n.get("titulo", "Sem título"))}</div>'
+                    + (f'<div class="summary">{esc_html((n.get("resumo") or "").strip()[:260])}...</div>' if len((n.get("resumo") or "").strip()) > 260 else (f'<div class="summary">{esc_html((n.get("resumo") or "").strip())}</div>' if (n.get("resumo") or "").strip() else ''))
+                    + f'<a class="read" href="{esc_html(n.get("link", ""))}" target="_blank">Ler matéria ↗</a></article>'
+                    for n in criticas_mg_7d
+                ])}
             </div>
             """,
-            unsafe_allow_html=True
+            height=250,
+            scrolling=False,
         )
     else:
         st.markdown(
