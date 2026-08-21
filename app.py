@@ -1062,7 +1062,6 @@ INSTITUICOES_FILTRO = {
 # combinação de palavras; as demais refinam conciliação, comunicação, controle etc.
 # ALMG/MPMG/TJMG continuam como fontes complementares via Google News.
 BUSCAS_OFICIAIS = [
-    ("TCE-MG", 'site:tce.mg.gov.br')
     ("TCE-MG", 'site:tce.mg.gov.br/noticia/'),
     ("TCE-MG", 'site:tce.mg.gov.br/noticia/ (comunicação OR comunicacao OR "comunicação pública" OR "comunicacao publica" OR imprensa OR jornalismo OR "redes sociais" OR "linguagem simples")'),
     ("TCE-MG", 'site:tce.mg.gov.br/noticia/ ("Agostinho Patrus" OR "Durval Ângelo" OR "Durval Angelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR "Alencar da Silveira" OR conselheiro OR conciliação OR "controle externo" OR fiscalização OR auditoria)'),
