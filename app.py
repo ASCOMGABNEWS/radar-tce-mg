@@ -334,10 +334,8 @@ TEMAS = {
         "transparência",
         "redes sociais",
         "imprensa",
-        "jornalismo",
-        "comunicação",
-        "linguagem simples",
-        "lingugaem simples",
+        "comunicação"
+        "lingugaem simples"
         "simplifica"
     ],
 
@@ -1063,14 +1061,42 @@ INSTITUICOES_FILTRO = {
 # uma busca ampla garante que uma matéria relevante não dependa de uma única
 # combinação de palavras; as demais refinam conciliação, comunicação, controle etc.
 # ALMG/MPMG/TJMG continuam como fontes complementares via Google News.
+BUSCA_TCE_BASE = 'site:tce.mg.gov.br/noticia/ -site:tcnotas.tce.mg.gov.br -site:doc.tce.mg.gov.br'
+TERMOS_BUSCA_TCE = '(TCE-MG OR TCEMG OR "Tribunal de Contas de Minas Gerais" OR "Tribunal de Contas do Estado de Minas Gerais" OR "Agostinho Patrus" OR "Durval Ângelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR "Alencar da Silveira" OR conselheiro OR conciliação OR "controle externo" OR fiscalização OR auditoria OR comunicação OR transparência OR "órgãos públicos" OR processo OR acórdão OR licitação OR concessão)'
+TERMOS_COMUNICACAO = '(comunicação OR comunicacao OR "comunicação pública" OR "comunicação institucional" OR imprensa OR jornalismo OR "redes sociais" OR "linguagem simples" OR transparência OR "órgãos públicos" OR "órgãos municipais" OR e-mail OR email OR "correio eletrônico")'
+
 BUSCAS_OFICIAIS = [
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ "TCE-MG"'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ (comunicação OR comunicacao OR "comunicação pública" OR "comunicacao publica" OR "comunicação institucional" OR imprensa OR jornalismo OR "redes sociais" OR "linguagem simples" OR transparência OR "órgãos públicos" OR "orgãos públicos")'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ ("Agostinho Patrus" OR "Durval Ângelo" OR "Durval Angelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR "Alencar da Silveira" OR conselheiro OR conciliação OR "controle externo" OR fiscalização OR auditoria)'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ (acórdão OR acordao OR processo OR decisão OR decisao OR licitação OR concessão OR auditoria OR fiscalização OR "mesa de conciliação" OR contrato OR contas)'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia/ ("comunicação institucional" OR "comunicação pública" OR comunicação OR transparência OR "redes sociais" OR evento OR seminário OR prêmio)'),
-    ("Órgãos complementares", '(site:almg.gov.br OR site:mpmg.mp.br OR site:tjmg.jus.br) ("TCE-MG" OR "Tribunal de Contas" OR TCU OR "conselheiro do TCE" OR "controle externo" OR "processo do TCE" OR "decisão do TCE")'),
+    ("TCE-MG", f'{BUSCA_TCE_BASE} {TERMOS_BUSCA_TCE} when:7d'),
+    ("TCE-MG", f'{BUSCA_TCE_BASE} {TERMOS_COMUNICACAO} when:7d'),
+    ("TCE-MG", f'{BUSCA_TCE_BASE} ("e-mail institucional" OR "email institucional" OR "comunicação oficial" OR "comunicacao oficial" OR "órgãos públicos" OR "órgãos municipais") when:7d'),
+    ("TCE-MG", f'{BUSCA_TCE_BASE} ("Agostinho Patrus" OR "Durval Ângelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR "Alencar da Silveira" OR "Licurgo Mourão" OR "Hamilton Coelho" OR "Adonias Fernandes" OR "Telmo Passareli" OR Tadeuzinho) when:7d'),
 ]
+
+TERMOS_IMPRENSA = '("TCE-MG" OR "TCEMG" OR "Tribunal de Contas de Minas Gerais" OR "Tribunal de Contas mineiro" OR "Tribunal de Contas do Estado de Minas Gerais" OR "Corte de Contas" OR "Corte de Contas mineira" OR "Agostinho Patrus" OR "Durval Ângelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR "Alencar da Silveira" OR "Licurgo Mourão" OR "Hamilton Coelho" OR "Adonias Fernandes" OR "Telmo Passareli" OR Tadeuzinho OR "controle externo" OR "mesa de conciliação" OR "processo do TCE" OR "decisão do TCE" OR "acórdão do TCE" OR "fiscalização do TCE" OR "auditoria do TCE")'
+
+FONTES_MG_PRIORITARIAS = [
+    ("Estado de Minas", "em.com.br"), ("Itatiaia", "itatiaia.com.br"),
+    ("O TEMPO", "otempo.com.br"), ("Hoje em Dia", "hojeemdia.com.br"),
+    ("O Fator", "ofator.com.br"), ("BHAZ", "bhaz.com.br"),
+    ("Diário do Comércio", "diariodocomercio.com.br"),
+    ("Tribuna de Minas", "tribunademinas.com.br"),
+    ("Agência Minas", "agenciaminas.mg.gov.br"),
+    ("Edição do Brasil", "edicaodobrasil.com.br"), ("Moon BH", "moonbh.com.br"),
+]
+
+BUSCAS_IMPRENSA_GRUPADAS = [
+    ("MG_RESTANTES", ["blogdoorion.com.br", "bemminas.com.br", "alemdofato.uai.com.br", "blogdopco.com.br"]),
+    ("BR_1", ["folha.uol.com.br", "uol.com.br", "globo.com", "g1.globo.com", "oglobo.globo.com", "poder360.com.br"]),
+    ("BR_2", ["jota.info", "migalhas.com.br", "obastidor.com.br", "intercept.com.br", "piaui.folha.uol.com.br", "brasildefato.com.br"]),
+    ("BR_3", ["correiobraziliense.com.br", "estadao.com.br", "oantagonista.com.br", "cartacapital.com.br", "cnnbrasil.com.br", "agenciabrasil.ebc.com.br", "valor.globo.com", "conjur.com.br", "metropoles.com"]),
+]
+
+BUSCAS_INSTITUCIONAIS = {
+    "Atricon": '"Atricon" when:7d',
+    "TCU": '("TCU" OR "Tribunal de Contas da União") when:7d',
+    "IRB": '("Instituto Rui Barbosa" OR "IRB") when:7d',
+}
+
 
 # ============================================================
 # REGRA-MÃE DO RADAR
@@ -1080,41 +1106,29 @@ BUSCAS_OFICIAIS = [
 # Contas, conselheiros, processos, decisões ou atuação de controle externo.
 TERMOS_CONEXAO_TC = (
     "tce-mg", "tce mg", "tcemg", "tribunal de contas de minas gerais",
+    "tribunal de contas do estado de minas gerais", "tribunal de contas mineiro",
+    "tribunal de contas estadual", "corte de contas", "corte de contas mineira",
     "tribunal de contas", "tribunais de contas", "tcu",
-    "conselheiro do tce", "conselheira do tce",
-    "conselheiro do tribunal de contas", "conselheira do tribunal de contas",
-    "ministro do tcu", "ministra do tcu", "presidente do tce",
-    "presidente do tribunal de contas", "presidente do tcu",
-    "acórdão do tce", "acordao do tce", "processo no tce",
-    "processo do tce", "processo no tribunal de contas",
-    "processo do tribunal de contas", "decisão do tce", "decisao do tce",
-    "decisão do tribunal de contas", "decisao do tribunal de contas",
-    "auditoria do tce", "fiscalização do tce", "fiscalizacao do tce",
-    "denúncia ao tce", "denuncia ao tce", "representação no tce",
-    "representacao no tce", "mesa de conciliação do tce",
-    "mesa de conciliacao do tce", "conciliação no tce",
-    "conciliacao no tce", "controle externo",
-    # Pessoas monitoradas: uma matéria pode citar apenas o nome do conselheiro.
-    "agostinho patrus", "durval ângelo", "durval angelo",
-    "gilberto diniz", "alencar da silveira", "ione pinheiro",
-    "licurgo mourão", "licurgo mourao", "hamilton coelho",
-    "adonias fernandes", "telmo passareli", "tadeu martins leite",
-    "tadeuzinho"
+    "conselheiro do tce", "conselheira do tce", "conselheiro do tribunal de contas",
+    "conselheira do tribunal de contas", "ministro do tcu", "ministra do tcu",
+    "presidente do tce", "presidente do tribunal de contas", "presidente do tcu",
+    "acórdão do tce", "acordao do tce", "processo no tce", "processo do tce",
+    "processo no tribunal de contas", "processo do tribunal de contas",
+    "decisão do tce", "decisao do tce", "decisão do tribunal de contas",
+    "decisao do tribunal de contas", "auditoria do tce", "fiscalização do tce",
+    "fiscalizacao do tce", "denúncia ao tce", "denuncia ao tce",
+    "representação no tce", "representacao no tce", "mesa de conciliação do tce",
+    "mesa de conciliacao do tce", "conciliação no tce", "conciliacao no tce",
+    "controle externo", "agostinho patrus", "durval ângelo", "durval angelo",
+    "gilberto diniz", "alencar da silveira", "ione pinheiro", "licurgo mourão",
+    "licurgo mourao", "hamilton coelho", "adonias fernandes", "telmo passareli",
+    "tadeu martins leite", "tadeuzinho"
 )
 
 
 def noticia_tem_conexao_tc(titulo, resumo, veiculo=""):
     texto = " ".join([str(titulo or ""), str(resumo or ""), str(veiculo or "")]).lower()
-    if any(t in texto for t in TERMOS_CONEXAO_TC):
-        return True
-
-    # Evita falso positivo de palavras genéricas. “processo”, “decisão”,
-    # “conselheiro” ou “auditoria” sozinhos não bastam.
-    tc = any(t in texto for t in (
-        "tce", "tcu", "tribunal de contas", "tribunais de contas",
-        "controle externo", "atricon", "irb"
-    ))
-    return tc
+    return any(t in texto for t in TERMOS_CONEXAO_TC)
 
 
 def rss_url_para_busca(q):
@@ -1150,12 +1164,16 @@ def buscar_noticias():
 
         resumo = limpar_texto(reg.get("resumo", ""))
         veiculo = reg.get("veiculo") or monitoramento
+        origem = str(reg.get("origem", "") or "").lower()
 
-        # O Radar quer notícias do portal do TCE-MG, não atos/processos do
-        # TCNotAS ou páginas de consulta processual.
+        # No TCE-MG queremos apenas o portal jornalístico de notícias.
+        # O Google News entrega um redirect, então a origem real do feed também
+        # é examinada para impedir que tcnotas/DOC apareçam como notícia.
         if monitoramento == "TCE-MG":
-            link_lower = str(link).lower()
-            if "tcnotas.tce.mg.gov.br" in link_lower and "/noticia/" not in link_lower:
+            origem_total = (str(link) + " " + origem).lower()
+            if any(x in origem_total for x in (
+                "tcnotas.tce.mg.gov.br", "doc.tce.mg.gov.br", "/tcjuris", "/tcnotas", "/processo"
+            )):
                 return False
 
         # Regra central do Radar: o veículo pode ser qualquer jornal da lista,
@@ -1198,28 +1216,21 @@ def buscar_noticias():
         titulos.append(normalizar_titulo_dedupe(titulo))
         return True
 
-    # IMPORTANTE: não fazemos scraping direto dos quatro portais.
-    # Cada portal entra como fonte de referência, mas somente para os assuntos
-    # que interessam ao Radar. As quatro buscas rodam em paralelo.
-    # Cada consulta recebe uma chave própria. Isso é importante: se fizermos
-    # várias buscas do TCE-MG com o mesmo nome, um resultado não pode sobrescrever
-    # o outro no dicionário.
+    # Todas as fontes externas entram exclusivamente pelo Google News.
     tarefas_oficiais = [
         (f"{nome}__{i}", rss_url_para_busca(query))
         for i, (nome, query) in enumerate(BUSCAS_OFICIAIS)
     ]
 
-    # Consultas agrupadas: todos os veículos continuam no Google News,
-    # mas 40+ requisições individuais viram poucas consultas.
-    # A busca deve ser ampla o suficiente para não perder matérias relevantes,
-    # mas não pode usar “conselheiro”, “processo” ou “auditoria” isoladamente,
-    # pois isso traz muita notícia sem relação com Tribunais de Contas.
-    termos_tc = '("TCE-MG" OR "Tribunal de Contas" OR TCU OR "conselheiro do TCE" OR "conselheiro do Tribunal de Contas" OR "presidente do TCE" OR "controle externo" OR "acórdão do TCE" OR "processo do TCE" OR "decisão do TCE" OR "auditoria do TCE" OR "fiscalização do TCE" OR "mesa de conciliação do TCE" OR "Agostinho Patrus" OR "Durval Ângelo" OR "Gilberto Diniz" OR "Ione Pinheiro" OR "Alencar da Silveira" OR "Licurgo Mourão" OR "Hamilton Coelho" OR "Adonias Fernandes" OR "Telmo Passareli")'
     tarefas_fontes = []
-    for grupo, dominios in DOMINIOS_GRUPADOS.items():
+    for nome, dominio in FONTES_MG_PRIORITARIAS:
+        tarefas_fontes.append((f"FONTES__{nome}", rss_url_para_busca(f'site:{dominio} {TERMOS_IMPRENSA} when:7d')))
+
+    for grupo, dominios in BUSCAS_IMPRENSA_GRUPADAS:
         sites = " OR ".join(f"site:{d}" for d in dominios)
-        tarefas_fontes.append((f"FONTES__{grupo}", rss_url_para_busca(f"({sites}) {termos_tc}")))
-    for nome, consulta in FONTES_INSTITUCIONAIS.items():
+        tarefas_fontes.append((f"FONTES__{grupo}", rss_url_para_busca(f'({sites}) {TERMOS_IMPRENSA} when:7d')))
+
+    for nome, consulta in BUSCAS_INSTITUCIONAIS.items():
         tarefas_fontes.append((f"FONTES__{nome}", rss_url_para_busca(consulta)))
 
     tarefas = tarefas_oficiais + tarefas_fontes
@@ -1249,6 +1260,7 @@ def buscar_noticias():
                 "link": item.get("link", ""),
                 "veiculo": nome,
                 "data": data,
+                "origem": str((item.get("source", {}) or {}).get("href", "") or "") + " " + str((item.get("source", {}) or {}).get("title", "") or ""),
             }, nome)
 
     # Depois, imprensa e fontes institucionais agrupadas. O veículo real é
@@ -1275,6 +1287,7 @@ def buscar_noticias():
                 "link": link,
                 "veiculo": veiculo,
                 "data": data,
+                "origem": str((item.get("source", {}) or {}).get("href", "") or "") + " " + str((item.get("source", {}) or {}).get("title", "") or ""),
             }, veiculo if veiculo in FONTES else nome_fallback)
 
     noticias.sort(
@@ -2071,30 +2084,16 @@ with col3:
 limite_destaque_7d = datetime.now(FUSO_BRASIL) - timedelta(days=7)
 
 def destaque_tce_mg(n):
-    """Seleciona somente a matéria crítica mais importante do TCE-MG em MG nos últimos 7 dias."""
+    """Candidata à matéria mais importante do Radar nos últimos 7 dias."""
     if not n.get("data") or n["data"] < limite_destaque_7d:
         return False
     if n.get("abrangencia") != "Minas Gerais":
         return False
-    if n.get("score", 0) < 85:
-        return False
-
-    texto = " ".join([
-        str(n.get("titulo") or ""),
-        str(n.get("resumo") or ""),
-        str(n.get("veiculo") or ""),
-    ]).lower()
-
-    termos_tce_mg = (
-        "tce-mg", "tce mg", "tcemg", "tribunal de contas de minas gerais",
-        "tribunal de contas do estado de minas gerais", "tribunal de contas do estado de mg"
-    )
-
     instituicoes = n.get("instituicoes") or []
     pessoas = " ".join(n.get("pessoas") or []).lower()
     return (
-        any(t in texto for t in termos_tce_mg)
-        or "TCE-MG" in instituicoes
+        "TCE-MG" in instituicoes
+        or noticia_tem_conexao_tc(n.get("titulo"), n.get("resumo"), n.get("veiculo"))
         or any(nome in pessoas for nome in (
             "agostinho patrus", "durval ângelo", "durval angelo", "gilberto diniz",
             "ione pinheiro", "alencar da silveira", "licurgo mourão", "licurgo mourao",
@@ -2102,9 +2101,12 @@ def destaque_tce_mg(n):
         ))
     )
 
+# Sempre há uma escolha quando existe notícia relevante. Se houver uma crítica,
+# ela ganha prioridade; se não houver, mostramos a matéria de maior relevância.
 criticas_tce_mg_7d = [n for n in noticias if destaque_tce_mg(n)]
 criticas_tce_mg_7d.sort(
     key=lambda n: (
+        1 if n.get("score", 0) >= 85 else 0,
         n.get("score", 0),
         n.get("data") or datetime.min.replace(tzinfo=FUSO_BRASIL)
     ),
@@ -2114,16 +2116,7 @@ criticas_tce_mg_7d.sort(
 with st.container(border=True):
     st.markdown(
         """
-        <div style="
-            background:rgba(100,116,139,.07);
-            border:1px solid rgba(100,116,139,.10);
-            border-radius:9px;
-            padding:8px 12px;
-            margin:-4px -4px 12px -8px;
-            font-size:17px;
-            font-weight:750;
-            color:#27324a;
-        ">
+        <div style="background:rgba(100,116,139,.07);border:1px solid rgba(100,116,139,.10);border-radius:9px;padding:8px 12px;margin:-4px -4px 12px -8px;font-size:17px;font-weight:750;color:#27324a;">
             ⭐ Matéria mais importante dos últimos 7 dias em Minas Gerais
         </div>
         """,
@@ -2135,12 +2128,13 @@ with st.container(border=True):
         resumo_n = (n.get("resumo") or "").strip()
         if len(resumo_n) > 320:
             resumo_n = resumo_n[:320] + "..."
-
+        bolinha = n.get("bolinha", "🔴")
+        nivel = {"🔴": "Crítica", "🟠": "Alta", "🟡": "Média", "⚪": "Menção"}.get(bolinha, "Relevante")
         st.markdown(
             f"""
             <div style="border:1px solid rgba(100,116,139,.16);border-radius:12px;padding:18px 20px 16px;background:#fff;margin-top:4px;margin-bottom:12px;">
                 <div style="font-size:14px;font-weight:700;color:#b42318;margin-bottom:12px;">
-                    🔴 Crítica &nbsp;•&nbsp; 📰 {esc_html(n.get('veiculo', 'Fonte não identificada'))} &nbsp;•&nbsp; 📅 {esc_html(formatar_horario_noticia(n.get('data')))}
+                    {bolinha} {esc_html(nivel)} &nbsp;•&nbsp; 📰 {esc_html(n.get('veiculo', 'Fonte não identificada'))} &nbsp;•&nbsp; 📅 {esc_html(formatar_horario_noticia(n.get('data')))}
                 </div>
                 <div style="font-size:23px;line-height:1.22;font-weight:800;color:#27324a;margin-bottom:13px;">
                     {esc_html(n.get('titulo', 'Sem título'))}
@@ -2150,33 +2144,18 @@ with st.container(border=True):
             """,
             unsafe_allow_html=True
         )
-
-        col_ler, col_whatsapp = st.columns([1, 1], gap="small")
+        col_ler, col_whatsapp = st.columns([1, 1], gap="medium")
         with col_ler:
-            st.link_button(
-                "**Ler matéria ↗**",
-                n.get("link", ""),
-                key=f"ler_destaque_{hash(n.get('link', ''))}"
-            )
-
+            st.link_button("**Ler matéria ↗**", n.get("link", ""), key=f"ler_destaque_{hash(n.get('link', ''))}")
         titulo_whatsapp = str(n.get("titulo") or "").replace("*", "").strip()
         texto_whatsapp = f"*{titulo_whatsapp}*\n\n{n.get('link', '')}"
         whatsapp_url = "https://wa.me/?text=" + quote(texto_whatsapp)
         with col_whatsapp:
-            st.link_button(
-                "📲 Compartilhar no WhatsApp",
-                whatsapp_url,
-                key=f"whatsapp_destaque_{hash(n.get('link', ''))}"
-            )
-
+            st.link_button("📲 Compartilhar no WhatsApp", whatsapp_url, key=f"whatsapp_destaque_{hash(n.get('link', ''))}")
     else:
-        st.markdown(
-            '<div style="color:#98a2b3;padding:10px 2px;">Nenhuma matéria crítica relacionada ao TCE-MG em Minas Gerais nos últimos 7 dias.</div>',
-            unsafe_allow_html=True
-        )
+        st.markdown('<div style="color:#98a2b3;padding:10px 2px;">Nenhuma matéria relacionada ao TCE-MG em Minas Gerais nos últimos 7 dias.</div>', unsafe_allow_html=True)
 
 
-# ============================================================
 # MÉTRICAS
 # ============================================================
 
