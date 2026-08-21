@@ -61,7 +61,6 @@ st.set_page_config(
 # ============================================================
 
 FONTES = {"Estado de Minas": "https://news.google.com/rss/search?q=site%3Aem.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
-    "TCE Notícias": "https://news.google.com/rss/search?q=site%3Atce.mg.gov.br%2Fnoticia%2F&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "AMM Notícias": "https://news.google.com/rss/search?q=site%3Aamm-mg.org.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "Jornal Panorama de Minas": "https://news.google.com/rss/search?q=%22Jornal+Panorama+de+Minas%22+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "Itatiaia": "https://news.google.com/rss/search?q=site%3Aitatiaia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
@@ -650,12 +649,63 @@ def calcular_relevancia(
     score = 15
 
     # Relevância institucional básica.
-    if "tce-mg" in texto:
+    # Inclui todas as grafias que aparecem com frequência no portal/imprensa.
+    if any(t in texto for t in (
+        "tce-mg",
+        "tce mg",
+        "tcemg",
+        "tce de minas gerais",
+        "tribunal de contas de minas gerais",
+        "tribunal de contas do estado de minas gerais",
+        "tribunal de contas de mg",
+    )):
         score += 35
-    elif "tce mg" in texto:
-        score += 30
     elif "tribunal de contas" in texto:
         score += 25
+
+    # Assuntos prioritários para o Gabinete quando ligados ao TCE-MG.
+    # Evita que uma notícia importante como a do e-mail institucional
+    # fique com pontuação baixa só porque o título usa "TCEMG" sem hífen.
+    termos_prioritarios_tce = (
+        "comunicação",
+        "comunicacao",
+        "comunicação institucional",
+        "comunicacao institucional",
+        "comunicação pública",
+        "comunicacao publica",
+        "e-mail institucional",
+        "email institucional",
+        "órgãos públicos",
+        "orgaos publicos",
+        "mesa de conciliação",
+        "mesa de conciliacao",
+        "conciliação",
+        "conciliacao",
+        "solução consensual",
+        "solucao consensual",
+    )
+
+    tem_tce_mg_score = any(t in texto for t in (
+        "tce-mg",
+        "tce mg",
+        "tcemg",
+        "tce de minas gerais",
+        "tribunal de contas de minas gerais",
+        "tribunal de contas do estado de minas gerais",
+        "tribunal de contas de mg",
+    ))
+
+    tem_prioridade_tce = any(t in texto for t in termos_prioritarios_tce)
+
+    if tem_tce_mg_score and tem_prioridade_tce:
+        # Matérias de comunicação/conciliação diretamente relacionadas ao
+        # TCE-MG devem ser consideradas pelo menos ALTA.
+        score = max(score, 75)
+
+    if monitoramento == "TCE-MG" and tem_prioridade_tce:
+        # Quando a própria fonte é o TCE Notícias, esses assuntos são
+        # prioritários para o Radar e podem aparecer no destaque de 7 dias.
+        score = max(score, 85)
 
     if "tcu" in texto or "tribunal de contas da união" in texto:
         score += 10
@@ -1230,22 +1280,32 @@ class LinksNoticiasParser(HTMLParser):
     """Extrai links de notícias sem depender de BeautifulSoup."""
     def __init__(self, padroes):
         super().__init__(convert_charrefs=True)
-        self.padroes = tuple(padroes)
+        self.padroes = tuple(str(p).lower() for p in padroes)
         self.ancora = None
         self.links = []
         self.texto_atual = []
-        self.contexto = ""
+        self.titulo_atributo = ""
 
     def handle_starttag(self, tag, attrs):
         if tag.lower() != "a":
             return
+
         attrs = dict(attrs)
-        href = attrs.get("href", "")
+        href = str(attrs.get("href", "") or "").strip()
         if not href:
             return
-        if any(p in href for p in self.padroes):
+
+        href_lower = href.lower()
+
+        # Case-insensitive: o TCE usa URLs como /Noticia/111...
+        if any(p in href_lower for p in self.padroes):
             self.ancora = href
             self.texto_atual = []
+            self.titulo_atributo = (
+                attrs.get("title")
+                or attrs.get("aria-label")
+                or ""
+            )
 
     def handle_data(self, data):
         if self.ancora is not None:
@@ -1254,10 +1314,17 @@ class LinksNoticiasParser(HTMLParser):
     def handle_endtag(self, tag):
         if tag.lower() == "a" and self.ancora is not None:
             titulo = limpar_texto(" ".join(self.texto_atual))
+
+            # Alguns cards do portal deixam o texto do título em atributo.
+            if not titulo:
+                titulo = limpar_texto(self.titulo_atributo)
+
             if titulo:
                 self.links.append((self.ancora, titulo))
+
             self.ancora = None
             self.texto_atual = []
+            self.titulo_atributo = ""
 
 
 def extrair_data_proxima(html_texto, posicao, limite=5000, titulo=""):
@@ -1328,9 +1395,11 @@ def buscar_noticias_oficiais_diretas():
             continue
 
         if nome == "TCE Notícias":
+            # O portal atual usa URLs como:
+            # /Orgaos-publicos-...html/Noticia/1111629106
+            # e também há links legados /Noticia/Detalhe/...
             parser = LinksNoticiasParser((
-                "/noticia/detalhe/",
-                "/Noticia/Detalhe/",
+                "/noticia/",
             ))
         else:
             parser = LinksNoticiasParser((
@@ -1351,8 +1420,11 @@ def buscar_noticias_oficiais_diretas():
             # TCE NOTÍCIAS
             # ====================================================
             if nome == "TCE Notícias":
-                if "/noticia/detalhe/" not in href_lower:
-                    continue
+                # Aceita o formato atual /Noticia/ID e o formato legado,
+                # sem depender de maiúsculas/minúsculas.
+                if not re.search(r"/noticia/\d+(?:[/?#]|$)", href_lower):
+                    if "/noticia/detalhe/" not in href_lower:
+                        continue
 
                 if not href_lower.startswith("http"):
                     href = "https://www.tce.mg.gov.br" + (
@@ -2393,9 +2465,11 @@ def destaque_tce_mg(n):
         "tce mg",
         "tcemg",
         "tce de minas gerais",
+        "tce de mg",
         "tribunal de contas de minas gerais",
         "tribunal de contas do estado de minas gerais",
         "tribunal de contas de mg",
+        "tribunal de contas mineiro",
     )
 
     tem_tce_mg = (
