@@ -2141,196 +2141,68 @@ st.markdown("""
 
 
 # ============================================================
-# REDES SOCIAIS — X (TWITTER)
+# REDES SOCIAIS — X (TWITTER) — MONITORAMENTO PÚBLICO
 # ============================================================
+# O acesso à API oficial do X exige créditos. Para manter o Radar
+# gratuito e sem erro 402, esta aba usa as buscas públicas do X.
+# Os links são montados dinamicamente para os últimos 3 dias e abrem
+# diretamente os resultados mais recentes no X.
 
-X_BUSCA_QUERY = (
-    '("TCE-MG" OR "TCE MG" OR TCEMG OR '
-    '"Tribunal de Contas de Minas Gerais" OR '
-    '"Tribunal de Contas do Estado de Minas Gerais" OR '
-    '"TCE de Minas Gerais" OR '
-    '("mesa de conciliação" TCE) OR '
-    '("mesa de conciliacao" TCE) OR '
-    '("comunicação" TCE) OR '
-    '("comunicacao" TCE) OR '
-    '("órgãos públicos" TCE) OR '
-    '("orgaos publicos" TCE) OR '
-    '("controle externo" TCE)) '
-    '-is:retweet lang:pt'
-)
+X_TERMOS_MONITORADOS = [
+    ("TCE-MG", '"TCE-MG"'),
+    ("TCEMG", 'TCEMG'),
+    ("Tribunal de Contas de Minas Gerais", '"Tribunal de Contas de Minas Gerais"'),
+    ("Mesa de Conciliação", '"Mesa de Conciliação" TCE'),
+    ("Comunicação + TCE", 'comunicação TCE-MG'),
+    ("Órgãos públicos + TCE", '"órgãos públicos" TCE-MG'),
+    ("Controle externo", '"controle externo" "TCE-MG"'),
+    ("Contratação + TCE", 'contratação "TCE-MG"'),
+]
+
+X_NOMES_MONITORADOS = [
+    ("Agostinho Patrus", '"Agostinho Patrus"'),
+    ("Durval Ângelo", '"Durval Ângelo"'),
+    ("Gilberto Diniz", '"Gilberto Diniz"'),
+    ("Ione Pinheiro", '"Ione Pinheiro"'),
+    ("Tadeu Martins Leite", '"Tadeu Martins Leite"'),
+]
 
 
-def obter_x_bearer_token():
-    """Lê o Bearer Token do X sem quebrar o app se o Secret ainda não existir."""
-    try:
-        return str(st.secrets.get("X_BEARER_TOKEN", "") or "").strip()
-    except Exception:
-        return ""
-
-
-@st.cache_data(ttl=300, show_spinner=False)
-def buscar_posts_x():
-    """Busca menções recentes ao TCE-MG no X e limita a análise a 3 dias."""
-    token = obter_x_bearer_token()
-
-    if not token:
-        return {
-            "ok": False,
-            "erro": "X_BEARER_TOKEN não configurado nos Secrets.",
-            "posts": [],
-        }
-
+def _x_busca_url(consulta, dias=3):
+    """Monta busca pública do X, ordenada pelas publicações mais recentes."""
     agora_x = datetime.now(FUSO_BRASIL)
-    inicio = agora_x - timedelta(days=3)
-
-    params = {
-        "query": X_BUSCA_QUERY,
-        "max_results": "100",
-        "start_time": inicio.astimezone(ZoneInfo("UTC")).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "tweet.fields": "created_at,public_metrics,author_id,entities",
-        "expansions": "author_id,entities.mentions.username",
-        "user.fields": "name,username",
-    }
-
-    url = "https://api.x.com/2/tweets/search/recent?" + urlencode(params)
-
-    try:
-        req = Request(
-            url,
-            headers={
-                "Authorization": f"Bearer {token}",
-                "User-Agent": "Radar-TCE-MG/2.0",
-            },
-        )
-
-        with urlopen(req, timeout=5) as resposta:
-            dados = json.loads(resposta.read().decode("utf-8", errors="ignore"))
-
-        posts = dados.get("data", []) or []
-        usuarios = dados.get("includes", {}).get("users", []) or []
-
-        mapa_usuarios = {
-            str(u.get("id")): u for u in usuarios if u.get("id")
-        }
-
-        posts_validos = []
-
-        for post in posts:
-            created = post.get("created_at")
-            if not created:
-                continue
-
-            try:
-                data_post = datetime.fromisoformat(
-                    created.replace("Z", "+00:00")
-                ).astimezone(FUSO_BRASIL)
-            except Exception:
-                continue
-
-            if data_post < inicio:
-                continue
-
-            post["_data_brasilia"] = data_post
-            post["_autor"] = mapa_usuarios.get(
-                str(post.get("author_id")), {}
-            )
-            posts_validos.append(post)
-
-        posts_validos.sort(
-            key=lambda p: p.get("_data_brasilia") or datetime.min.replace(tzinfo=FUSO_BRASIL),
-            reverse=True,
-        )
-
-        return {
-            "ok": True,
-            "erro": "",
-            "posts": posts_validos[:20],
-        }
-
-    except Exception as e:
-        return {
-            "ok": False,
-            "erro": f"Não foi possível consultar o X: {str(e)[:180]}",
-            "posts": [],
-        }
+    inicio_x = agora_x - timedelta(days=dias)
+    q = f"{consulta} since:{inicio_x.strftime('%Y-%m-%d')} until:{(agora_x + timedelta(days=1)).strftime('%Y-%m-%d')}"
+    return "https://x.com/search?" + urlencode({
+        "q": q,
+        "src": "typed_query",
+        "f": "live",
+    })
 
 
-def analisar_mencoes_x(posts):
-    """Monta rankings de perfis e assuntos citados nos posts coletados."""
-    pessoas = Counter()
-    termos = Counter()
-
-    for post in posts:
-        for mention in (
-            (post.get("entities", {}) or {}).get("mentions", []) or []
-        ):
-            username = mention.get("username")
-            if username:
-                pessoas[f"@{username}"] += 1
-
-        texto = str(post.get("text", "") or "").lower()
-
-        for grupo in PESSOAS.values():
-            for nome, variacoes in grupo.items():
-                if any(v.lower() in texto for v in variacoes):
-                    pessoas[nome] += 1
-
-    termos_prioritarios = (
-        "TCE-MG",
-        "TCEMG",
-        "TCE",
-        "Tribunal de Contas",
-        "mesa de conciliação",
-        "mesa de conciliacao",
-        "comunicação",
-        "comunicacao",
-        "órgãos públicos",
-        "orgaos publicos",
-        "controle externo",
-        "fiscalização",
-        "fiscalizacao",
-        "conciliação",
-        "conciliacao",
-        "licitação",
-        "licitacao",
-        "contratação",
-        "contratacao",
+def _x_busca_combinada():
+    """Busca ampla, sempre focada em TCE-MG e assuntos diretamente ligados."""
+    agora_x = datetime.now(FUSO_BRASIL)
+    inicio_x = agora_x - timedelta(days=3)
+    consulta = (
+        '("TCE-MG" OR TCEMG OR '
+        '"Tribunal de Contas de Minas Gerais" OR '
+        '"Tribunal de Contas do Estado de Minas Gerais" OR '
+        '"Mesa de Conciliação" OR "Mesa de Conciliacao" OR '
+        '(comunicação TCE-MG) OR (comunicacao TCE-MG) OR '
+        '("órgãos públicos" TCE-MG) OR ("orgaos publicos" TCE-MG) OR '
+        '("controle externo" TCE-MG)) '
+        f'since:{inicio_x.strftime("%Y-%m-%d")} '
+        f'until:{(agora_x + timedelta(days=1)).strftime("%Y-%m-%d")}'
     )
-
-    for post in posts:
-        texto = str(post.get("text", "") or "").lower()
-
-        for termo in termos_prioritarios:
-            if termo.lower() in texto:
-                termos[termo] += 1
-
-    return pessoas, termos
+    return _x_busca_url(consulta, dias=3)
 
 
 def renderizar_redes_sociais():
     st.markdown("### 𝕏 **Redes Sociais — X**")
     st.caption(
-        "Menções ao TCE-MG e assuntos diretamente relacionados nos últimos 3 dias."
+        "Monitoramento público de menções ao TCE-MG e assuntos diretamente relacionados nos últimos 3 dias."
     )
-
-    resultado_x = buscar_posts_x()
-
-    if not resultado_x["ok"]:
-        st.info("𝕏 " + resultado_x["erro"])
-        st.markdown(
-            "No Streamlit Cloud, adicione `X_BEARER_TOKEN` em **Secrets**."
-        )
-        return
-
-    posts = resultado_x["posts"]
-
-    if not posts:
-        st.info(
-            "Nenhuma menção ao TCE-MG foi encontrada nos últimos 3 dias."
-        )
-        return
-
-    pessoas_x, termos_x = analisar_mencoes_x(posts)
 
     st.markdown(
         """
@@ -2338,132 +2210,128 @@ def renderizar_redes_sociais():
         .x-summary-box {
             background: rgba(39,50,74,.055);
             border: 1px solid rgba(100,116,139,.15);
-            border-radius: 14px;
-            padding: 18px 20px;
-            margin: 8px 0 18px 0;
+            border-radius: 16px;
+            padding: 20px 22px;
+            margin: 8px 0 20px 0;
         }
         .x-summary-title {
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 800;
             color: #27324a;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
         }
-        .x-rank {
-            font-size: 14px;
-            color: #344054;
-            line-height: 1.7;
+        .x-monitor-item {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+            padding:10px 0;
+            border-bottom:1px solid rgba(100,116,139,.10);
         }
-        .x-post {
-            border: 1px solid rgba(100,116,139,.14);
-            border-radius: 13px;
-            padding: 15px 17px;
-            margin: 9px 0;
-            background: #fff;
+        .x-monitor-item:last-child { border-bottom:0; }
+        .x-monitor-name { font-size:14px; font-weight:750; color:#27324a; }
+        .x-monitor-caption { font-size:12px; color:#667085; margin-top:2px; }
+        .x-live {
+            display:inline-block;
+            padding:4px 9px;
+            border-radius:999px;
+            background:rgba(220,38,38,.09);
+            color:#b42318;
+            font-size:11px;
+            font-weight:800;
+            white-space:nowrap;
         }
-        .x-post-meta {
-            color: #667085;
-            font-size: 12px;
-            margin-bottom: 8px;
+        .x-search-box {
+            border:1px solid rgba(100,116,139,.14);
+            border-radius:14px;
+            padding:15px 16px;
+            background:#fff;
+            margin-bottom:10px;
         }
-        .x-post-text {
-            color: #27324a;
-            font-size: 15px;
-            line-height: 1.5;
-        }
+        .x-search-title { font-size:15px; font-weight:800; color:#27324a; }
+        .x-search-caption { font-size:12px; color:#667085; margin-top:3px; }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-    top_pessoas = pessoas_x.most_common(8)
-    top_termos = termos_x.most_common(8)
-
+    # ------------------------------------------------------------
+    # BLOCO TRANSLÚCIDO — PRINCIPAIS FRENTES
+    # ------------------------------------------------------------
     with st.container(border=True):
+        st.markdown('<div class="x-summary-box">', unsafe_allow_html=True)
         st.markdown(
-            '<div class="x-summary-box">',
+            '<div class="x-summary-title">🔥 Maiores frentes de monitoramento — últimos 3 dias</div>',
             unsafe_allow_html=True,
         )
-        st.markdown(
-            '<div class="x-summary-title">🔥 Maiores menções — últimos 3 dias</div>',
-            unsafe_allow_html=True,
+        st.caption(
+            "Clique em qualquer item para abrir o X já filtrado por publicações mais recentes."
         )
 
         c1, c2 = st.columns(2)
+        for idx, (nome, consulta) in enumerate(X_TERMOS_MONITORADOS):
+            col = c1 if idx % 2 == 0 else c2
+            with col:
+                st.markdown('<div class="x-monitor-item">', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div><div class="x-monitor-name">{esc_html(nome)}</div>'
+                    f'<div class="x-monitor-caption">últimos 3 dias</div></div>',
+                    unsafe_allow_html=True,
+                )
+                st.link_button("Ver no X ↗", _x_busca_url(consulta), key=f"x_term_{idx}")
+                st.markdown('</div>', unsafe_allow_html=True)
 
-        with c1:
-            st.markdown("**👥 Nomes/perfis mais mencionados**")
-            if top_pessoas:
-                for nome, qtd in top_pessoas[:6]:
-                    st.markdown(
-                        f'<div class="x-rank"><strong>{esc_html(nome)}</strong> — {qtd} menção(ões)</div>',
-                        unsafe_allow_html=True,
-                    )
-            else:
-                st.caption("Nenhum perfil identificado.")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        with c2:
-            st.markdown("**📌 Termos mais recorrentes**")
-            if top_termos:
-                for termo, qtd in top_termos[:6]:
-                    st.markdown(
-                        f'<div class="x-rank"><strong>{esc_html(termo)}</strong> — {qtd} ocorrência(s)</div>',
-                        unsafe_allow_html=True,
-                    )
-            else:
-                st.caption("Nenhum termo identificado.")
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("### 𝕏 Últimas 20 menções")
-
-    for post in posts[:20]:
-        texto_post = esc_html(post.get("text", ""))
-        autor = post.get("_autor") or {}
-        nome_autor = autor.get("name") or "Usuário do X"
-        username = autor.get("username")
-
-        autor_exibicao = (
-            f"{nome_autor} (@{username})"
-            if username
-            else nome_autor
-        )
-
-        data_post = post.get("_data_brasilia")
-        data_texto = (
-            data_post.strftime("%d/%m/%Y %H:%M")
-            if data_post else ""
-        )
-
-        post_id = post.get("id", "")
-        link_post = (
-            f"https://x.com/i/web/status/{post_id}"
-            if post_id else ""
-        )
-
-        metricas = post.get("public_metrics", {}) or {}
-
+    # ------------------------------------------------------------
+    # NOMES MONITORADOS
+    # ------------------------------------------------------------
+    with st.container(border=True):
         st.markdown(
-            f"""
-            <div class="x-post">
-                <div class="x-post-meta">
-                    𝕏 <strong>{esc_html(autor_exibicao)}</strong>
-                    &nbsp;•&nbsp; {esc_html(data_texto)}
-                    &nbsp;•&nbsp; ❤️ {metricas.get("like_count", 0)}
-                    &nbsp;•&nbsp; 🔁 {metricas.get("retweet_count", 0)}
-                    &nbsp;•&nbsp; 💬 {metricas.get("reply_count", 0)}
-                </div>
-                <div class="x-post-text">{texto_post}</div>
-            </div>
-            """,
+            '<div class="x-summary-title">👥 Nomes mais importantes para o monitoramento</div>',
             unsafe_allow_html=True,
         )
+        st.caption("Busca pública no X pelos principais nomes ligados ao Tribunal.")
 
-        if link_post:
-            st.link_button(
-                "Abrir no X ↗",
-                link_post,
-                key=f"x_post_{post_id}",
-            )
+        cols = st.columns(3)
+        for idx, (nome, consulta) in enumerate(X_NOMES_MONITORADOS):
+            with cols[idx % 3]:
+                st.markdown(
+                    f'<div class="x-search-box"><div class="x-search-title">{esc_html(nome)}</div>'
+                    f'<div class="x-search-caption">menções nos últimos 3 dias</div></div>',
+                    unsafe_allow_html=True,
+                )
+                st.link_button(
+                    "🔎 Ver menções no X",
+                    _x_busca_url(consulta),
+                    key=f"x_nome_{idx}",
+                    use_container_width=True,
+                )
+
+    # ------------------------------------------------------------
+    # BUSCA GERAL
+    # ------------------------------------------------------------
+    st.markdown("### 𝕏 **Últimas menções ao TCE-MG**")
+    st.caption(
+        "O botão abaixo abre a busca pública do X com os principais termos do Radar, ordenada pelas publicações mais recentes."
+    )
+    st.link_button(
+        "𝕏 Abrir últimas menções no X",
+        _x_busca_combinada(),
+        use_container_width=False,
+    )
+
+    st.markdown(
+        """
+        <div style="margin-top:14px;padding:13px 15px;border-radius:12px;
+        background:rgba(39,50,74,.045);color:#667085;font-size:12px;line-height:1.5;">
+        <strong>Como funciona:</strong> esta aba usa a busca pública do X e não a API paga.
+        Por isso, o Radar não inventa contagens nem promete uma lista completa dos últimos 20 posts;
+        os links levam diretamente ao X, com o período e os termos já configurados.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # ============================================================
