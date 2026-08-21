@@ -64,21 +64,47 @@ st.set_page_config(
 # FONTES
 # ============================================================
 
-FONTES = {'Estado de Minas': 'https://news.google.com/rss/search?q=site%3Aem.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'Itatiaia': 'https://news.google.com/rss/search?q=site%3Aitatiaia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'O TEMPO': 'https://news.google.com/rss/search?q=site%3Aotempo.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'Hoje em Dia': 'https://news.google.com/rss/search?q=site%3Ahojeemdia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'G1': 'https://news.google.com/rss/search?q=site%3Ag1.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22Atricon%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'G1 - Tribunais de Contas': 'https://news.google.com/rss/search?q=site%3Ag1.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'O Globo': 'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22Atricon%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'O Globo - Tribunais de Contas': 'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'STF - Tribunais de Contas': 'https://news.google.com/rss/search?q=(%22STF%22+OR+%22Supremo+Tribunal+Federal%22)+(%22Tribunal+de+Contas%22+OR+%22TCE%22+OR+%22TCU%22+OR+%22controle+externo%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'Folha de S.Paulo': 'https://news.google.com/rss/search?q=site%3Afolha.uol.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'Poder360': 'https://news.google.com/rss/search?q=site%3Apoder360.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'JOTA': 'https://news.google.com/rss/search?q=site%3Ajota.info+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'Migalhas': 'https://news.google.com/rss/search?q=site%3Amigalhas.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'Atricon': 'https://news.google.com/rss/search?q=%22Atricon%22&hl=pt-BR&gl=BR&ceid=BR:pt-419',
- 'TCU': 'https://news.google.com/rss/search?q=(%22TCU%22+OR+%22Tribunal%20de%20Contas%20da%20Uni%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419'}
+FONTES = {"Estado de Minas": "https://news.google.com/rss/search?q=site%3Aem.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Itatiaia": "https://news.google.com/rss/search?q=site%3Aitatiaia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "O TEMPO": "https://news.google.com/rss/search?q=site%3Aotempo.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Hoje em Dia": "https://news.google.com/rss/search?q=site%3Ahojeemdia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Tribuna de Minas": "https://news.google.com/rss/search?q=site%3Atribunademinas.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Diário do Comércio": "https://news.google.com/rss/search?q=site%3Adiariodocomercio.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "BHAZ": "https://news.google.com/rss/search?q=site%3Abhaz.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Agência Minas": "https://news.google.com/rss/search?q=site%3Aagenciaminas.mg.gov.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "O Fator": "https://news.google.com/rss/search?q=site%3Aofator.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Edição do Brasil": "https://news.google.com/rss/search?q=site%3Aedicaodobrasil.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Moon BH": "https://news.google.com/rss/search?q=site%3Amoonbh.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Bem Minas": "https://news.google.com/rss/search?q=%22Bem+Minas%22+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Blog do Orion": "https://news.google.com/rss/search?q=%22Blog+do+Orion%22+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Além do Fato": "https://news.google.com/rss/search?q=%22Al%C3%A9m+do+Fato%22+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Blog do PCO": "https://news.google.com/rss/search?q=%22Blog+do+PCO%22+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "G1": "https://news.google.com/rss/search?q=site%3Ag1.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22Atricon%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "G1 - Tribunais de Contas": "https://news.google.com/rss/search?q=site%3Ag1.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "O Globo": "https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22Atricon%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "O Globo - Tribunais de Contas": "https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+(%22presidente+do+TCE%22+OR+%22conselheiro+do+TCE%22+OR+%22TCE-MA%22+OR+%22TCE-PI%22+OR+%22TCE-SP%22+OR+%22TCE-RJ%22+OR+%22TCE-PR%22+OR+%22TCE-SC%22+OR+%22TCE-RS%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "STF - Tribunais de Contas": "https://news.google.com/rss/search?q=(%22STF%22+OR+%22Supremo+Tribunal+Federal%22)+(%22Tribunal+de+Contas%22+OR+%22TCE%22+OR+%22TCU%22+OR+%22controle+externo%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Folha": "https://news.google.com/rss/search?q=site%3Afolha.uol.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "UOL": "https://news.google.com/rss/search?q=site%3Auol.com.br+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Globo": "https://news.google.com/rss/search?q=site%3Aglobo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Poder360": "https://news.google.com/rss/search?q=site%3Apoder360.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "JOTA": "https://news.google.com/rss/search?q=site%3Ajota.info+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Migalhas": "https://news.google.com/rss/search?q=site%3Amigalhas.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "O Bastidor": "https://news.google.com/rss/search?q=site%3Aobastidor.com.br+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Intercept Brasil": "https://news.google.com/rss/search?q=site%3Aintercept.com.br+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "revista piauí": "https://news.google.com/rss/search?q=site%3Apiaui.folha.uol.com.br+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Brasil de Fato": "https://news.google.com/rss/search?q=site%3Abrasildefato.com.br+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Correio Braziliense": "https://news.google.com/rss/search?q=site%3Acorreiobraziliense.com.br+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Estadão": "https://news.google.com/rss/search?q=site%3Aestadao.com.br+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "O Antagonista": "https://news.google.com/rss/search?q=site%3Aoantagonista.com.br+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Carta Capital": "https://news.google.com/rss/search?q=site%3Acartacapital.com.br+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "CNN Brasil": "https://news.google.com/rss/search?q=site%3Acnnbrasil.com.br+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Agência Brasil": "https://news.google.com/rss/search?q=site%3Aagenciabrasil.ebc.com.br+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Valor Econômico": "https://news.google.com/rss/search?q=site%3Avalor.globo.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "ConJur": "https://news.google.com/rss/search?q=site%3Aconjur.com.br+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Metrópoles": "https://news.google.com/rss/search?q=site%3Ametropoles.com+(%22TCE%22+OR+%22Tribunal+de+Contas%22+OR+%22TCU%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Atricon": "https://news.google.com/rss/search?q=%22Atricon%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "TCU": "https://news.google.com/rss/search?q=(%22TCU%22+OR+%22Tribunal%20de%20Contas%20da%20Uni%C3%A3o%22)&hl=pt-BR&gl=BR&ceid=BR:pt-419"}
 
 
 # ============================================================
@@ -473,7 +499,7 @@ def identificar_instituicoes(
 
     mapa = {
         "TCE-MG": [
-            "tce-mg", "tce mg", "tribunal de contas de minas gerais",
+            "tce-mg", "tce mg", "tcemg", "tribunal de contas de minas gerais",
             "tribunal de contas do estado de minas gerais"
         ],
         "Governo de Minas": [
