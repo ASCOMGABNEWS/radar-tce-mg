@@ -4,6 +4,7 @@ from datetime import datetime
 FONTES = {
     "Google News - TCE-MG": "https://news.google.com/rss/search?q=%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "Google News - TCE MG": "https://news.google.com/rss/search?q=%22TCE%20MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+    "Google News - TCEMG": "https://news.google.com/rss/search?q=%22TCEMG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "Google News - Tribunal de Contas MG": "https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%22%20%22Minas%20Gerais%22&hl=pt-BR&gl=BR&ceid=BR:pt-419",
 }
 
