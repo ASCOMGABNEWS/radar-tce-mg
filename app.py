@@ -448,9 +448,16 @@ TEMAS = {
     "🏗️ Obras públicas": [
         "obra pública",
         "obras públicas",
-        "obras",
         "infraestrutura",
         "construção"
+    ],
+
+    "📚 Obras literárias": [
+        "obra literária",
+        "obras literárias",
+        "literatura",
+        "literário",
+        "literária"
     ],
 
     "🤝 Conciliação": [
@@ -490,6 +497,29 @@ TEMAS = {
         "Cemig",
         "Codemig",
         "Vale"
+    ],
+
+    "🏛️ Institucional": [
+        "institucional",
+        "órgão público",
+        "órgãos públicos",
+        "poder público",
+        "administração pública",
+        "gestão pública",
+        "entidade pública",
+        "entidades públicas",
+        "serviço público",
+        "serviços públicos",
+        "governança pública",
+        "governança",
+        "política pública",
+        "políticas públicas",
+        "prestação de contas",
+        "responsabilidade fiscal",
+        "controle interno",
+        "transparência pública",
+        "gestão municipal",
+        "gestão estadual"
     ],
 }
 
@@ -742,6 +772,20 @@ def calcular_relevancia(
 
     if "atricon" in texto or "instituto rui barbosa" in texto or " irb" in texto:
         score += 8
+
+    # Conteúdo institucional é relevante mesmo quando a matéria não cita
+    # diretamente TCE-MG. Isso captura notícias sobre órgãos públicos,
+    # administração, governança e políticas públicas.
+    termos_institucionais = [
+        "órgãos públicos", "órgão público", "administração pública",
+        "poder público", "gestão pública", "entidades públicas",
+        "entidade pública", "serviço público", "serviços públicos",
+        "governança pública", "governança", "políticas públicas",
+        "política pública", "prestação de contas", "responsabilidade fiscal",
+        "controle interno", "transparência pública", "gestão municipal",
+        "gestão estadual"
+    ]
+    score += min(sum(1 for t in termos_institucionais if t in texto) * 4, 16)
 
     # Autoridades de Tribunais de Contas.
     termos_autoridade = [
@@ -1119,14 +1163,46 @@ INSTITUICOES_FILTRO = {
 # ALMG/MPMG/TJMG continuam como fontes complementares via Google News.
 BUSCAS_OFICIAIS = [
     ("TCE-MG", 'site:tce.mg.gov.br/noticia'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia conciliação OR "mesa de conciliação" OR consensualidade'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia comunicação OR "comunicação pública" OR "linguagem simples" OR transparência'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia "controle externo" OR fiscalização OR auditoria OR licitação OR contrato OR "contas públicas"'),
-    ("TCE-MG", 'site:tce.mg.gov.br/noticia concessão OR conselheiro OR "Agostinho Patrus" OR "Durval Ângelo" OR TCU OR Atricon OR IRB'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia (conciliação OR "mesa de conciliação" OR consensualidade OR consenso OR mediação)'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia (comunicação OR "comunicação pública" OR "linguagem simples" OR transparência OR imprensa)'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia ("controle externo" OR fiscalização OR auditoria OR licitação OR contrato OR "contas públicas" OR "prestação de contas")'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia ("órgãos públicos" OR "órgão público" OR "administração pública" OR "poder público" OR "gestão pública" OR institucional OR governança)'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia ("políticas públicas" OR "política pública" OR municípios OR prefeitura OR "responsabilidade fiscal" OR "controle interno")'),
+    ("TCE-MG", 'site:tce.mg.gov.br/noticia (concessão OR conselheiro OR "Agostinho Patrus" OR "Durval Ângelo" OR TCU OR Atricon OR IRB OR processo OR decisão OR acórdão OR auditoria)'),
     ("ALMG", 'site:almg.gov.br "Tribunal de Contas" OR TCE-MG OR "controle externo" OR fiscalização OR conciliação OR comunicação'),
     ("MPMG", 'site:mpmg.mp.br "Tribunal de Contas" OR TCE-MG OR "controle externo" OR fiscalização OR auditoria OR licitação OR conciliação OR comunicação'),
     ("TJMG", 'site:tjmg.jus.br "Tribunal de Contas" OR TCE-MG OR "controle externo" OR fiscalização OR auditoria OR licitação OR conciliação OR comunicação'),
 ]
+
+
+# ============================================================
+# REGRA-MÃE DO RADAR
+# ============================================================
+# O Radar é focado em Tribunais de Contas. Órgãos como ALMG, MPMG e TJMG
+# só entram quando a notícia tem conexão explícita com TCE/TCU/Tribunais de
+# Contas, conselheiros, processos, decisões ou atuação de controle externo.
+TERMOS_CONEXAO_TC = (
+    "tce-mg", "tce mg", "tribunal de contas de minas gerais",
+    "tribunal de contas", "tribunais de contas", "tcu",
+    "conselheiro do tce", "conselheira do tce",
+    "conselheiro do tribunal de contas", "conselheira do tribunal de contas",
+    "ministro do tcu", "ministra do tcu", "presidente do tce",
+    "presidente do tribunal de contas", "presidente do tcu",
+    "acórdão do tce", "acordao do tce", "processo no tce",
+    "processo do tce", "processo no tribunal de contas",
+    "processo do tribunal de contas", "decisão do tce", "decisao do tce",
+    "decisão do tribunal de contas", "decisao do tribunal de contas",
+    "auditoria do tce", "fiscalização do tce", "fiscalizacao do tce",
+    "denúncia ao tce", "denuncia ao tce", "representação no tce",
+    "representacao no tce", "mesa de conciliação do tce",
+    "mesa de conciliacao do tce", "conciliação no tce",
+    "conciliacao no tce", "controle externo"
+)
+
+
+def noticia_tem_conexao_tc(titulo, resumo, veiculo=""):
+    texto = " ".join([str(titulo or ""), str(resumo or ""), str(veiculo or "")]).lower()
+    return any(t in texto for t in TERMOS_CONEXAO_TC)
 
 
 def rss_url_para_busca(q):
@@ -1137,7 +1213,7 @@ def baixar_feed(args):
     nome, url = args
     try:
         request = Request(url, headers={"User-Agent": "Radar-TCE-MG/2.0"})
-        with urlopen(request, timeout=5) as resposta:
+        with urlopen(request, timeout=3) as resposta:
             return nome, feedparser.parse(resposta.read())
     except Exception:
         return nome, None
@@ -1161,6 +1237,14 @@ def buscar_noticias():
             return False
 
         resumo = limpar_texto(reg.get("resumo", ""))
+        veiculo = reg.get("veiculo") or monitoramento
+
+        # ALMG, MPMG e TJMG são fontes complementares. Não queremos
+        # notícias desses órgãos por si só: elas só entram quando há conexão
+        # com Tribunal de Contas/TCE/TCU/processo/decisão/controle externo.
+        if monitoramento in {"ALMG", "MPMG", "TJMG"} and not noticia_tem_conexao_tc(titulo, resumo, veiculo):
+            return False
+
         pessoas = identificar_pessoas(titulo, resumo)
         temas = identificar_temas(titulo, resumo)
         instituicoes = identificar_instituicoes(titulo, resumo)
@@ -1173,7 +1257,6 @@ def buscar_noticias():
             instituicoes.append(monitoramento)
 
         score = calcular_relevancia(titulo, resumo, monitoramento, temas, pessoas)
-        veiculo = reg.get("veiculo") or monitoramento
         abr = classificar_abrangencia(veiculo, titulo, resumo)
 
         noticias.append({
@@ -1207,7 +1290,7 @@ def buscar_noticias():
 
     tarefas = tarefas_oficiais + list(FONTES.items())
     resultados = {}
-    with ThreadPoolExecutor(max_workers=16) as executor:
+    with ThreadPoolExecutor(max_workers=32) as executor:
         futures = [executor.submit(baixar_feed, tarefa) for tarefa in tarefas]
         for future in as_completed(futures):
             chave, feed = future.result()
