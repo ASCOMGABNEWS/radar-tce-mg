@@ -64,18 +64,19 @@ st.set_page_config(
 # FONTES
 # ============================================================
 
-FONTES = {}
+FONTES = {'Estado de Minas': 'https://news.google.com/rss/search?q=site%3Aem.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Itatiaia': 'https://news.google.com/rss/search?q=site%3Aitatiaia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'O TEMPO': 'https://news.google.com/rss/search?q=site%3Aotempo.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Hoje em Dia': 'https://news.google.com/rss/search?q=site%3Ahojeemdia.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Tribuna de Minas': 'https://news.google.com/rss/search?q=site%3Atribunademinas.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Diário do Comércio': 'https://news.google.com/rss/search?q=site%3Adiariodocomercio.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'BHAZ': 'https://news.google.com/rss/search?q=site%3Abhaz.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Agência Minas': 'https://news.google.com/rss/search?q=site%3Aagenciaminas.mg.gov.br+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'O Fator': 'https://news.google.com/rss/search?q=site%3Aofator.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Edição do Brasil': 'https://news.google.com/rss/search?q=site%3Aedicaodobrasil.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Moon BH': 'https://news.google.com/rss/search?q=site%3Amoonbh.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'G1 Minas': 'https://news.google.com/rss/search?q=site%3Ag1.globo.com%2Fmg+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Folha de S.Paulo': 'https://news.google.com/rss/search?q=site%3Afolha.uol.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'O Globo': 'https://news.google.com/rss/search?q=site%3Aoglobo.globo.com+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Correio Braziliense': 'https://news.google.com/rss/search?q=site%3Acorreiobraziliense.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Poder360': 'https://news.google.com/rss/search?q=site%3Apoder360.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'O Antagonista': 'https://news.google.com/rss/search?q=site%3Aoantagonista.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Brasil de Fato': 'https://news.google.com/rss/search?q=site%3Abrasildefato.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'revista piauí': 'https://news.google.com/rss/search?q=site%3Apiaui.folha.uol.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'JOTA': 'https://news.google.com/rss/search?q=site%3Ajota.info+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Migalhas': 'https://news.google.com/rss/search?q=site%3Amigalhas.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'O Bastidor': 'https://news.google.com/rss/search?q=site%3Aobastidor.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Intercept Brasil': 'https://news.google.com/rss/search?q=site%3Aintercept.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Bem Minas': 'https://news.google.com/rss/search?q=site%3Abemminas.com.br+%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'TCE-MG': 'https://news.google.com/rss/search?q=%22TCE-MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'TCE MG': 'https://news.google.com/rss/search?q=%22TCE%20MG%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Tribunal de Contas MG': 'https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%22+%22Minas%20Gerais%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Atricon': 'https://news.google.com/rss/search?q=%22Atricon%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'IRB': 'https://news.google.com/rss/search?q=%22Instituto%20Rui%20Barbosa%22+OR+%22IRB%22+%22Tribunais%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Tribunais de Contas': 'https://news.google.com/rss/search?q=%22Tribunais%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Tribunal de Contas': 'https://news.google.com/rss/search?q=%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Presidentes de Tribunais de Contas': 'https://news.google.com/rss/search?q=%22presidente%20do%20Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Conselheiros de Tribunais de Contas': 'https://news.google.com/rss/search?q=%22conselheiro%22+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'TCEs': 'https://news.google.com/rss/search?q=%22TCE%22+%22Tribunal%20de%20Contas%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Durval Ângelo': 'https://news.google.com/rss/search?q=%22Durval%20Ângelo%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Agostinho Patrus': 'https://news.google.com/rss/search?q=%22Agostinho%20Patrus%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Gilberto Diniz': 'https://news.google.com/rss/search?q=%22Gilberto%20Diniz%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Alencar da Silveira': 'https://news.google.com/rss/search?q=%22Alencar%20da%20Silveira%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Ione Pinheiro': 'https://news.google.com/rss/search?q=%22Ione%20Pinheiro%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Tadeu Martins Leite / Tadeuzinho': 'https://news.google.com/rss/search?q=%22Tadeu%20Martins%20Leite%22+OR+%22Tadeuzinho%22&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Licurgo Mourão': 'https://news.google.com/rss/search?q=%22Licurgo%20Mourão%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Hamilton Coelho': 'https://news.google.com/rss/search?q=%22Hamilton%20Coelho%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Adonias Fernandes': 'https://news.google.com/rss/search?q=%22Adonias%20Fernandes%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419', 'Telmo Passareli': 'https://news.google.com/rss/search?q=%22Telmo%20Passareli%22+TCE&hl=pt-BR&gl=BR&ceid=BR:pt-419'}
 
-# Coleta enxuta: poucas consultas amplas no Google News.
-# O Radar não acessa diretamente TCE-MG, ALMG, MPMG ou TJMG.
+# As referências de imprensa permanecem cadastradas acima para identificação
+# da origem. A coleta, porém, NÃO faz uma chamada por jornal: agrupa os veículos
+# em poucas consultas do Google News para manter o Radar rápido.
+
 BUSCAS_RADAR = [
     ("TCE-MG", 'site:tce.mg.gov.br/noticia'),
-    ("Tribunais de Contas", '("TCE-MG" OR "Tribunal de Contas de Minas Gerais" OR "Agostinho Patrus" OR "Durval Ângelo")'),
-    ("Tribunais de Contas", '("Tribunal de Contas" OR TCU OR "TCE-MG") (conciliação OR "mesa de conciliação" OR fiscalização OR auditoria OR denúncia OR acórdão OR processo OR licitação OR concessão OR conselheiro OR comunicação)'),
-    ("Órgãos complementares", '(site:almg.gov.br OR site:mpmg.mp.br OR site:tjmg.jus.br) ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo")'),
-    ("Notícias", '("TCE-MG" OR "Tribunal de Contas" OR TCU OR "conselheiro do TCE") (G1 OR Globo OR "O TEMPO" OR Itatiaia OR "Estado de Minas")'),
+    ("Tribunais de Contas", '("TCE-MG" OR "Tribunal de Contas de Minas Gerais" OR "Agostinho Patrus" OR "Durval Ângelo" OR TCU OR "Tribunal de Contas")'),
+    ("Imprensa de Minas", f'({mg_sites}) ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo" OR fiscalização OR auditoria OR conciliação OR "mesa de conciliação" OR acórdão OR processo)'),
+    ("Imprensa nacional", f'({nat_sites}) ("TCE-MG" OR "Tribunal de Contas" OR TCU OR "Tribunal de Contas" OR conselheiro OR "controle externo" OR fiscalização OR auditoria OR conciliação OR acórdão OR processo)'),
+    ("Órgãos complementares", '(site:almg.gov.br OR site:mpmg.mp.br OR site:tjmg.jus.br) ("TCE-MG" OR "Tribunal de Contas" OR TCU OR conselheiro OR "controle externo" OR acórdão OR processo)'),
 ]
-
 
 # ============================================================
 # PESSOAS MONITORADAS
@@ -1147,7 +1148,10 @@ def buscar_noticias():
                 "titulo": limpar_texto(item.get("title", "")),
                 "resumo": limpar_texto(item.get("summary", "")),
                 "link": item.get("link", ""),
-                "veiculo": nome,
+                "veiculo": (
+                    (item.get("source", {}) or {}).get("title")
+                    or nome
+                ),
                 "data": data,
             }, nome)
 
@@ -2607,4 +2611,3 @@ else:
 st.caption(
     "As notícias são classificadas automaticamente com base em relevância para o TCE-MG."
 )
-
