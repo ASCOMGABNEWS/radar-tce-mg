@@ -24,9 +24,9 @@ from openai import OpenAI
 import re
 import html
 from difflib import SequenceMatcher
+from bs4 import BeautifulSoup
 from collections import Counter
 from io import BytesIO
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
@@ -451,29 +451,6 @@ TEMAS = {
         "obras",
         "infraestrutura",
         "construção"
-    ],
-
-    "🤝 Conciliação": [
-        "conciliação",
-        "mesa de conciliação",
-        "mesa de negociação",
-        "solução consensual",
-        "consensualidade",
-        "consenso",
-        "mediação",
-        "prevenção e resolução de conflitos",
-        "acordo"
-    ],
-
-    "📣 Comunicação": [
-        "comunicação pública",
-        "comunicação institucional",
-        "comunicação pública digital",
-        "linguagem simples",
-        "transparência",
-        "redes sociais",
-        "imprensa",
-        "comunicação"
     ],
 
     "🏢 Instituições": [
@@ -964,6 +941,19 @@ def classificar_abrangencia(veiculo, titulo="", resumo=""):
 
 
 
+# ============================================================
+# PORTAIS OFICIAIS
+# ============================================================
+# Estes portais são coletados diretamente. Assim o Radar não depende
+# de o Google News indexar a notícia.
+PORTAIS_OFICIAIS = {
+    "TCE-MG": ("https://www.tce.mg.gov.br/noticia/", "tce"),
+    "ALMG": ("https://www.almg.gov.br/comunicacao/noticias/", "almg"),
+    "MPMG": ("https://www.mpmg.mp.br/portal/menu/comunicacao/noticias/", "mpmg"),
+    "TJMG": ("https://www.tjmg.jus.br/portal-tjmg/", "tjmg"),
+}
+
+
 def normalizar_titulo_dedupe(titulo):
     texto = limpar_texto(titulo).lower()
     texto = re.sub(r"[^a-z0-9áàâãéêíóôõúçü ]", " ", texto)
@@ -1239,44 +1229,6 @@ MOTIVO: explicação curta em até 2 frases
             "motivo": "Não foi possível realizar a análise da IA."
         }
         
-# Instituições disponíveis para classificação e filtro.
-# Deve ser definido antes de buscar_noticias(), pois a coleta o utiliza.
-INSTITUICOES_FILTRO = {
-    "TCE-MG": "TCE-MG",
-    "MPMG": "MPMG",
-    "ALMG": "ALMG",
-    "Procuradoria": "Procuradoria",
-    "TJMG": "TJMG",
-    "Atricon": "Atricon",
-    "IRB": "IRB",
-    "TCU": "TCU",
-    "Outros Tribunais de Contas": "Outros Tribunais de Contas",
-}
-
-# Buscas temáticas nos portais oficiais. O Radar NÃO varre os portais inteiros:
-# procura apenas assuntos que fazem parte do monitoramento.
-PORTAIS_OFICIAIS_BUSCA = {
-    "TCE-MG": 'site:tce.mg.gov.br ("TCE-MG" OR "Tribunal de Contas" OR "controle externo" OR fiscalização OR auditoria OR licitação OR contrato OR "contas públicas" OR conciliação OR "Mesa de Conciliação" OR consensualidade OR comunicação OR "comunicação pública" OR "linguagem simples" OR concessão OR "Agostinho Patrus" OR "Durval Ângelo")',
-    "ALMG": 'site:almg.gov.br ("Tribunal de Contas" OR TCE-MG OR "controle externo" OR fiscalização OR licitação OR "contas públicas" OR conciliação OR consensualidade OR comunicação OR "comunicação pública" OR "linguagem simples" OR concessão OR "Agostinho Patrus" OR "Durval Ângelo")',
-    "MPMG": 'site:mpmg.mp.br ("Tribunal de Contas" OR TCE-MG OR "controle externo" OR fiscalização OR auditoria OR licitação OR contrato OR "contas públicas" OR conciliação OR consensualidade OR comunicação OR "comunicação pública" OR "linguagem simples" OR concessão OR "Agostinho Patrus" OR "Durval Ângelo")',
-    "TJMG": 'site:tjmg.jus.br ("Tribunal de Contas" OR TCE-MG OR "controle externo" OR fiscalização OR auditoria OR licitação OR contrato OR "contas públicas" OR conciliação OR consensualidade OR comunicação OR "comunicação pública" OR "linguagem simples" OR concessão OR "Agostinho Patrus" OR "Durval Ângelo")',
-}
-
-
-def rss_url_para_busca(q):
-    return 'https://news.google.com/rss/search?q=' + quote(q) + '&hl=pt-BR&gl=BR&ceid=BR:pt-419'
-
-
-def baixar_feed(args):
-    nome, url = args
-    try:
-        request = Request(url, headers={"User-Agent": "Radar-TCE-MG/2.0"})
-        with urlopen(request, timeout=5) as resposta:
-            return nome, feedparser.parse(resposta.read())
-    except Exception:
-        return nome, None
-
-
 @st.cache_data(ttl=300, show_spinner=False)
 def buscar_noticias():
     noticias = []
@@ -1289,7 +1241,6 @@ def buscar_noticias():
         titulo = reg.get("titulo", "Sem título")
         if not link or titulo_duplicado(titulo, titulos):
             return False
-
         data = reg.get("data")
         if data and data < limite:
             return False
@@ -1303,13 +1254,14 @@ def buscar_noticias():
         if pessoa_fonte and pessoa_fonte not in pessoas:
             pessoas.append(pessoa_fonte)
 
+        # Fontes oficiais identificam a própria instituição mesmo quando a
+        # sigla não aparece no título/resumo.
         if monitoramento in INSTITUICOES_FILTRO and monitoramento not in instituicoes:
             instituicoes.append(monitoramento)
 
         score = calcular_relevancia(titulo, resumo, monitoramento, temas, pessoas)
         veiculo = reg.get("veiculo") or monitoramento
         abr = classificar_abrangencia(veiculo, titulo, resumo)
-
         noticias.append({
             "titulo": titulo,
             "resumo": resumo,
@@ -1328,31 +1280,22 @@ def buscar_noticias():
         titulos.append(normalizar_titulo_dedupe(titulo))
         return True
 
-    # IMPORTANTE: não fazemos scraping direto dos quatro portais.
-    # Cada portal entra como fonte de referência, mas somente para os assuntos
-    # que interessam ao Radar. As quatro buscas rodam em paralelo.
-    buscas_oficiais = [
-        (nome, rss_url_para_busca(query))
-        for nome, query in PORTAIS_OFICIAIS_BUSCA.items()
-    ]
+    # 1) Portais oficiais primeiro: eles têm prioridade sobre cópias em jornais.
+    for nome, (url, tipo) in PORTAIS_OFICIAIS.items():
+        for reg in coletar_portal_oficial(nome, url, tipo):
+            adicionar(reg, nome)
 
-    # Todas as fontes RSS também são baixadas em paralelo. Isso evita que uma
-    # fonte lenta trave o Radar por dezenas de segundos em sequência.
-    tarefas = buscas_oficiais + list(FONTES.items())
-    resultados = {}
-    with ThreadPoolExecutor(max_workers=12) as executor:
-        futures = [executor.submit(baixar_feed, tarefa) for tarefa in tarefas]
-        for future in as_completed(futures):
-            nome, feed = future.result()
-            if feed is not None:
-                resultados[nome] = feed
-
-    # Primeiro as fontes oficiais, para que a versão oficial tenha prioridade
-    # se a mesma matéria também aparecer em um jornal.
-    for nome, _ in buscas_oficiais:
-        feed = resultados.get(nome)
-        if not feed:
+    # 1b) Backup dos próprios portais oficiais via Google News.
+    # Não é a fonte principal: só recupera matérias que o HTML dinâmico
+    # ou a paginação do portal não expôs na coleta direta.
+    for nome, url in PORTAIS_OFICIAIS_RSS.items():
+        try:
+            request = Request(url, headers={"User-Agent": "Radar-TCE-MG/2.0"})
+            with urlopen(request, timeout=8) as resposta:
+                feed = feedparser.parse(resposta.read())
+        except Exception:
             continue
+
         for item in feed.entries:
             data = obter_data(item)
             adicionar({
@@ -1363,11 +1306,16 @@ def buscar_noticias():
                 "data": data,
             }, nome)
 
-    # Depois, imprensa e demais fontes já configuradas.
-    for nome, _ in FONTES.items():
-        feed = resultados.get(nome)
-        if not feed:
+    # 2) Demais veículos continuam via Google News/RSS.
+    for nome, url in FONTES.items():
+        try:
+            request = Request(url, headers={"User-Agent": "Radar-TCE-MG/2.0"})
+            with urlopen(request, timeout=8) as resposta:
+                conteudo = resposta.read()
+            feed = feedparser.parse(conteudo)
+        except Exception:
             continue
+
         for item in feed.entries:
             link = item.get("link", "")
             if not link or link in links:
@@ -1856,6 +1804,19 @@ if atualizar_agora:
     st.cache_data.clear()
     st.rerun()
 
+
+
+# ============================================================
+# PORTAIS OFICIAIS
+# ============================================================
+# Estes portais são coletados diretamente. Assim o Radar não depende
+# de o Google News indexar a notícia.
+PORTAIS_OFICIAIS = {
+    "TCE-MG": ("https://www.tce.mg.gov.br/noticia/", "tce"),
+    "ALMG": ("https://www.almg.gov.br/comunicacao/noticias/", "almg"),
+    "MPMG": ("https://www.mpmg.mp.br/portal/menu/comunicacao/noticias/", "mpmg"),
+    "TJMG": ("https://www.tjmg.jus.br/portal-tjmg/", "tjmg"),
+}
 
 
 def normalizar_titulo_dedupe(titulo):
@@ -2411,6 +2372,18 @@ with st.container(border=True, key="metricas-centralizadas"):
 # ============================================================
 # FILTROS
 # ============================================================
+
+INSTITUICOES_FILTRO = {
+    "TCE-MG": "TCE-MG",
+    "MPMG": "MPMG",
+    "ALMG": "ALMG",
+    "Procuradoria": "Procuradoria",
+    "TJMG": "TJMG",
+    "Atricon": "Atricon",
+    "IRB": "IRB",
+    "TCU": "TCU",
+    "Outros Tribunais de Contas": "Outros Tribunais de Contas",
+}
 
 st.subheader("🔎 Monitorar")
 
