@@ -14,9 +14,10 @@ def formatar_horario_noticia(data):
     except Exception:
         return ""
 import streamlit as st
+import streamlit.components.v1 as components
 from streamlit_autorefresh import st_autorefresh
 import feedparser
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from urllib.parse import quote, unquote, urlencode
 from urllib.request import Request, urlopen
 from openai import OpenAI
@@ -2198,136 +2199,227 @@ def _x_busca_combinada():
     return _x_busca_url(consulta, dias=3)
 
 
+def _x_data_entry(entry):
+    """Converte a data do RSS para o fuso do Radar."""
+    try:
+        if getattr(entry, "published_parsed", None):
+            dt = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
+            return dt.astimezone(FUSO_BRASIL)
+    except Exception:
+        pass
+    return None
+
+
+@st.cache_data(ttl=180, show_spinner=False)
+def buscar_publicacoes_x():
+    """
+    Solução gratuita para trazer conteúdo do X sem usar a API paga.
+
+    O Radar consulta o índice público do Google News por resultados cuja
+    fonte seja X/Twitter. Quando o X não estiver indexado para determinado
+    termo, o item continua disponível pelo botão de busca pública do X.
+    """
+    agora_x = datetime.now(FUSO_BRASIL)
+    inicio_x = agora_x - timedelta(days=3)
+    consultas = []
+
+    for nome, consulta in X_TERMOS_MONITORADOS + X_NOMES_MONITORADOS:
+        q = (
+            f'site:x.com {consulta} '
+            f'since:{inicio_x.strftime("%Y-%m-%d")} '
+            f'until:{(agora_x + timedelta(days=1)).strftime("%Y-%m-%d")}'
+        )
+        consultas.append((nome, consulta, rss_url_para_busca(q)))
+
+    def coletar(item):
+        nome, consulta, url = item
+        try:
+            req = Request(url, headers={"User-Agent": "Mozilla/5.0 (Radar TCE-MG)"})
+            with urlopen(req, timeout=8) as resposta:
+                feed = feedparser.parse(resposta.read())
+        except Exception:
+            return nome, consulta, []
+
+        resultados = []
+        vistos = set()
+        for entry in feed.entries:
+            source = getattr(entry, "source", {}) or {}
+            source_url = str(source.get("href") or "").lower()
+            source_name = str(source.get("title") or "").strip()
+            link = str(entry.get("link") or "").strip()
+            titulo = limpar_texto(entry.get("title") or "").strip()
+            resumo = limpar_texto(entry.get("summary") or "").strip()
+
+            # O Google News pode devolver notícias que apenas mencionam X.
+            # Só aceitamos resultados cuja fonte declarada seja X/Twitter.
+            eh_x = (
+                "x.com" in source_url
+                or "twitter.com" in source_url
+                or source_name.lower() in {"x", "twitter"}
+            )
+            if not eh_x or not titulo or not link:
+                continue
+
+            chave = normalizar_titulo_dedupe(titulo)
+            if not chave or chave in vistos:
+                continue
+            vistos.add(chave)
+
+            resultados.append({
+                "monitoramento": nome,
+                "consulta": consulta,
+                "titulo": titulo,
+                "resumo": resumo,
+                "link": link,
+                "fonte": source_name or "X",
+                "data": _x_data_entry(entry),
+            })
+
+            if len(resultados) >= 6:
+                break
+
+        return nome, consulta, resultados
+
+    saida = {}
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = [executor.submit(coletar, item) for item in consultas]
+        for future in as_completed(futures):
+            nome, consulta, resultados = future.result()
+            saida[nome] = resultados
+
+    return saida
+
+
 def renderizar_redes_sociais():
     st.markdown("### 𝕏 **Redes Sociais — X**")
     st.caption(
-        "Monitoramento público de menções ao TCE-MG e assuntos diretamente relacionados nos últimos 3 dias."
+        "Atualizações públicas encontradas no X sobre os assuntos e nomes definidos no Radar. "
+        "Atualização automática a cada 3 minutos."
     )
 
-    st.markdown(
-        """
-        <style>
-        .x-summary-box {
-            background: rgba(39,50,74,.055);
-            border: 1px solid rgba(100,116,139,.15);
-            border-radius: 16px;
-            padding: 20px 22px;
-            margin: 8px 0 20px 0;
-        }
-        .x-summary-title {
-            font-size: 17px;
-            font-weight: 800;
-            color: #27324a;
-            margin-bottom: 14px;
-        }
-        .x-monitor-item {
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:12px;
-            padding:10px 0;
-            border-bottom:1px solid rgba(100,116,139,.10);
-        }
-        .x-monitor-item:last-child { border-bottom:0; }
-        .x-monitor-name { font-size:14px; font-weight:750; color:#27324a; }
-        .x-monitor-caption { font-size:12px; color:#667085; margin-top:2px; }
-        .x-live {
-            display:inline-block;
-            padding:4px 9px;
-            border-radius:999px;
-            background:rgba(220,38,38,.09);
-            color:#b42318;
-            font-size:11px;
-            font-weight:800;
-            white-space:nowrap;
-        }
-        .x-search-box {
-            border:1px solid rgba(100,116,139,.14);
-            border-radius:14px;
-            padding:15px 16px;
-            background:#fff;
-            margin-bottom:10px;
-        }
-        .x-search-title { font-size:15px; font-weight:800; color:#27324a; }
-        .x-search-caption { font-size:12px; color:#667085; margin-top:3px; }
-        </style>
-        """,
-        unsafe_allow_html=True,
+    resultados_x = buscar_publicacoes_x()
+    todas_publicacoes = []
+    for itens in resultados_x.values():
+        todas_publicacoes.extend(itens)
+
+    # ------------------------------------------------------------
+    # ATUALIZAÇÃO GERAL
+    # ------------------------------------------------------------
+    col_status, col_busca = st.columns([3.2, 1.2])
+    with col_status:
+        if todas_publicacoes:
+            st.success(f"🟢 {len(todas_publicacoes)} publicações do X localizadas nos últimos 3 dias.")
+        else:
+            st.info(
+                "Não foram localizadas publicações do X pelo índice público neste momento. "
+                "As buscas diretas abaixo continuam disponíveis."
+            )
+    with col_busca:
+        st.link_button("𝕏 Abrir busca geral no X", _x_busca_combinada(), use_container_width=True)
+
+    # ------------------------------------------------------------
+    # PUBLICAÇÕES RECENTES
+    # ------------------------------------------------------------
+    st.markdown("### 𝕏 **Publicações recentes**")
+    st.caption(
+        "Aqui aparecem o título/texto encontrado, horário e origem. Clique na publicação para abrir o conteúdo no X."
     )
 
-    # ------------------------------------------------------------
-    # BLOCO TRANSLÚCIDO — PRINCIPAIS FRENTES
-    # ------------------------------------------------------------
-    with st.container(border=True):
-        st.markdown('<div class="x-summary-box">', unsafe_allow_html=True)
-        st.markdown(
-            '<div class="x-summary-title">🔥 Maiores frentes de monitoramento — últimos 3 dias</div>',
-            unsafe_allow_html=True,
-        )
-        st.caption(
-            "Clique em qualquer item para abrir o X já filtrado por publicações mais recentes."
-        )
+    todas_publicacoes.sort(
+        key=lambda n: n.get("data") or datetime.min.replace(tzinfo=FUSO_BRASIL),
+        reverse=True,
+    )
 
-        c1, c2 = st.columns(2)
-        for idx, (nome, consulta) in enumerate(X_TERMOS_MONITORADOS):
-            col = c1 if idx % 2 == 0 else c2
-            with col:
-                st.markdown('<div class="x-monitor-item">', unsafe_allow_html=True)
+    if todas_publicacoes:
+        for i, post in enumerate(todas_publicacoes[:30]):
+            data_post = post.get("data")
+            horario = data_post.strftime("%d/%m/%Y %H:%M") if data_post else "Horário não informado"
+            resumo = post.get("resumo") or ""
+            if len(resumo) > 280:
+                resumo = resumo[:280].rstrip() + "..."
+
+            with st.container(border=True):
                 st.markdown(
-                    f'<div><div class="x-monitor-name">{esc_html(nome)}</div>'
-                    f'<div class="x-monitor-caption">últimos 3 dias</div></div>',
-                    unsafe_allow_html=True,
+                    f"**𝕏 {esc_html(post.get('fonte') or 'X')}**  •  "
+                    f"📅 {esc_html(horario)}  •  🔎 {esc_html(post.get('monitoramento') or '')}"
                 )
-                st.link_button("Ver no X ↗", _x_busca_url(consulta), key=f"x_term_{idx}")
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown(f"### {esc_html(post.get('titulo') or 'Sem texto')}")
+                if resumo:
+                    st.write(resumo)
+                st.link_button(
+                    "𝕏 Abrir publicação no X",
+                    post.get("link", ""),
+                    key=f"x_post_{i}_{hash(post.get('link', ''))}",
+                )
+    else:
+        st.caption("Nenhuma publicação do X foi localizada pelo índice público agora.")
 
-        st.markdown('</div>', unsafe_allow_html=True)
+    # ------------------------------------------------------------
+    # ASSUNTOS MONITORADOS
+    # ------------------------------------------------------------
+    st.markdown("### 🔎 **Assuntos monitorados**")
+    st.caption("Cada botão abre a busca pública do X já filtrada e ordenada pelas publicações mais recentes.")
+
+    cols = st.columns(2)
+    for idx, (nome, consulta) in enumerate(X_TERMOS_MONITORADOS):
+        itens = resultados_x.get(nome, [])
+        with cols[idx % 2]:
+            with st.container(border=True):
+                st.markdown(f"**{nome}**")
+                if itens:
+                    st.caption(f"{len(itens)} publicação(ões) localizada(s)")
+                    for item in itens[:3]:
+                        data_item = item.get("data")
+                        hora = data_item.strftime("%d/%m %H:%M") if data_item else ""
+                        st.markdown(
+                            f"• **{esc_html(item.get('titulo') or 'Sem texto')}**"
+                            + (f" — {hora}" if hora else "")
+                        )
+                else:
+                    st.caption("Nenhuma publicação localizada agora.")
+                st.link_button(
+                    "𝕏 Ver busca ao vivo no X",
+                    _x_busca_url(consulta),
+                    key=f"x_term_{idx}",
+                    use_container_width=True,
+                )
 
     # ------------------------------------------------------------
     # NOMES MONITORADOS
     # ------------------------------------------------------------
-    with st.container(border=True):
-        st.markdown(
-            '<div class="x-summary-title">👥 Nomes mais importantes para o monitoramento</div>',
-            unsafe_allow_html=True,
-        )
-        st.caption("Busca pública no X pelos principais nomes ligados ao Tribunal.")
-
-        cols = st.columns(3)
-        for idx, (nome, consulta) in enumerate(X_NOMES_MONITORADOS):
-            with cols[idx % 3]:
-                st.markdown(
-                    f'<div class="x-search-box"><div class="x-search-title">{esc_html(nome)}</div>'
-                    f'<div class="x-search-caption">menções nos últimos 3 dias</div></div>',
-                    unsafe_allow_html=True,
-                )
+    st.markdown("### 👥 **Nomes monitorados**")
+    cols = st.columns(3)
+    for idx, (nome, consulta) in enumerate(X_NOMES_MONITORADOS):
+        itens = resultados_x.get(nome, [])
+        with cols[idx % 3]:
+            with st.container(border=True):
+                st.markdown(f"**{nome}**")
+                if itens:
+                    st.caption(f"{len(itens)} publicação(ões) localizada(s)")
+                    for item in itens[:2]:
+                        data_item = item.get("data")
+                        hora = data_item.strftime("%d/%m %H:%M") if data_item else ""
+                        st.markdown(
+                            f"• **{esc_html(item.get('titulo') or 'Sem texto')}**"
+                            + (f" — {hora}" if hora else "")
+                        )
+                else:
+                    st.caption("Nenhuma publicação localizada agora.")
                 st.link_button(
-                    "🔎 Ver menções no X",
+                    "🔎 Abrir no X",
                     _x_busca_url(consulta),
                     key=f"x_nome_{idx}",
                     use_container_width=True,
                 )
 
-    # ------------------------------------------------------------
-    # BUSCA GERAL
-    # ------------------------------------------------------------
-    st.markdown("### 𝕏 **Últimas menções ao TCE-MG**")
-    st.caption(
-        "O botão abaixo abre a busca pública do X com os principais termos do Radar, ordenada pelas publicações mais recentes."
-    )
-    st.link_button(
-        "𝕏 Abrir últimas menções no X",
-        _x_busca_combinada(),
-        use_container_width=False,
-    )
-
     st.markdown(
         """
         <div style="margin-top:14px;padding:13px 15px;border-radius:12px;
         background:rgba(39,50,74,.045);color:#667085;font-size:12px;line-height:1.5;">
-        <strong>Como funciona:</strong> esta aba usa a busca pública do X e não a API paga.
-        Por isso, o Radar não inventa contagens nem promete uma lista completa dos últimos 20 posts;
-        os links levam diretamente ao X, com o período e os termos já configurados.
+        <strong>Importante:</strong> esta versão não usa a API paga do X. O Radar tenta trazer
+        automaticamente publicações que o índice público disponibiliza e mantém a busca direta do X
+        como complemento. Assim, não há cobrança nem erro 402, mas também não é possível garantir
+        100% das publicações do X sem acesso oficial à API.
         </div>
         """,
         unsafe_allow_html=True,
@@ -2826,7 +2918,9 @@ with aba_midias:
     # ============================================================
     # BARRA DE NOTÍCIAS — MINAS GERAIS
     # ============================================================
-
+    # Renderizada em componente isolado para evitar que o HTML do ticker
+    # "vaze" para a página quando o usuário troca o período (especialmente
+    # em Últimos 7 dias, quando há mais itens).
     noticias_ticker = [
         n for n in noticias_periodo
         if n.get("abrangencia") == "Minas Gerais"
@@ -2851,106 +2945,69 @@ with aba_midias:
             break
 
     if _ticker_final:
+        def _ticker_escape(value):
+            return html.escape(str(value or ""), quote=True)
+
         itens_ticker = []
-
         for n in _ticker_final:
-            titulo_ticker = esc_html(str(n.get("titulo") or "Sem título").strip())
-            fonte_ticker = esc_html(nome_fonte_exibicao(n.get("veiculo")))
-            link_ticker = esc_html(str(n.get("link") or ""))
-            bolinha_ticker = esc_html(n.get("bolinha", "🔵"))
-
+            titulo_ticker = _ticker_escape(str(n.get("titulo") or "Sem título").strip())
+            fonte_ticker = _ticker_escape(nome_fonte_exibicao(n.get("veiculo")))
+            link_ticker = _ticker_escape(str(n.get("link") or ""))
+            bolinha_ticker = _ticker_escape(n.get("bolinha", "🔵"))
             itens_ticker.append(
-                f"<a href=\"{link_ticker}\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"radar-ticker-item\">"
-                f"<span class=\"radar-ticker-dot\">{bolinha_ticker}</span>"
-                f"<span class=\"radar-ticker-title\">{titulo_ticker}</span>"
-                f"<span class=\"radar-ticker-source\">{fonte_ticker}</span>"
-                f"</a>"
+                f'<a href="{link_ticker}" target="_blank" rel="noopener noreferrer" class="radar-ticker-item">'
+                f'<span class="radar-ticker-dot">{bolinha_ticker}</span>'
+                f'<span class="radar-ticker-title">{titulo_ticker}</span>'
+                f'<span class="radar-ticker-source">{fonte_ticker}</span>'
+                f'</a>'
             )
 
         itens_html = "".join(itens_ticker)
-
-        st.markdown(
-            f"""
-            <style>
-                .radar-ticker-wrap {{
-                    width: 100%;
-                    overflow: hidden;
-                    border: 1px solid rgba(100,116,139,.16);
-                    border-radius: 10px;
-                    background: #27324a;
-                    display: flex;
-                    align-items: center;
-                    margin: 12px 0 16px 0;
-                    height: 46px;
-                    box-sizing: border-box;
-                }}
-                .radar-ticker-label {{
-                    flex: 0 0 auto;
-                    height: 100%;
-                    display: flex;
-                    align-items: center;
-                    padding: 0 16px;
-                    background: #1d2638;
-                    color: #fff;
-                    font-size: 13px;
-                    font-weight: 800;
-                    z-index: 3;
-                    box-shadow: 5px 0 12px rgba(0,0,0,.12);
-                }}
-                .radar-ticker-window {{
-                    overflow: hidden;
-                    flex: 1;
-                    height: 100%;
-                    display: flex;
-                    align-items: center;
-                }}
-                .radar-ticker-track {{
-                    display: flex;
-                    align-items: center;
-                    width: max-content;
-                    animation: radarTickerMove 145s linear infinite;
-                    will-change: transform;
-                }}
-                .radar-ticker-item {{
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                    color: #fff !important;
-                    text-decoration: none !important;
-                    white-space: nowrap;
-                    padding: 0 24px;
-                    font-size: 14px;
-                    line-height: 1;
-                }}
-                .radar-ticker-item:hover .radar-ticker-title {{
-                    text-decoration: underline !important;
-                }}
-                .radar-ticker-dot {{ font-size: 11px; }}
-                .radar-ticker-title {{ font-weight: 700; }}
-                .radar-ticker-source {{
-                    opacity: .68;
-                    font-size: 12px;
-                    font-weight: 600;
-                }}
-                @keyframes radarTickerMove {{
-                    from {{ transform: translateX(0); }}
-                    to {{ transform: translateX(-50%); }}
-                }}
-                .radar-ticker-wrap:hover .radar-ticker-track {{
-                    animation-play-state: paused;
-                }}
-            </style>
-            <div class="radar-ticker-wrap">
-                <div class="radar-ticker-label">📰 ÚLTIMAS NOS PARTAIS DE MG</div>
-                <div class="radar-ticker-window">
-                    <div class="radar-ticker-track">
-                        {itens_html}{itens_html}
-                    </div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        ticker_html = f"""
+        <!doctype html>
+        <html><head><meta charset="utf-8">
+        <style>
+            * {{ box-sizing: border-box; }}
+            html, body {{ margin:0; padding:0; background:transparent; overflow:hidden; }}
+            .radar-ticker-wrap {{
+                width:100%; height:46px; overflow:hidden;
+                border:1px solid rgba(100,116,139,.16); border-radius:10px;
+                background:#27324a; display:flex; align-items:center;
+                font-family:Arial,Helvetica,sans-serif;
+            }}
+            .radar-ticker-label {{
+                flex:0 0 auto; height:100%; display:flex; align-items:center;
+                padding:0 16px; background:#1d2638; color:#fff;
+                font-size:13px; font-weight:800; z-index:3;
+                box-shadow:5px 0 12px rgba(0,0,0,.12);
+            }}
+            .radar-ticker-window {{ overflow:hidden; flex:1; height:100%; display:flex; align-items:center; }}
+            .radar-ticker-track {{
+                display:flex; align-items:center; width:max-content;
+                animation:radarTickerMove 145s linear infinite;
+                will-change:transform;
+            }}
+            .radar-ticker-item {{
+                display:inline-flex; align-items:center; gap:8px;
+                color:#fff !important; text-decoration:none !important;
+                white-space:nowrap; padding:0 24px; font-size:14px; line-height:1;
+            }}
+            .radar-ticker-item:hover .radar-ticker-title {{ text-decoration:underline !important; }}
+            .radar-ticker-dot {{ font-size:11px; }}
+            .radar-ticker-title {{ font-weight:700; }}
+            .radar-ticker-source {{ opacity:.68; font-size:12px; font-weight:600; }}
+            @keyframes radarTickerMove {{ from {{ transform:translateX(0); }} to {{ transform:translateX(-50%); }} }}
+            .radar-ticker-wrap:hover .radar-ticker-track {{ animation-play-state:paused; }}
+        </style></head><body>
+        <div class="radar-ticker-wrap">
+            <div class="radar-ticker-label">📰 ÚLTIMAS NOS PORTAIS DE MG</div>
+            <div class="radar-ticker-window"><div class="radar-ticker-track">
+                {itens_html}{itens_html}
+            </div></div>
+        </div>
+        </body></html>
+        """
+        components.html(ticker_html, height=52, scrolling=False)
 
 
     # ============================================================
