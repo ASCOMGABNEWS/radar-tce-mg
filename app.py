@@ -1806,6 +1806,24 @@ st.markdown("""
     border-color: #475467 !important;
 }
 
+/* Botão de abrangência selecionado: preto para ficar inequívoco */
+.st-key-abrangencia-estadual-selecionada button,
+.st-key-abrangencia-nacional-selecionada button,
+.st-key-abrangencia-total-selecionada button {
+    background: #111827 !important;
+    color: #ffffff !important;
+    border: 2px solid #111827 !important;
+    box-shadow: 0 0 0 2px rgba(17,24,39,.10) !important;
+    font-weight: 800 !important;
+}
+.st-key-abrangencia-estadual-selecionada button:hover,
+.st-key-abrangencia-nacional-selecionada button:hover,
+.st-key-abrangencia-total-selecionada button:hover {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border-color: #000000 !important;
+}
+
 .st-key-filtros-centralizados [data-testid="stWidgetLabel"] {
     justify-content: center;
     width: 100%;
@@ -2213,200 +2231,99 @@ def _x_data_entry(entry):
 @st.cache_data(ttl=180, show_spinner=False)
 def buscar_publicacoes_x():
     """
-    Solução gratuita para trazer conteúdo do X sem usar a API paga.
+    O X não oferece, no plano gratuito, um endpoint de pesquisa pública
+    que permita ao Radar baixar menções por palavra-chave.
 
-    O Radar consulta o índice público do Google News por resultados cuja
-    fonte seja X/Twitter. Quando o X não estiver indexado para determinado
-    termo, o item continua disponível pelo botão de busca pública do X.
+    Não usamos scraping de instâncias de Nitter/XCancel porque essas
+    alternativas estão instáveis em 2026. Retornamos vazio aqui para
+    evitar apresentar uma lista falsa ou quebrada.
     """
-    agora_x = datetime.now(FUSO_BRASIL)
-    inicio_x = agora_x - timedelta(days=3)
-    consultas = []
-
-    for nome, consulta in X_TERMOS_MONITORADOS + X_NOMES_MONITORADOS:
-        q = (
-            f'site:x.com {consulta} '
-            f'since:{inicio_x.strftime("%Y-%m-%d")} '
-            f'until:{(agora_x + timedelta(days=1)).strftime("%Y-%m-%d")}'
-        )
-        consultas.append((nome, consulta, rss_url_para_busca(q)))
-
-    def coletar(item):
-        nome, consulta, url = item
-        try:
-            req = Request(url, headers={"User-Agent": "Mozilla/5.0 (Radar TCE-MG)"})
-            with urlopen(req, timeout=8) as resposta:
-                feed = feedparser.parse(resposta.read())
-        except Exception:
-            return nome, consulta, []
-
-        resultados = []
-        vistos = set()
-        for entry in feed.entries:
-            source = getattr(entry, "source", {}) or {}
-            source_url = str(source.get("href") or "").lower()
-            source_name = str(source.get("title") or "").strip()
-            link = str(entry.get("link") or "").strip()
-            titulo = limpar_texto(entry.get("title") or "").strip()
-            resumo = limpar_texto(entry.get("summary") or "").strip()
-
-            # O Google News pode devolver notícias que apenas mencionam X.
-            # Só aceitamos resultados cuja fonte declarada seja X/Twitter.
-            eh_x = (
-                "x.com" in source_url
-                or "twitter.com" in source_url
-                or source_name.lower() in {"x", "twitter"}
-            )
-            if not eh_x or not titulo or not link:
-                continue
-
-            chave = normalizar_titulo_dedupe(titulo)
-            if not chave or chave in vistos:
-                continue
-            vistos.add(chave)
-
-            resultados.append({
-                "monitoramento": nome,
-                "consulta": consulta,
-                "titulo": titulo,
-                "resumo": resumo,
-                "link": link,
-                "fonte": source_name or "X",
-                "data": _x_data_entry(entry),
-            })
-
-            if len(resultados) >= 6:
-                break
-
-        return nome, consulta, resultados
-
-    saida = {}
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(coletar, item) for item in consultas]
-        for future in as_completed(futures):
-            nome, consulta, resultados = future.result()
-            saida[nome] = resultados
-
-    return saida
+    return {}
 
 
 def renderizar_redes_sociais():
     st.markdown("### 𝕏 **Redes Sociais — X**")
     st.caption(
-        "Atualizações públicas encontradas no X sobre os assuntos e nomes definidos no Radar. "
-        "Atualização automática a cada 3 minutos."
+        "Painel de monitoramento do X para TCE-MG. Os termos abaixo já abrem a busca pública do X com as publicações mais recentes."
     )
 
-    resultados_x = buscar_publicacoes_x()
-    todas_publicacoes = []
-    for itens in resultados_x.values():
-        todas_publicacoes.extend(itens)
+    # ------------------------------------------------------------
+    # AVISO HONESTO SOBRE A LIMITAÇÃO DO X
+    # ------------------------------------------------------------
+    with st.container(border=True):
+        st.markdown(
+            """
+            <div style="padding:4px 2px 8px 2px;">
+                <div style="font-size:17px;font-weight:800;color:#27324a;margin-bottom:7px;">
+                    𝕏 Monitoramento em tempo real
+                </div>
+                <div style="font-size:14px;line-height:1.55;color:#667085;">
+                    Para mostrar o <b>texto dos posts diretamente dentro do Radar</b>, seria necessário
+                    acesso a uma fonte que forneça os dados do X. A API oficial disponível para este
+                    projeto está retornando <b>402 / cobrança</b>. Por isso, esta versão não inventa
+                    publicações nem mostra uma lista vazia fingindo ser o X: ela mantém as buscas públicas
+                    prontas e ordenadas para abrir o conteúdo real no X.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     # ------------------------------------------------------------
-    # ATUALIZAÇÃO GERAL
+    # BUSCA GERAL
     # ------------------------------------------------------------
-    col_status, col_busca = st.columns([3.2, 1.2])
-    with col_status:
-        if todas_publicacoes:
-            st.success(f"🟢 {len(todas_publicacoes)} publicações do X localizadas nos últimos 3 dias.")
-        else:
-            st.info(
-                "Não foram localizadas publicações do X pelo índice público neste momento. "
-                "As buscas diretas abaixo continuam disponíveis."
-            )
-    with col_busca:
-        st.link_button("𝕏 Abrir busca geral no X", _x_busca_combinada(), use_container_width=True)
-
-    # ------------------------------------------------------------
-    # PUBLICAÇÕES RECENTES
-    # ------------------------------------------------------------
-    st.markdown("### 𝕏 **Publicações recentes**")
-    st.caption(
-        "Aqui aparecem o título/texto encontrado, horário e origem. Clique na publicação para abrir o conteúdo no X."
+    st.markdown("### 𝕏 **Últimas menções ao TCE-MG**")
+    st.caption("Abre diretamente o X com os principais termos do Radar e os últimos 3 dias.")
+    st.link_button(
+        "𝕏 Abrir últimas menções ao TCE-MG",
+        _x_busca_combinada(),
+        use_container_width=True,
     )
-
-    todas_publicacoes.sort(
-        key=lambda n: n.get("data") or datetime.min.replace(tzinfo=FUSO_BRASIL),
-        reverse=True,
-    )
-
-    if todas_publicacoes:
-        for i, post in enumerate(todas_publicacoes[:30]):
-            data_post = post.get("data")
-            horario = data_post.strftime("%d/%m/%Y %H:%M") if data_post else "Horário não informado"
-            resumo = post.get("resumo") or ""
-            if len(resumo) > 280:
-                resumo = resumo[:280].rstrip() + "..."
-
-            with st.container(border=True):
-                st.markdown(
-                    f"**𝕏 {esc_html(post.get('fonte') or 'X')}**  •  "
-                    f"📅 {esc_html(horario)}  •  🔎 {esc_html(post.get('monitoramento') or '')}"
-                )
-                st.markdown(f"### {esc_html(post.get('titulo') or 'Sem texto')}")
-                if resumo:
-                    st.write(resumo)
-                st.link_button(
-                    "𝕏 Abrir publicação no X",
-                    post.get("link", ""),
-                    key=f"x_post_{i}_{hash(post.get('link', ''))}",
-                )
-    else:
-        st.caption("Nenhuma publicação do X foi localizada pelo índice público agora.")
 
     # ------------------------------------------------------------
     # ASSUNTOS MONITORADOS
     # ------------------------------------------------------------
     st.markdown("### 🔎 **Assuntos monitorados**")
-    st.caption("Cada botão abre a busca pública do X já filtrada e ordenada pelas publicações mais recentes.")
+    st.caption("Cada cartão abre a busca pública do X já filtrada pelo assunto e pelos últimos 3 dias.")
 
-    cols = st.columns(2)
-    for idx, (nome, consulta) in enumerate(X_TERMOS_MONITORADOS):
-        itens = resultados_x.get(nome, [])
-        with cols[idx % 2]:
-            with st.container(border=True):
-                st.markdown(f"**{nome}**")
-                if itens:
-                    st.caption(f"{len(itens)} publicação(ões) localizada(s)")
-                    for item in itens[:3]:
-                        data_item = item.get("data")
-                        hora = data_item.strftime("%d/%m %H:%M") if data_item else ""
-                        st.markdown(
-                            f"• **{esc_html(item.get('titulo') or 'Sem texto')}**"
-                            + (f" — {hora}" if hora else "")
-                        )
-                else:
-                    st.caption("Nenhuma publicação localizada agora.")
-                st.link_button(
-                    "𝕏 Ver busca ao vivo no X",
-                    _x_busca_url(consulta),
-                    key=f"x_term_{idx}",
-                    use_container_width=True,
-                )
+    for linha in range(0, len(X_TERMOS_MONITORADOS), 2):
+        cols = st.columns(2, gap="medium")
+        for pos, col in enumerate(cols):
+            idx = linha + pos
+            if idx >= len(X_TERMOS_MONITORADOS):
+                continue
+            nome, consulta = X_TERMOS_MONITORADOS[idx]
+            with col:
+                with st.container(border=True):
+                    st.markdown(
+                        f'<div style="font-size:16px;font-weight:800;color:#27324a;margin-bottom:4px;">{esc_html(nome)}</div>',
+                        unsafe_allow_html=True,
+                    )
+                    st.caption("Publicações mais recentes no X")
+                    st.link_button(
+                        "𝕏 Ver publicações no X",
+                        _x_busca_url(consulta),
+                        key=f"x_term_{idx}",
+                        use_container_width=True,
+                    )
 
     # ------------------------------------------------------------
     # NOMES MONITORADOS
     # ------------------------------------------------------------
     st.markdown("### 👥 **Nomes monitorados**")
-    cols = st.columns(3)
+    st.caption("Busca pública no X pelos principais nomes ligados ao Tribunal.")
+
+    cols = st.columns(3, gap="medium")
     for idx, (nome, consulta) in enumerate(X_NOMES_MONITORADOS):
-        itens = resultados_x.get(nome, [])
         with cols[idx % 3]:
             with st.container(border=True):
-                st.markdown(f"**{nome}**")
-                if itens:
-                    st.caption(f"{len(itens)} publicação(ões) localizada(s)")
-                    for item in itens[:2]:
-                        data_item = item.get("data")
-                        hora = data_item.strftime("%d/%m %H:%M") if data_item else ""
-                        st.markdown(
-                            f"• **{esc_html(item.get('titulo') or 'Sem texto')}**"
-                            + (f" — {hora}" if hora else "")
-                        )
-                else:
-                    st.caption("Nenhuma publicação localizada agora.")
+                st.markdown(
+                    f'<div style="font-size:16px;font-weight:800;color:#27324a;margin-bottom:4px;">{esc_html(nome)}</div>',
+                    unsafe_allow_html=True,
+                )
+                st.caption("Publicações mais recentes nos últimos 3 dias")
                 st.link_button(
-                    "🔎 Abrir no X",
+                    "🔎 Ver menções no X",
                     _x_busca_url(consulta),
                     key=f"x_nome_{idx}",
                     use_container_width=True,
@@ -2414,12 +2331,11 @@ def renderizar_redes_sociais():
 
     st.markdown(
         """
-        <div style="margin-top:14px;padding:13px 15px;border-radius:12px;
+        <div style="margin-top:16px;padding:13px 15px;border-radius:12px;
         background:rgba(39,50,74,.045);color:#667085;font-size:12px;line-height:1.5;">
-        <strong>Importante:</strong> esta versão não usa a API paga do X. O Radar tenta trazer
-        automaticamente publicações que o índice público disponibiliza e mantém a busca direta do X
-        como complemento. Assim, não há cobrança nem erro 402, mas também não é possível garantir
-        100% das publicações do X sem acesso oficial à API.
+        <strong>Importante:</strong> sem uma fonte de dados do X, o Radar não consegue exibir
+        automaticamente o texto e o horário dos últimos 20 posts dentro do Streamlit.
+        A busca acima é a alternativa gratuita e real, sem API paga e sem dados inventados.
         </div>
         """,
         unsafe_allow_html=True,
@@ -3408,8 +3324,11 @@ with aba_midias:
             "### 📰 **Notícias monitoradas**"
         )
 
+    abrangencia_atual = st.session_state.get("abrangencia_botao", "Todas")
+
     with col_total:
-        with st.container(key="abrangencia-total"):
+        chave = "abrangencia-total-selecionada" if abrangencia_atual == "Todas" else "abrangencia-total"
+        with st.container(key=chave):
             if st.button(
                 "Abrangência Total",
                 key="btn_abrangencia_total",
@@ -3419,29 +3338,25 @@ with aba_midias:
                 st.rerun()
 
     with col_estadual:
-        with st.container(key="abrangencia-estadual"):
+        chave = "abrangencia-estadual-selecionada" if abrangencia_atual == "Minas Gerais" else "abrangencia-estadual"
+        with st.container(key=chave):
             if st.button(
                 "Abrangência Estadual - MG",
                 key="btn_abrangencia_estadual",
                 use_container_width=True
             ):
-                if st.session_state.get("abrangencia_botao", "Todas") == "Minas Gerais":
-                    st.session_state["abrangencia_botao"] = "Todas"
-                else:
-                    st.session_state["abrangencia_botao"] = "Minas Gerais"
+                st.session_state["abrangencia_botao"] = "Todas" if abrangencia_atual == "Minas Gerais" else "Minas Gerais"
                 st.rerun()
 
     with col_nacional:
-        with st.container(key="abrangencia-nacional"):
+        chave = "abrangencia-nacional-selecionada" if abrangencia_atual == "Nacional" else "abrangencia-nacional"
+        with st.container(key=chave):
             if st.button(
                 "Abrangência Nacional - BR",
                 key="btn_abrangencia_nacional",
                 use_container_width=True
             ):
-                if st.session_state.get("abrangencia_botao", "Todas") == "Nacional":
-                    st.session_state["abrangencia_botao"] = "Todas"
-                else:
-                    st.session_state["abrangencia_botao"] = "Nacional"
+                st.session_state["abrangencia_botao"] = "Todas" if abrangencia_atual == "Nacional" else "Nacional"
                 st.rerun()
 
     st.markdown(
