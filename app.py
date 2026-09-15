@@ -2208,7 +2208,7 @@ st.markdown(
             <div>
                 <div class="radar-title">Radar TCE-MG</div>
                 <div class="radar-subtitle">
-                    Monitoramento inteligente do Gab. Agostinho Patrus sobre notícias<br>
+                    Monitoramento inteligente sobre notícias<br>
                     relacionadas aos Tribunal de Contas e outros Orgãos
                 </div>
             </div>
